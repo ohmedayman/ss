@@ -39,17 +39,17 @@ export default function ActivityPage() {
   const getActionIcon = (type: string) => {
     switch (type) {
       case 'screen':
-        return <Monitor className="w-4 h-4 text-indigo-400" />;
+        return <Monitor className="w-4 h-4 text-indigo-500" />;
       case 'media':
-        return <Film className="w-4 h-4 text-cyan-400" />;
+        return <Film className="w-4 h-4 text-cyan-500" />;
       case 'playlist':
-        return <ListVideo className="w-4 h-4 text-violet-400" />;
+        return <ListVideo className="w-4 h-4 text-violet-500" />;
       case 'schedule':
-        return <CalendarClock className="w-4 h-4 text-emerald-400" />;
+        return <CalendarClock className="w-4 h-4 text-emerald-500" />;
       case 'auth':
-        return <Shield className="w-4 h-4 text-amber-400" />;
+        return <Shield className="w-4 h-4 text-amber-500" />;
       default:
-        return <Settings className="w-4 h-4 text-slate-400" />;
+        return <Settings className="w-4 h-4 text-slate-500" />;
     }
   };
 
@@ -65,17 +65,17 @@ export default function ActivityPage() {
           {logs.map((log) => (
             <div
               key={log.id}
-              className="flex items-start gap-4 p-4 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 transition-colors"
+              className="flex items-start gap-4 p-4 rounded-xl bg-white border border-slate-200 hover:border-slate-300 transition-colors"
             >
-              <div className="w-9 h-9 rounded-xl bg-slate-800 flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-xl bg-slate-100 flex items-center justify-center shrink-0">
                 {getActionIcon(log.actionType)}
               </div>
 
               <div className="flex-1 text-xs">
                 <div className="flex items-center justify-between mb-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-bold text-white text-sm">{log.action}</span>
-                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-800 text-slate-300 font-mono">
+                    <span className="font-bold text-slate-900 text-sm">{log.action}</span>
+                    <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
                       {log.userName || 'المدير العام'}
                     </span>
                   </div>
@@ -84,7 +84,7 @@ export default function ActivityPage() {
                   </span>
                 </div>
 
-                <p className="text-slate-300 leading-relaxed">{log.details}</p>
+                <p className="text-slate-600 leading-relaxed">{log.details}</p>
 
                 {log.ipAddress && (
                   <div className="mt-2 text-[10px] text-slate-500 font-mono">

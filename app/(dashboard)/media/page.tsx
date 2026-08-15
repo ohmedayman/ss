@@ -12,12 +12,8 @@ import {
   Search,
   Plus,
   Clock,
-  HardDrive,
-  ExternalLink,
   Eye,
   X,
-  Sparkles,
-  Folder,
 } from 'lucide-react';
 
 export default function MediaPage() {
@@ -90,7 +86,7 @@ export default function MediaPage() {
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             placeholder="بحث في ملفات الوسائط..."
-            className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 placeholder:text-slate-500"
+            className="input pl-3 pr-9"
           />
         </div>
 
@@ -98,10 +94,10 @@ export default function MediaPage() {
         <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto">
           <button
             onClick={() => setFilterType('all')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
               filterType === 'all'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
           >
             الكل ({media.length})
@@ -109,10 +105,10 @@ export default function MediaPage() {
 
           <button
             onClick={() => setFilterType('image')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
               filterType === 'image'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
           >
             <ImageIcon className="w-3.5 h-3.5" />
@@ -121,10 +117,10 @@ export default function MediaPage() {
 
           <button
             onClick={() => setFilterType('video')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
               filterType === 'video'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
           >
             <Film className="w-3.5 h-3.5" />
@@ -133,10 +129,10 @@ export default function MediaPage() {
 
           <button
             onClick={() => setFilterType('ticker_text')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
               filterType === 'ticker_text'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
           >
             <Type className="w-3.5 h-3.5" />
@@ -145,10 +141,10 @@ export default function MediaPage() {
 
           <button
             onClick={() => setFilterType('web_url')}
-            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
+            className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
               filterType === 'web_url'
-                ? 'bg-indigo-600 text-white shadow-sm'
-                : 'bg-slate-900 text-slate-400 hover:text-white border border-slate-800'
+                ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
+                : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
             }`}
           >
             <Globe className="w-3.5 h-3.5" />
@@ -172,7 +168,7 @@ export default function MediaPage() {
           return (
             <div
               key={item.id}
-              className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-800/90 group"
+              className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-200 group"
             >
               {/* Media Thumbnail */}
               <div
@@ -188,7 +184,7 @@ export default function MediaPage() {
                 )}
 
                 {item.fileType === 'video' && (
-                  <div className="relative w-full h-full flex items-center justify-center bg-slate-900">
+                  <div className="relative w-full h-full flex items-center justify-center bg-slate-950">
                     <video
                       src={item.fileUrl}
                       className="w-full h-full object-cover opacity-80"
@@ -235,10 +231,10 @@ export default function MediaPage() {
               {/* Media Info */}
               <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
                 <div>
-                  <h4 className="font-bold text-white text-xs truncate" title={item.name}>
+                  <h4 className="font-bold text-slate-900 text-xs truncate" title={item.name}>
                     {item.name}
                   </h4>
-                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-500">
+                  <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
                     <span>
                       {item.fileSizeBytes > 1024 * 1024
                         ? `${(item.fileSizeBytes / 1024 / 1024).toFixed(1)} MB`
@@ -248,10 +244,10 @@ export default function MediaPage() {
                   </div>
                 </div>
 
-                <div className="pt-2 border-t border-slate-800/80 flex items-center justify-between">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
                   <button
                     onClick={() => setPreviewItem(item)}
-                    className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 cursor-pointer font-medium"
+                    className="text-xs text-indigo-600 hover:text-indigo-500 flex items-center gap-1 cursor-pointer font-medium"
                   >
                     <Eye className="w-3.5 h-3.5" />
                     <span>معاينة</span>
@@ -259,7 +255,7 @@ export default function MediaPage() {
 
                   <button
                     onClick={() => deleteMedia(item.id, item.name)}
-                    className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                     title="حذف"
                   >
                     <Trash2 className="w-3.5 h-3.5" />
@@ -273,24 +269,24 @@ export default function MediaPage() {
 
       {/* Lightbox / Preview Modal */}
       {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="relative max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+          <div className="relative max-w-4xl w-full bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
+            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
               <div>
-                <h3 className="font-bold text-white text-sm">{previewItem.name}</h3>
+                <h3 className="font-bold text-slate-900 text-sm">{previewItem.name}</h3>
                 <p className="text-[11px] text-slate-400">
                   النوع: {previewItem.fileType} • المدة: {previewItem.durationSeconds} ثانية
                 </p>
               </div>
               <button
                 onClick={() => setPreviewItem(null)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black">
+            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-slate-950">
               {previewItem.fileType === 'image' && (
                 <img
                   src={previewItem.fileUrl}

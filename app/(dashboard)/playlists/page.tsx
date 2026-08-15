@@ -5,21 +5,13 @@ import Header from '@/components/Header';
 import {
   ListVideo,
   Plus,
-  Play,
   Clock,
   Trash2,
-  Edit,
   ArrowUp,
   ArrowDown,
   X,
-  CheckCircle2,
-  Sparkles,
-  Layers,
-  Image as ImageIcon,
   Film,
-  Globe,
   Type,
-  Shuffle,
 } from 'lucide-react';
 
 export default function PlaylistsPage() {
@@ -170,8 +162,8 @@ export default function PlaylistsPage() {
 
       {/* Action Bar */}
       <div className="glass-panel rounded-2xl p-4 flex items-center justify-between">
-        <div className="text-xs text-slate-300">
-          لديك <span className="font-bold text-indigo-400">{playlists.length}</span> قائمة تشغيل جاهزة للبث
+        <div className="text-xs text-slate-500">
+          لديك <span className="font-bold text-indigo-600">{playlists.length}</span> قائمة تشغيل جاهزة للبث
         </div>
 
         <button
@@ -189,16 +181,16 @@ export default function PlaylistsPage() {
           return (
             <div
               key={pl.id}
-              className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-800 group"
+              className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-200 group"
             >
               {/* Item Carousel Preview */}
-              <div className="p-4 border-b border-slate-800 bg-slate-950/60">
+              <div className="p-4 border-b border-slate-100 bg-slate-50">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <ListVideo className="w-4 h-4 text-indigo-400" />
-                    <h3 className="font-bold text-white text-sm truncate">{pl.name}</h3>
+                    <ListVideo className="w-4 h-4 text-indigo-500" />
+                    <h3 className="font-bold text-slate-900 text-sm truncate">{pl.name}</h3>
                   </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-500/10 text-indigo-300 font-mono border border-indigo-500/20">
+                  <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-mono border border-indigo-100">
                     {pl.totalDurationSeconds} ثانية
                   </span>
                 </div>
@@ -209,7 +201,7 @@ export default function PlaylistsPage() {
                     pl.items.map((it: any, idx: number) => (
                       <div
                         key={idx}
-                        className="relative w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-800"
+                        className="relative w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-700"
                         title={it.media?.name || `عنصر ${idx + 1}`}
                       >
                         {it.media?.fileType === 'image' && (
@@ -230,7 +222,7 @@ export default function PlaylistsPage() {
                       </div>
                     ))
                   ) : (
-                    <div className="text-xs text-slate-500 py-3 text-center w-full">
+                    <div className="text-xs text-slate-400 py-3 text-center w-full">
                       قائمة فارغة
                     </div>
                   )}
@@ -239,25 +231,25 @@ export default function PlaylistsPage() {
 
               {/* Info & Actions */}
               <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                <p className="text-xs text-slate-400 line-clamp-2">
+                <p className="text-xs text-slate-500 line-clamp-2">
                   {pl.description || 'قائمة تشغيل إعلانية متتابعة للشاشات'}
                 </p>
 
-                <div className="pt-2 border-t border-slate-800 flex items-center justify-between">
-                  <div className="text-[11px] text-slate-500">
+                <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                  <div className="text-[11px] text-slate-400">
                     {pl.items?.length || 0} عناصر • {pl.isLoop ? 'تكرار مستمر' : 'مرة واحدة'}
                   </div>
 
                   <div className="flex items-center gap-1.5">
                     <button
                       onClick={() => openEditPlaylist(pl)}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium border border-slate-700 transition-colors cursor-pointer"
+                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
                     >
                       تعديل
                     </button>
                     <button
                       onClick={() => deletePlaylist(pl.id, pl.name)}
-                      className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
                       title="حذف"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -272,26 +264,26 @@ export default function PlaylistsPage() {
 
       {/* Playlist Visual Builder & Editor Modal */}
       {isEditorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="bg-[#111827] border border-slate-700 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/60">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-indigo-600/20 text-indigo-400 flex items-center justify-center">
+                <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <ListVideo className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-white text-base">
+                  <h3 className="font-bold text-slate-900 text-base">
                     {editingId ? 'تعديل قائمة التشغيل' : 'إنشاء قائمة تشغيل جديدة'}
                   </h3>
-                  <p className="text-xs text-slate-400">
-                    المدة الإجمالية الحالية: <span className="font-bold text-indigo-400 font-mono">{calculateTotalDuration()} ثانية</span>
+                  <p className="text-xs text-slate-500">
+                    المدة الإجمالية الحالية: <span className="font-bold text-indigo-600 font-mono">{calculateTotalDuration()} ثانية</span>
                   </p>
                 </div>
               </div>
               <button
                 onClick={() => setIsEditorOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800"
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -302,27 +294,27 @@ export default function PlaylistsPage() {
               {/* Form Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
-                    اسم قائمة التشغيل <span className="text-rose-400">*</span>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                    اسم قائمة التشغيل <span className="text-rose-500">*</span>
                   </label>
                   <input
                     type="text"
                     value={playlistName}
                     onChange={(e) => setPlaylistName(e.target.value)}
                     placeholder="مثال: عروض المساء الترويجية"
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="input"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                     التأثير الانتقالي الافتراضي
                   </label>
                   <select
                     value={defaultTransition}
                     onChange={(e) => setDefaultTransition(e.target.value)}
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="input"
                   >
                     <option value="fade">تلاشي (Fade)</option>
                     <option value="slide_left">انزلاق يسار (Slide Left)</option>
@@ -333,7 +325,7 @@ export default function PlaylistsPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                     الوصف (اختياري)
                   </label>
                   <input
@@ -341,7 +333,7 @@ export default function PlaylistsPage() {
                     value={playlistDesc}
                     onChange={(e) => setPlaylistDesc(e.target.value)}
                     placeholder="أدخل وصفاً توضيحياً للهدف من هذه القائمة..."
-                    className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                    className="input"
                   />
                 </div>
               </div>
@@ -349,7 +341,7 @@ export default function PlaylistsPage() {
               {/* Items Sequencer Timeline */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-xs font-bold text-slate-200">
+                  <label className="block text-xs font-bold text-slate-700">
                     عناصر وتتابع العرض ({items.length} عناصر)
                   </label>
                   <button
@@ -363,10 +355,10 @@ export default function PlaylistsPage() {
                 </div>
 
                 {items.length === 0 ? (
-                  <div className="border-2 border-dashed border-slate-800 rounded-2xl p-8 text-center bg-slate-900/40">
-                    <ListVideo className="w-10 h-10 mx-auto mb-2 text-slate-600" />
-                    <p className="text-xs font-semibold text-slate-400">القائمة فارغة حالياً</p>
-                    <p className="text-[11px] text-slate-600 mt-1">
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50">
+                    <ListVideo className="w-10 h-10 mx-auto mb-2 text-slate-300" />
+                    <p className="text-xs font-semibold text-slate-500">القائمة فارغة حالياً</p>
+                    <p className="text-[11px] text-slate-400 mt-1">
                       اضغط على زر "إضافة عنصر من المكتبة" لاختيار الصور والفيديوهات
                     </p>
                   </div>
@@ -375,15 +367,15 @@ export default function PlaylistsPage() {
                     {items.map((item, idx) => (
                       <div
                         key={item.id || idx}
-                        className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800 gap-3"
+                        className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 gap-3"
                       >
                         {/* Order badge & preview */}
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-slate-800 text-slate-300 flex items-center justify-center text-xs font-bold font-mono">
+                          <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold font-mono">
                             {idx + 1}
                           </span>
 
-                          <div className="w-12 h-9 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-slate-800 flex items-center justify-center">
+                          <div className="w-12 h-9 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center">
                             {item.media?.fileType === 'image' && (
                               <img src={item.media.fileUrl} alt="" className="w-full h-full object-cover" />
                             )}
@@ -396,18 +388,18 @@ export default function PlaylistsPage() {
                           </div>
 
                           <div>
-                            <p className="text-xs font-semibold text-white truncate max-w-[200px]">
+                            <p className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">
                               {item.media?.name || 'عنصر مخصص'}
                             </p>
-                            <span className="text-[10px] text-slate-500 uppercase">{item.media?.fileType}</span>
+                            <span className="text-[10px] text-slate-400 uppercase">{item.media?.fileType}</span>
                           </div>
                         </div>
 
                         {/* Controls: Duration, Transition, Reorder */}
                         <div className="flex items-center gap-3">
                           {/* Duration input */}
-                          <div className="flex items-center gap-1.5 text-xs text-slate-400">
-                            <Clock className="w-3.5 h-3.5 text-indigo-400" />
+                          <div className="flex items-center gap-1.5 text-xs text-slate-500">
+                            <Clock className="w-3.5 h-3.5 text-indigo-500" />
                             <input
                               type="number"
                               min="1"
@@ -418,7 +410,7 @@ export default function PlaylistsPage() {
                                 newItems[idx].durationSeconds = parseInt(e.target.value, 10) || 5;
                                 setItems(newItems);
                               }}
-                              className="w-16 px-2 py-1 rounded-lg bg-slate-800 border border-slate-700 text-center font-mono text-xs text-white"
+                              className="w-16 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-center font-mono text-xs text-slate-800"
                             />
                             <span className="text-[10px]">ثانية</span>
                           </div>
@@ -429,7 +421,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'up')}
                               disabled={idx === 0}
-                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300"
+                              className="p-1 rounded bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-500 border border-slate-200"
                               title="تحريك لأعلى"
                             >
                               <ArrowUp className="w-3.5 h-3.5" />
@@ -438,7 +430,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'down')}
                               disabled={idx === items.length - 1}
-                              className="p-1 rounded bg-slate-800 hover:bg-slate-700 disabled:opacity-30 text-slate-300"
+                              className="p-1 rounded bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-500 border border-slate-200"
                               title="تحريك لأسفل"
                             >
                               <ArrowDown className="w-3.5 h-3.5" />
@@ -449,7 +441,7 @@ export default function PlaylistsPage() {
                           <button
                             type="button"
                             onClick={() => removeItem(idx)}
-                            className="p-1.5 rounded-lg text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -461,11 +453,11 @@ export default function PlaylistsPage() {
               </div>
 
               {/* Modal Footer */}
-              <div className="pt-4 border-t border-slate-800 flex items-center justify-end gap-2">
+              <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
                   onClick={() => setIsEditorOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium"
+                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200"
                 >
                   إلغاء
                 </button>
@@ -484,13 +476,13 @@ export default function PlaylistsPage() {
 
       {/* Media Picker Modal */}
       {isMediaPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
-          <div className="bg-[#111827] border border-slate-700 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-6">
-            <div className="flex items-center justify-between pb-4 border-b border-slate-800 mb-4">
-              <h3 className="font-bold text-white text-sm">اختر عنصراً من مكتبة الوسائط</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
+          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-900 text-sm">اختر عنصراً من مكتبة الوسائط</h3>
               <button
                 onClick={() => setIsMediaPickerOpen(false)}
-                className="p-1 text-slate-400 hover:text-white"
+                className="p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -501,9 +493,9 @@ export default function PlaylistsPage() {
                 <div
                   key={med.id}
                   onClick={() => addItemFromMedia(med)}
-                  className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-indigo-500 cursor-pointer group transition-all"
+                  className="p-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 cursor-pointer group transition-all"
                 >
-                  <div className="aspect-video bg-black rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
+                  <div className="aspect-video bg-slate-950 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
                     {med.fileType === 'image' && (
                       <img src={med.fileUrl} alt="" className="w-full h-full object-cover" />
                     )}
@@ -514,8 +506,8 @@ export default function PlaylistsPage() {
                       <Type className="w-6 h-6 text-emerald-400" />
                     )}
                   </div>
-                  <p className="text-xs font-semibold text-white truncate">{med.name}</p>
-                  <span className="text-[10px] text-slate-500">{med.durationSeconds} ثانية</span>
+                  <p className="text-xs font-semibold text-slate-800 truncate">{med.name}</p>
+                  <span className="text-[10px] text-slate-400">{med.durationSeconds} ثانية</span>
                 </div>
               ))}
             </div>

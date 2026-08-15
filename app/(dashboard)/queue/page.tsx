@@ -124,8 +124,8 @@ export default function QueuePage() {
 
       {/* Service Counters Simulator */}
       <div className="space-y-4">
-        <h3 className="font-bold text-white text-sm flex items-center gap-2">
-          <UsersRound className="w-4 h-4 text-amber-400" />
+        <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+          <UsersRound className="w-4 h-4 text-amber-500" />
           محطة نداء العملاء والمكاتب (Counter Simulator)
         </h3>
 
@@ -133,23 +133,23 @@ export default function QueuePage() {
           {services.map((svc) => (
             <div
               key={svc.id}
-              className="glass-panel rounded-2xl p-6 border border-slate-800 flex flex-col justify-between space-y-4"
+              className="glass-panel rounded-2xl p-6 border border-slate-200 flex flex-col justify-between space-y-4"
             >
               <div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[11px] font-mono font-bold text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20">
+                  <span className="text-[11px] font-mono font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded border border-amber-100">
                     رمز: {svc.codePrefix}
                   </span>
-                  <span className="text-[11px] text-slate-400">
+                  <span className="text-[11px] text-slate-500">
                     متوسط الانتظار: {svc.averageWaitMinutes} دقائق
                   </span>
                 </div>
 
-                <h4 className="font-bold text-white text-base">{svc.name}</h4>
+                <h4 className="font-bold text-slate-900 text-base">{svc.name}</h4>
 
                 {/* Current Number Display */}
-                <div className="my-4 p-4 rounded-xl bg-slate-950/80 border border-slate-800 text-center">
-                  <span className="text-[11px] text-slate-500 block mb-1">الرقم المستدعى حالياً</span>
+                <div className="my-4 p-4 rounded-xl bg-slate-950 border border-slate-700 text-center">
+                  <span className="text-[11px] text-slate-400 block mb-1">الرقم المستدعى حالياً</span>
                   <span className="text-4xl font-black font-mono text-amber-400 tracking-wider">
                     {svc.codePrefix}-{svc.currentNumber}
                   </span>
@@ -172,14 +172,14 @@ export default function QueuePage() {
 
       {/* Live Ticket Logs */}
       <div className="glass-panel rounded-2xl p-6">
-        <h3 className="font-bold text-white text-sm mb-4 flex items-center gap-2">
-          <Clock className="w-4 h-4 text-indigo-400" />
+        <h3 className="font-bold text-slate-900 text-sm mb-4 flex items-center gap-2">
+          <Clock className="w-4 h-4 text-indigo-500" />
           سجل التذاكر المستدعاة مؤخراً
         </h3>
 
         <div className="overflow-x-auto">
           <table className="w-full text-right text-xs">
-            <thead className="bg-slate-900/90 text-slate-400 border-b border-slate-800">
+            <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="p-3">رقم التذكرة</th>
                 <th className="p-3">الخدمة / العيادة</th>
@@ -188,18 +188,18 @@ export default function QueuePage() {
                 <th className="p-3">وقت النداء</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/60">
+            <tbody className="divide-y divide-slate-100">
               {tickets.map((tkt) => (
-                <tr key={tkt.id} className="hover:bg-slate-800/30">
-                  <td className="p-3 font-mono font-bold text-amber-400">{tkt.ticketNumber}</td>
-                  <td className="p-3 font-medium text-white">{tkt.serviceName}</td>
-                  <td className="p-3 text-slate-300">{tkt.counterNumber || 'مكتب 1'}</td>
+                <tr key={tkt.id} className="hover:bg-slate-50">
+                  <td className="p-3 font-mono font-bold text-amber-600">{tkt.ticketNumber}</td>
+                  <td className="p-3 font-medium text-slate-800">{tkt.serviceName}</td>
+                  <td className="p-3 text-slate-600">{tkt.counterNumber || 'مكتب 1'}</td>
                   <td className="p-3">
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 text-[10px] font-semibold border border-emerald-500/20">
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 text-[10px] font-semibold border border-emerald-100">
                       تم النداء
                     </span>
                   </td>
-                  <td className="p-3 text-slate-400 font-mono text-[11px]">
+                  <td className="p-3 text-slate-500 font-mono text-[11px]">
                     {new Date(tkt.createdAt).toLocaleTimeString('ar-SA')}
                   </td>
                 </tr>

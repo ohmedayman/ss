@@ -55,8 +55,8 @@ export default function TemplatesPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Left Column: Templates List */}
         <div className="space-y-4">
-          <h3 className="font-bold text-white text-sm flex items-center gap-2">
-            <LayoutTemplate className="w-4 h-4 text-indigo-400" />
+          <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <LayoutTemplate className="w-4 h-4 text-indigo-500" />
             القوالب الجاهزة المتاحة
           </h3>
 
@@ -70,18 +70,18 @@ export default function TemplatesPage() {
                   onClick={() => setSelectedTemplate(tpl)}
                   className={`glass-panel p-4 rounded-2xl cursor-pointer transition-all border ${
                     isSelected
-                      ? 'border-indigo-500 bg-indigo-950/30 shadow-lg shadow-indigo-600/10'
-                      : 'border-slate-800 hover:border-slate-700'
+                      ? 'border-indigo-500 bg-indigo-50/50 shadow-lg shadow-indigo-500/10'
+                      : 'border-slate-200 hover:border-slate-300'
                   }`}
                 >
                   <div className="flex items-center justify-between mb-2">
-                    <h4 className="font-bold text-white text-xs">{tpl.name}</h4>
+                    <h4 className="font-bold text-slate-900 text-xs">{tpl.name}</h4>
                     {isSelected && (
-                      <span className="w-2 h-2 rounded-full bg-indigo-400 pulse-green" />
+                      <span className="w-2 h-2 rounded-full bg-indigo-500 pulse-green" />
                     )}
                   </div>
 
-                  <p className="text-[11px] text-slate-400 line-clamp-1 mb-3">
+                  <p className="text-[11px] text-slate-500 line-clamp-1 mb-3">
                     {tpl.headerTitle || 'تخطيط احترافي متعدد المناطق'}
                   </p>
 
@@ -89,7 +89,7 @@ export default function TemplatesPage() {
                     {tpl.zones?.map((z: any, idx: number) => (
                       <span
                         key={idx}
-                        className="text-[9px] px-2 py-0.5 rounded bg-slate-900 text-slate-400 border border-slate-800"
+                        className="text-[9px] px-2 py-0.5 rounded bg-white text-slate-500 border border-slate-200"
                       >
                         {z.type === 'playlist'
                           ? 'فيديو/صور'
@@ -112,15 +112,15 @@ export default function TemplatesPage() {
         {/* Right Column: Live Interactive Interactive Preview Canvas */}
         <div className="lg:col-span-2 space-y-4">
           <div className="flex items-center justify-between">
-            <h3 className="font-bold text-white text-sm flex items-center gap-2">
-              <Eye className="w-4 h-4 text-indigo-400" />
+            <h3 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+              <Eye className="w-4 h-4 text-indigo-500" />
               المعاينة التفاعلية المباشرة للقالب
             </h3>
-            <span className="text-xs text-slate-400 font-mono">1920x1080 Full HD</span>
+            <span className="text-xs text-slate-500 font-mono">1920x1080 Full HD</span>
           </div>
 
           {selectedTemplate && (
-            <div className="glass-panel rounded-2xl overflow-hidden border border-slate-800 p-2 bg-[#090d16]">
+            <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 p-2 bg-white">
               {/* Virtual TV Frame */}
               <div
                 className="w-full aspect-video rounded-xl overflow-hidden flex flex-col relative text-white select-none shadow-2xl border border-slate-700/50"

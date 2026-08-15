@@ -35,7 +35,7 @@ export default function SettingsPage() {
       />
 
       {saved && (
-        <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-xs text-emerald-400 flex items-center gap-2">
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 flex items-center gap-2">
           <CheckCircle2 className="w-4 h-4 shrink-0" />
           <span>تم حفظ الإعدادات بنجاح ✅</span>
         </div>
@@ -65,33 +65,33 @@ export default function SettingsPage() {
       <form onSubmit={handleSave} className="space-y-6">
         {/* Organization Info */}
         <div className="glass-panel rounded-2xl p-6 space-y-4">
-          <h4 className="font-bold text-white text-sm flex items-center gap-2">
-            <Building className="w-4 h-4 text-indigo-400" />
+          <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <Building className="w-4 h-4 text-indigo-500" />
             بيانات المؤسسة (Organization Info)
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 اسم المنشأة / الشركة
               </label>
               <input
                 type="text"
                 value={orgName}
                 onChange={(e) => setOrgName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 معرف المؤسسة (Slug)
               </label>
               <input
                 type="text"
                 value="al-ofuq"
                 disabled
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-950 border border-slate-800 text-xs text-slate-500 font-mono"
+                className="input bg-slate-100 border-slate-200 text-slate-400 font-mono"
               />
             </div>
           </div>
@@ -99,45 +99,45 @@ export default function SettingsPage() {
 
         {/* User Profile */}
         <div className="glass-panel rounded-2xl p-6 space-y-4">
-          <h4 className="font-bold text-white text-sm flex items-center gap-2">
-            <User className="w-4 h-4 text-indigo-400" />
+          <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
+            <User className="w-4 h-4 text-indigo-500" />
             الملف الشخصي للمسؤول
           </h4>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 الاسم الكامل
               </label>
               <input
                 type="text"
                 value={fullName}
                 onChange={(e) => setFullName(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 البريد الإلكتروني
               </label>
               <input
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="input"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
                 رقم الجوال
               </label>
               <input
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full px-3.5 py-2 rounded-xl bg-slate-900 border border-slate-700 text-xs text-slate-200 focus:outline-none focus:border-indigo-500"
+                className="input"
               />
             </div>
           </div>
