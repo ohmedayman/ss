@@ -23,6 +23,7 @@ export async function GET() {
       storageUsedBytes: session.organization.storageUsedBytes,
       maxScreens: session.organization.maxScreens,
       screensCount: screens.length,
+      logoUrl: session.organization.logoUrl || '',
     },
     notifications: {
       email: true,
@@ -55,6 +56,7 @@ export async function PUT(req: NextRequest) {
     await db.updateOrganization(session.organization.id, {
       name: body.organization.name,
       slug: body.organization.slug,
+      logoUrl: body.organization.logoUrl,
     });
   }
 

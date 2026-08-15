@@ -91,7 +91,7 @@ export interface ScreenCommand {
   executedAt?: string;
 }
 
-export type MediaType = 'image' | 'video' | 'web_url' | 'ticker_text' | 'document';
+export type MediaType = 'image' | 'video' | 'audio' | 'web_url' | 'youtube_video' | 'ticker_text' | 'document';
 
 export interface MediaItem {
   id: string;
@@ -100,6 +100,7 @@ export interface MediaItem {
   fileType: MediaType;
   fileUrl: string;
   thumbnailUrl?: string;
+  customUrl?: string;
   fileSizeBytes: number;
   durationSeconds: number; // e.g. 10s for images, or video duration
   width?: number;

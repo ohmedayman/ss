@@ -25,7 +25,16 @@ import {
   FileText,
   Edit3,
   AlertTriangle,
+  Music,
 } from 'lucide-react';
+
+function YoutubeIcon({ className }: { className?: string }) {
+  return (
+    <svg className={className} viewBox="0 0 24 24" fill="currentColor">
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+    </svg>
+  );
+}
 
 export default function MediaPage() {
   const [media, setMedia] = useState<any[]>([]);
@@ -45,7 +54,7 @@ export default function MediaPage() {
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
   const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
-  const defaultFolders = ['الكل', 'عام', 'إعلانات', 'فيديو', 'قوائم الطعام', 'نصوص'];
+  const defaultFolders = ['الكل', 'عام', 'صور', 'فيديو', 'صوتيات', 'يوتيوب', 'إعلانات', 'لوجوهات'];
 
   const loadMedia = async () => {
     try {
@@ -197,6 +206,10 @@ export default function MediaPage() {
         return <ImageIcon className="w-4 h-4" />;
       case 'video':
         return <Film className="w-4 h-4" />;
+      case 'audio':
+        return <Music className="w-4 h-4" />;
+      case 'youtube_video':
+        return <YoutubeIcon className="w-4 h-4 text-red-500" />;
       case 'ticker_text':
         return <Type className="w-4 h-4" />;
       case 'web_url':
@@ -342,6 +355,28 @@ export default function MediaPage() {
                 >
                   <Globe className="w-3.5 h-3.5" />
                   ويب
+                </button>
+                <button
+                  onClick={() => setFilterType('youtube_video')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                    filterType === 'youtube_video'
+                      ? 'bg-red-600 text-white border-red-600 shadow-sm'
+                      : 'bg-white text-slate-500 hover:text-red-600 border-slate-200'
+                  }`}
+                >
+                  <YoutubeIcon className="w-3.5 h-3.5" />
+                  يوتيوب
+                </button>
+                <button
+                  onClick={() => setFilterType('audio')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                    filterType === 'audio'
+                      ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
+                      : 'bg-white text-slate-500 hover:text-purple-600 border-slate-200'
+                  }`}
+                >
+                  <Music className="w-3.5 h-3.5" />
+                  صوتيات
                 </button>
               </div>
 
@@ -509,6 +544,30 @@ export default function MediaPage() {
                           </p>
                         </div>
                       )}
+                      {item.fileType === 'youtube_video' && (
+                        <div className="relative w-full h-full flex items-center justify-center bg-red-950">
+                          {item.thumbnailUrl ? (
+                            <img
+                              src={item.thumbnailUrl}
+                              alt={item.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            />
+                          ) : (
+                            <YoutubeIcon className="w-10 h-10 text-red-500 opacity-60" />
+                          )}
+                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                            <div className="w-10 h-10 rounded-full bg-red-600/80 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                              <Film className="w-5 h-5" />
+                            </div>
+                          </div>
+                        </div>
+                      )}
+                      {item.fileType === 'audio' && (
+                        <div className="p-4 w-full h-full bg-gradient-to-br from-purple-950 to-slate-900 flex flex-col items-center justify-center text-center">
+                          <Music className="w-8 h-8 mb-2 text-purple-400 opacity-60" />
+                          <p className="text-xs text-purple-200 font-semibold">{item.name}</p>
+                        </div>
+                      )}
 
                       {/* Hover Overlay */}
                       <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
@@ -654,6 +713,8 @@ export default function MediaPage() {
                             {item.fileType === 'video' && <Film className="w-4 h-4 text-indigo-400" />}
                             {item.fileType === 'ticker_text' && <Type className="w-4 h-4 text-indigo-400" />}
                             {item.fileType === 'web_url' && <Globe className="w-4 h-4 text-cyan-400" />}
+                            {item.fileType === 'youtube_video' && <YoutubeIcon className="w-4 h-4 text-red-400" />}
+                            {item.fileType === 'audio' && <Music className="w-4 h-4 text-purple-400" />}
                           </div>
                           <div>
                             <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]" title={item.name}>
@@ -778,6 +839,24 @@ export default function MediaPage() {
                     className="w-full h-full rounded-lg border-0"
                     title={previewItem.name}
                   />
+                </div>
+              )}
+              {previewItem.fileType === 'youtube_video' && (
+                <div className="w-full aspect-video">
+                  <iframe
+                    src={previewItem.customUrl || `https://www.youtube.com/embed/${previewItem.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1`}
+                    className="w-full h-full rounded-lg border-0"
+                    title={previewItem.name}
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                </div>
+              )}
+              {previewItem.fileType === 'audio' && (
+                <div className="p-8 w-full bg-gradient-to-br from-purple-950 to-slate-900 rounded-xl text-center">
+                  <Music className="w-12 h-12 mx-auto mb-3 text-purple-400 opacity-60" />
+                  <p className="text-sm font-bold text-white mb-4">{previewItem.name}</p>
+                  <audio src={previewItem.fileUrl} controls autoPlay className="w-full max-w-md mx-auto" />
                 </div>
               )}
             </div>

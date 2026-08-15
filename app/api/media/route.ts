@@ -43,7 +43,9 @@ export async function POST(req: Request) {
 
       const isVideo = file.type.startsWith('video/');
       const isImage = file.type.startsWith('image/');
-      const fileType = isVideo ? 'video' : isImage ? 'image' : 'document';
+      const isAudio = file.type.startsWith('audio/');
+      const mediaTypeOverride = formData.get('mediaType') as string | null;
+      const fileType = mediaTypeOverride === 'audio' ? 'audio' : isVideo ? 'video' : isImage ? 'image' : 'document';
 
       let fileUrl: string;
       let thumbnailUrl: string | undefined = undefined;
@@ -89,7 +91,7 @@ export async function POST(req: Request) {
 
     // Handle JSON payload (web_url or ticker_text or predefined link)
     const body = await req.json();
-    const { name, fileType, fileUrl, customTickerText, folder = 'عام', durationSeconds = 15, tags = [] } = body;
+    const { name, fileType, fileUrl, customUrl, thumbnailUrl: thumbUrl, customTickerText, folder = 'عام', durationSeconds = 15, tags = [] } = body;
 
     if (!name || !fileType) {
       return NextResponse.json({ error: 'مطلوب اسم ونوع الوسائط' }, { status: 400 });
@@ -100,8 +102,10 @@ export async function POST(req: Request) {
       name: name.trim(),
       fileType,
       fileUrl: fileUrl || '',
+      thumbnailUrl: thumbUrl,
       customTickerText,
-      fileSizeBytes: fileType === 'ticker_text' ? (customTickerText?.length || 0) * 2 : 1024,
+      customUrl,
+      fileSizeBytes: fileType === 'ticker_text' ? (customTickerText?.length || 0) * 2 : fileType === 'youtube_video' ? 0 : 1024,
       durationSeconds: parseInt(durationSeconds.toString(), 10) || 15,
       folder,
       tags: tags.length ? tags : [folder, fileType],

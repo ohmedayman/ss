@@ -803,6 +803,29 @@ export default function PlayerPage() {
                       className="w-full h-full object-cover rounded-2xl shadow-2xl"
                     />
                   )}
+                  {currentItem.media?.fileType === 'youtube_video' && (
+                    <iframe
+                      src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
+                      className="w-full h-full rounded-2xl shadow-2xl border-0"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                  )}
+                  {currentItem.media?.fileType === 'audio' && (
+                    <>
+                      <audio src={currentItem.media.fileUrl} autoPlay loop />
+                      <div className="w-full h-full bg-gradient-to-br from-purple-950 via-slate-900 to-purple-950 flex items-center justify-center rounded-2xl">
+                        <div className="text-center">
+                          <div className="w-20 h-20 mx-auto rounded-full bg-purple-600/20 flex items-center justify-center mb-3 animate-pulse">
+                            <svg className="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                            </svg>
+                          </div>
+                          <p className="text-lg font-bold text-white">{currentItem.media.name}</p>
+                        </div>
+                      </div>
+                    </>
+                  )}
                 </div>
               ) : (
                 <div className="text-center text-slate-500">
@@ -995,6 +1018,37 @@ export default function PlayerPage() {
                   playsInline
                   className="w-full h-full object-cover"
                 />
+              )}
+
+              {currentItem.media?.fileType === 'youtube_video' && (
+                <iframe
+                  key={currentItem.id}
+                  src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
+                  className="w-full h-full border-0"
+                  title={currentItem.media.name || 'YouTube'}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              )}
+
+              {currentItem.media?.fileType === 'audio' && (
+                <div className="w-full h-full bg-gradient-to-br from-purple-950 via-slate-900 to-purple-950 flex items-center justify-center p-12">
+                  <audio
+                    key={currentItem.id}
+                    src={currentItem.media.fileUrl}
+                    autoPlay
+                    loop
+                  />
+                  <div className="text-center">
+                    <div className="w-24 h-24 mx-auto rounded-full bg-purple-600/20 flex items-center justify-center mb-4 animate-pulse">
+                      <svg className="w-10 h-10 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
+                      </svg>
+                    </div>
+                    <p className="text-xl font-bold text-white">{currentItem.media.name}</p>
+                    <p className="text-sm text-purple-300 mt-1">صوتيات</p>
+                  </div>
+                </div>
               )}
 
               {currentItem.media?.fileType === 'web_url' && (

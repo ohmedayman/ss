@@ -41,6 +41,7 @@ interface OrgData {
   storageUsedBytes: number;
   maxScreens: number;
   screensCount: number;
+  logoUrl?: string;
 }
 
 interface NotificationsData {
@@ -251,6 +252,50 @@ export default function SettingsPage() {
           <Building className="w-4 h-4 text-indigo-500" />
           المنظمة
         </h4>
+
+        {/* Logo Upload */}
+        <div className="flex items-center gap-4">
+          <div className="relative group">
+            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center text-white text-2xl font-black shadow-lg overflow-hidden border-2 border-white">
+              {org.logoUrl ? (
+                <img src={org.logoUrl} alt="Logo" className="w-full h-full object-cover" />
+              ) : (
+                org.name?.charAt(0) || 'S'
+              )}
+            </div>
+            <label className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
+              <Camera className="w-5 h-5 text-white" />
+              <input
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const formData = new FormData();
+                  formData.append('file', file);
+                  formData.append('name', 'لوجو المنظمة');
+                  formData.append('folder', 'لوجوهات');
+                  formData.append('duration', '0');
+                  const res = await fetch('/api/media', { method: 'POST', body: formData });
+                  if (res.ok) {
+                    const data = await res.json();
+                    setOrg({ ...org, logoUrl: data.media.fileUrl });
+                    await fetch('/api/settings', {
+                      method: 'PUT',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ organization: { logoUrl: data.media.fileUrl } }),
+                    });
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-700">لوجو المنظمة</p>
+            <p className="text-[11px] text-slate-400 mt-0.5">اضغط على الصورة لتغيير اللوجو. يظهر في التقارير والشاشات.</p>
+          </div>
+        </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
