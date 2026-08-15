@@ -79,7 +79,7 @@ export default function RegisterPage() {
           <img
             src="https://i.postimg.cc/Y05shkp1/screenflow-logo-final.png"
             alt="ScreenFlow"
-            className="h-10 w-auto"
+            className="h-16 w-auto"
           />
         </Link>
       </header>
