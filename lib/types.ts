@@ -127,12 +127,12 @@ export interface Playlist {
   updatedAt: string;
 }
 
-export type TemplateLayout = 'full' | 'split_2_horizontal' | 'split_2_vertical' | 'split_3_sidebar' | 'menu_board' | 'clinic_waiting';
+export type TemplateLayout = 'full' | 'split_2_horizontal' | 'split_2_vertical' | 'split_3_sidebar' | 'menu_board' | 'clinic_waiting' | 'retail_promo' | 'corporate' | 'mosque' | 'school' | 'gym';
 
 export interface TemplateZoneConfig {
   id: string;
   title: string;
-  type: 'media' | 'playlist' | 'clock' | 'weather' | 'ticker' | 'queue_display' | 'web_embed';
+  type: 'media' | 'playlist' | 'clock' | 'weather' | 'ticker' | 'queue_display' | 'web_embed' | 'countdown' | 'qr_display' | 'social_feed' | 'prayer_times';
   contentId?: string;
   url?: string;
   text?: string;

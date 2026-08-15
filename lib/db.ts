@@ -205,6 +205,88 @@ function getInitialData(): DatabaseSchema {
       ],
       createdAt: now,
       updatedAt: now,
+    },
+    {
+      id: genId('tpl'),
+      organizationId: orgId,
+      name: 'قالب المطاعم والمقاهي (Restaurant Menu Board)',
+      layout: 'menu_board',
+      backgroundColor: '#1c1917',
+      headerTitle: 'مطعم الديوان - أشهى المأكولات العربية',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-restaurant-media', title: 'عرض الأصناف والوجبات', type: 'media', contentId: 'med-3' },
+        { id: 'zone-restaurant-ticker', title: 'العروض والخصومات', type: 'ticker', text: '🍽️ عرض الغداء المميز: وجبة كاملة بـ 39 ريال فقط! • مشروبات مجانية مع الوجبات العائلية • الخصم يشمل جميع أصناف القائمة الجديدة' },
+        { id: 'zone-restaurant-clock', title: 'الساعة وساعات العمل', type: 'clock', options: { showWeather: false } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: genId('tpl'),
+      organizationId: orgId,
+      name: 'قالب المتاجر والسوبرماركت (Retail Promo)',
+      layout: 'retail_promo',
+      backgroundColor: '#1e3a5f',
+      headerTitle: 'هايبر ماركت الأفق - عروض لا تُفوَّت',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-retail-playlist', title: 'العرض الرئيسي للمنتجات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-retail-countdown', title: 'العرض اللحظي - سعر خاص لفترة محدودة', type: 'countdown', options: { targetDate: '2026-12-31', label: 'نهاية العروض' } },
+        { id: 'zone-retail-ticker', title: 'شريط عروض المتجر', type: 'ticker', text: '🛒 خصم 50% على جميع منتجات العناية بالبشرة • شراء 2احصل على 1 مجاناً على الخضروات والفواكه الطازجة • عرض نهاية الأسبوع: توصيل مجاني للطلبات فوق 200 ريال' }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: genId('tpl'),
+      organizationId: orgId,
+      name: 'قالب الشركات والمكاتب (Corporate)',
+      layout: 'corporate',
+      backgroundColor: '#0f172a',
+      headerTitle: 'شركة الأفق للحلول الرقمية',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-corp-playlist', title: 'عرض مشاريع وإنجازات الشركة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-corp-clock', title: 'الساعة والتقويم', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-corp-ticker', title: 'آخر أخبار الشركة والقطاع', type: 'ticker', text: '📊 نتائج الربع الأول: نمو 35% في الإيرادات • إطلاق منصة جديدة للتجارة الإلكترونية قريباً • توظيف 20 موظف جديد في أقسام التطوير والتصميم' },
+        { id: 'zone-corp-qr', title: 'تواصل معنا عبر QR', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'امسح للطلب' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: genId('tpl'),
+      organizationId: orgId,
+      name: 'قالب المساجد (Mosque)',
+      layout: 'mosque',
+      backgroundColor: '#1a4731',
+      headerTitle: 'مسجد الرحمة - أوقات الصلاة',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-mosque-prayer', title: 'أوقات الصلاة الحالية والقادمة', type: 'prayer_times', options: { city: 'الرياض', method: 'UmmAlQura' } },
+        { id: 'zone-mosque-clock', title: 'الساعة والتاريخ الهجري', type: 'clock', options: { showWeather: false } },
+        { id: 'zone-mosque-ticker', title: 'إعلانات المسجد وال activities', type: 'ticker', text: '🕌 صلاة الجمعة الساعة 12:15 ظهراً • درس ديني بعد صلاة المغرب يومياً • مجمع الخيرات مفتوح للنساء يوم السبت والأحد من 9 صباحاً' }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: genId('tpl'),
+      organizationId: orgId,
+      name: 'قالب الصالات الرياضية (Gym)',
+      layout: 'gym',
+      backgroundColor: '#18181b',
+      headerTitle: 'صالة فيت برو - تحدي جديد كل يوم',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-gym-playlist', title: 'فيديوهات التمارين والتدريب', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-gym-countdown', title: 'التمارين الجماعية القادمة', type: 'countdown', options: { targetDate: '2026-12-31', label: 'بداية التمرين' } },
+        { id: 'zone-gym-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-gym-ticker', title: 'نصائح رياضية وhealth tips', type: 'ticker', text: '💪 تمرين اليوم: قوة الأطراف العلوية - 4 مجموعات x 12 تكرار • نصيحة: اشرب 3 لتر ماء يومياً • عرض الأعضاء الجدد: دورة تأهيل مجانية مع أي اشتراك سنوي' }
+      ],
+      createdAt: now,
+      updatedAt: now,
     }
   ];
 

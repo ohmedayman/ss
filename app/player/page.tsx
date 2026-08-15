@@ -21,6 +21,24 @@ import {
   ExternalLink,
 } from 'lucide-react';
 
+// QR Display component (renders QR code from URL)
+function QrDisplay({ url }: { url: string }) {
+  const [imgSrc, setImgSrc] = useState<string>('');
+
+  useEffect(() => {
+    if (!url) return;
+    QRCode.toDataURL(url, { width: 160, margin: 1 }, (err, dataUrl) => {
+      if (!err && dataUrl) setImgSrc(dataUrl);
+    });
+  }, [url]);
+
+  if (!imgSrc) {
+    return <div className="w-40 h-40 flex items-center justify-center text-slate-400"><QrCode className="w-12 h-12 animate-pulse" /></div>;
+  }
+
+  return <img src={imgSrc} alt="QR Code" className="w-40 h-40 rounded-lg" />;
+}
+
 export default function PlayerPage() {
   const [screen, setScreen] = useState<any | null>(null);
   const [registrationCode, setRegistrationCode] = useState<string>('');
@@ -32,10 +50,20 @@ export default function PlayerPage() {
   const [isOnline, setIsOnline] = useState<boolean>(true);
   const [currentTime, setCurrentTime] = useState<string>('');
   const [hijriDate, setHijriDate] = useState<string>('');
+  const [weatherData, setWeatherData] = useState<any>(null);
+  const [countdown, setCountdown] = useState<string>('');
+  const [currentQueueTicket, setCurrentQueueTicket] = useState<{ ticket: string; counter: string } | null>(null);
+  const [showQueueTicket, setShowQueueTicket] = useState<boolean>(false);
+  const [currentTransition, setCurrentTransition] = useState<string>('fade');
+  const [playlistTransition, setPlaylistTransition] = useState<string>('animate-fade-in');
+  const [prayerData, setPrayerData] = useState<any>(null);
+  const [nextPrayer, setNextPrayer] = useState<{ name: string; time: string; countdown: string } | null>(null);
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const videoRef = useRef<HTMLVideoElement | null>(null);
   const playerContainerRef = useRef<HTMLDivElement | null>(null);
+  const weatherCacheRef = useRef<{ data: any; timestamp: number; city: string } | null>(null);
+  const audioContextRef = useRef<AudioContext | null>(null);
 
   // 1. Clock ticker
   useEffect(() => {
@@ -63,6 +91,216 @@ export default function PlayerPage() {
     const interval = setInterval(updateClock, 1000);
     return () => clearInterval(interval);
   }, []);
+
+  // 1b. Play chime sound using Web Audio API
+  const playChime = () => {
+    try {
+      if (!audioContextRef.current) {
+        audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      }
+      const ctx = audioContextRef.current;
+      const now = ctx.currentTime;
+
+      const playTone = (freq: number, startTime: number, duration: number) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(0.3, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      playTone(880, now, 0.15);
+      playTone(1100, now + 0.12, 0.15);
+      playTone(880, now + 0.25, 0.2);
+    } catch (e) {
+      console.error('Chime failed:', e);
+    }
+  };
+
+  // 1c. TTS Queue Announcement
+  const speakQueueTicket = (ticketNumber: string, counterName: string) => {
+    try {
+      playChime();
+      setTimeout(() => {
+        const utterance = new SpeechSynthesisUtterance(
+          `التذكرة رقم ${ticketNumber} إلى ${counterName}`
+        );
+        utterance.lang = 'ar-SA';
+        utterance.rate = 0.9;
+        utterance.pitch = 1.0;
+        utterance.volume = 1.0;
+
+        const voices = window.speechSynthesis.getVoices();
+        const arabicVoice = voices.find((v) => v.lang.startsWith('ar'));
+        if (arabicVoice) utterance.voice = arabicVoice;
+
+        window.speechSynthesis.speak(utterance);
+
+        setCurrentQueueTicket({ ticket: ticketNumber, counter: counterName });
+        setShowQueueTicket(true);
+        setTimeout(() => setShowQueueTicket(false), 10000);
+      }, 500);
+    } catch (e) {
+      console.error('TTS failed:', e);
+    }
+  };
+
+  // 1d. Fetch Weather from wttr.in
+  const fetchWeather = async (city: string = 'Riyadh') => {
+    try {
+      const now = Date.now();
+      if (weatherCacheRef.current && weatherCacheRef.current.city === city && now - weatherCacheRef.current.timestamp < 10 * 60 * 1000) {
+        setWeatherData(weatherCacheRef.current.data);
+        return;
+      }
+
+      const res = await fetch(`https://wttr.in/${encodeURIComponent(city)}?format=j1`);
+      if (res.ok) {
+        const data = await res.json();
+        const current = data.current_condition?.[0];
+        if (current) {
+          const weather = {
+            temp: current.temp_C,
+            condition: current.lang_ar?.[0]?.value || current.weatherDesc?.[0]?.value || '',
+            icon: getWeatherIcon(current.weatherCode),
+            city: city,
+          };
+          setWeatherData(weather);
+          weatherCacheRef.current = { data: weather, timestamp: now, city };
+        }
+      }
+    } catch (e) {
+      console.error('Weather fetch failed:', e);
+    }
+  };
+
+  const getWeatherIcon = (code: string): string => {
+    const c = parseInt(code);
+    if (c === 113) return '☀️';
+    if (c === 116) return '⛅';
+    if (c === 119 || c === 122) return '☁️';
+    if (c >= 176 && c <= 299) return '🌧️';
+    if (c >= 300 && c <= 399) return '❄️';
+    if (c >= 386) return '⛈️';
+    return '🌤️';
+  };
+
+  // 1e. Fetch Prayer Times from aladhan.com
+  const fetchPrayerTimes = async () => {
+    try {
+      const now = new Date();
+      const dd = String(now.getDate()).padStart(2, '0');
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = now.getFullYear();
+      const res = await fetch(
+        `https://api.aladhan.com/v1/timings/${dd}-${mm}-${yyyy}?latitude=24.7136&longitude=46.6753&method=4`
+      );
+      if (res.ok) {
+        const data = await res.json();
+        const timings = data.data?.timings;
+        if (timings) {
+          const prayers = [
+            { name: 'الفجر', time: timings.Fajr },
+            { name: 'الشروق', time: timings.Sunrise },
+            { name: 'الظهر', time: timings.Dhuhr },
+            { name: 'العصر', time: timings.Asr },
+            { name: 'المغرب', time: timings.Maghrib },
+            { name: 'العشاء', time: timings.Isha },
+          ];
+
+          const currentTimeMinutes = now.getHours() * 60 + now.getMinutes();
+          let next = prayers[0];
+          for (const p of prayers) {
+            const [h, m] = p.time.split(':').map(Number);
+            const pMinutes = h * 60 + m;
+            if (pMinutes > currentTimeMinutes) {
+              next = p;
+              break;
+            }
+            next = p;
+          }
+
+          const [nh, nm] = next.time.split(':').map(Number);
+          const nextDate = new Date(now);
+          nextDate.setHours(nh, nm, 0, 0);
+          if (nextDate <= now) nextDate.setDate(nextDate.getDate() + 1);
+          const diffMs = nextDate.getTime() - now.getTime();
+          const diffH = Math.floor(diffMs / 3600000);
+          const diffM = Math.floor((diffMs % 3600000) / 60000);
+          const diffS = Math.floor((diffMs % 60000) / 1000);
+
+          setNextPrayer({
+            name: next.name,
+            time: next.time,
+            countdown: `${diffH}س ${diffM}د ${diffS}ث`,
+          });
+          setPrayerData({ prayers });
+        }
+      }
+    } catch (e) {
+      console.error('Prayer times fetch failed:', e);
+    }
+  };
+
+  // 1f. Countdown Timer Effect
+  useEffect(() => {
+    if (!contentPayload?.template) return;
+    const countdownZone = contentPayload.template.zones?.find((z: any) => z.type === 'countdown');
+    if (!countdownZone?.options?.targetDate) {
+      setCountdown('');
+      return;
+    }
+
+    const targetDate = new Date(countdownZone.options.targetDate);
+
+    const tick = () => {
+      const now = new Date();
+      const diff = targetDate.getTime() - now.getTime();
+      if (diff <= 0) {
+        setCountdown('00:00:00:00');
+        return;
+      }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      const mins = Math.floor((diff % 3600000) / 60000);
+      const secs = Math.floor((diff % 60000) / 1000);
+      setCountdown(
+        `${String(days).padStart(2, '0')}:${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`
+      );
+    };
+
+    tick();
+    const interval = setInterval(tick, 1000);
+    return () => clearInterval(interval);
+  }, [contentPayload]);
+
+  // 1g. Prayer times polling
+  useEffect(() => {
+    if (!contentPayload?.template) return;
+    const hasPrayerZone = contentPayload.template.zones?.some((z: any) => z.type === 'prayer_times');
+    if (!hasPrayerZone) return;
+
+    fetchPrayerTimes();
+    const interval = setInterval(fetchPrayerTimes, 60000);
+    return () => clearInterval(interval);
+  }, [contentPayload]);
+
+  // 1h. Weather polling
+  useEffect(() => {
+    if (!contentPayload?.template) return;
+    const weatherZone = contentPayload.template.zones?.find((z: any) => z.type === 'weather');
+    if (!weatherZone) return;
+
+    const city = weatherZone.options?.city || 'Riyadh';
+    fetchWeather(city);
+    const interval = setInterval(() => fetchWeather(city), 10 * 60 * 1000);
+    return () => clearInterval(interval);
+  }, [contentPayload]);
 
   // 2. Initialize Player (Register or Get Screen)
   const initPlayer = async () => {
@@ -267,6 +505,10 @@ export default function PlayerPage() {
           fetchContent();
         } else if (data.event === 'command') {
           handleRemoteCommand(data.data?.command, data.data?.payload);
+        } else if (data.event === 'queue_called') {
+          const ticketNumber = data.data?.ticketNumber || data.data?.ticket || '';
+          const counterName = data.data?.counterName || data.data?.counter || '';
+          speakQueueTicket(ticketNumber, counterName);
         } else if (data.event === 'unlinked') {
           setIsPaired(false);
           initPlayer();
@@ -310,6 +552,24 @@ export default function PlayerPage() {
       setIsFullscreen(false);
     }
   };
+
+  // Transition class helper
+  const getTransitionClass = (type: string): string => {
+    switch (type) {
+      case 'slide_up': return 'animate-slide-up';
+      case 'slide_down': return 'animate-slide-down';
+      case 'zoom_out': return 'animate-zoom-out';
+      case 'flip': return 'animate-flip';
+      default: return 'animate-fade-in';
+    }
+  };
+
+  // Cycle transition type on index change
+  useEffect(() => {
+    const transitions = ['fade', 'slide_up', 'slide_down', 'zoom_out', 'flip'];
+    const idx = currentPlayIndex % transitions.length;
+    setPlaylistTransition(getTransitionClass(transitions[idx]));
+  }, [currentPlayIndex]);
 
   // --- RENDERING VIEWS ---
 
@@ -457,18 +717,16 @@ export default function PlayerPage() {
             {/* Main Area */}
             <div className="flex-1 p-6 flex flex-col justify-center items-center relative overflow-hidden bg-black/40">
               {currentItem ? (
-                <>
+                <div key={`${currentItem.id}-${currentPlayIndex}`} className={`w-full h-full ${playlistTransition}`}>
                   {currentItem.media?.fileType === 'image' && (
                     <img
-                      key={currentItem.id}
                       src={currentItem.media.fileUrl}
                       alt=""
-                      className="w-full h-full object-cover rounded-2xl shadow-2xl transition-opacity duration-700"
+                      className="w-full h-full object-cover rounded-2xl shadow-2xl"
                     />
                   )}
                   {currentItem.media?.fileType === 'video' && (
                     <video
-                      key={currentItem.id}
                       ref={videoRef}
                       src={currentItem.media.fileUrl}
                       autoPlay
@@ -478,7 +736,7 @@ export default function PlayerPage() {
                       className="w-full h-full object-cover rounded-2xl shadow-2xl"
                     />
                   )}
-                </>
+                </div>
               ) : (
                 <div className="text-center text-slate-500">
                   <Tv className="w-16 h-16 mx-auto mb-2 opacity-30" />
@@ -487,36 +745,148 @@ export default function PlayerPage() {
               )}
             </div>
 
-            {/* Sidebar Widgets (Queue & Clock) */}
+            {/* Sidebar Widgets (Dynamic Zones) */}
             {template.layout === 'split_3_sidebar' && (
-              <div className="w-96 bg-slate-900/95 border-r border-slate-800 p-6 flex flex-col justify-between space-y-6">
-                {/* Queue Display Box */}
-                <div className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 text-center shadow-2xl">
-                  <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold text-sm mb-2">
-                    <UsersRound className="w-5 h-5 text-amber-400" />
-                    <span>الرقم المستدعى حالياً</span>
-                  </div>
-                  <div className="text-6xl font-black font-mono text-amber-400 tracking-wider my-2">
-                    A-104
-                  </div>
-                  <div className="text-sm text-slate-200 font-semibold mt-2">
-                    عيادة الاستشارات الطبية 3
-                  </div>
-                </div>
+              <div className="w-96 bg-slate-900/95 border-r border-slate-800 p-6 flex flex-col justify-between space-y-6 overflow-y-auto">
+                {/* Dynamic Zone Rendering */}
+                {template.zones?.filter((z: any) => z.type !== 'ticker').map((zone: any, i: number) => {
+                  if (zone.type === 'weather') {
+                    return (
+                      <div key={i} className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
+                        <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                          <CloudSun className="w-4 h-4" />
+                          <span>الطقس المباشر</span>
+                        </div>
+                        {weatherData ? (
+                          <>
+                            <div className="text-5xl">{weatherData.icon}</div>
+                            <div className="text-4xl font-black text-white">{weatherData.temp}°C</div>
+                            <div className="text-sm text-slate-300">{weatherData.condition}</div>
+                            <div className="text-xs text-slate-500">{weatherData.city}</div>
+                          </>
+                        ) : (
+                          <div className="text-slate-500 text-sm animate-pulse">جاري تحميل الطقس...</div>
+                        )}
+                      </div>
+                    );
+                  }
 
-                {/* Live Clock & Weather Widget */}
+                  if (zone.type === 'countdown') {
+                    return (
+                      <div key={i} className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 text-center shadow-2xl">
+                        <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold text-sm mb-3">
+                          <Clock className="w-5 h-5 text-amber-400" />
+                          <span>{zone.options?.label || 'العد التنازلي'}</span>
+                        </div>
+                        {countdown ? (
+                          <div className="flex justify-center gap-2">
+                            {countdown.split(':').map((unit: string, idx: number) => (
+                              <div key={idx} className="flex flex-col items-center">
+                                <div className="text-4xl font-black font-mono text-amber-400 w-16 h-16 flex items-center justify-center bg-black/40 rounded-xl border border-amber-500/30 animate-digit-pulse">
+                                  {unit}
+                                </div>
+                                <span className="text-[10px] text-slate-400 mt-1">
+                                  {['أيام', 'ساعات', 'دقائق', 'ثواني'][idx]}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="text-slate-500 text-sm">لم يتم تحديد تاريخ مستهدف</div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (zone.type === 'qr_display') {
+                    return (
+                      <div key={i} className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
+                        <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                          <QrCode className="w-4 h-4" />
+                          <span>{zone.options?.label || 'امسح الكود'}</span>
+                        </div>
+                        <div className="bg-white p-3 rounded-2xl inline-block">
+                          <QrDisplay url={zone.options?.qrUrl || ''} />
+                        </div>
+                        {zone.options?.qrUrl && (
+                          <a
+                            href={zone.options.qrUrl}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xs text-indigo-300 hover:text-indigo-200 flex items-center justify-center gap-1"
+                          >
+                            <ExternalLink className="w-3 h-3" />
+                            {zone.options.qrUrl}
+                          </a>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  if (zone.type === 'prayer_times') {
+                    return (
+                      <div key={i} className="bg-gradient-to-br from-emerald-900/90 via-slate-900 to-emerald-950 p-6 rounded-3xl border-2 border-emerald-500/40 text-center shadow-2xl">
+                        <div className="flex items-center justify-center gap-2 text-emerald-300 font-bold text-sm mb-3">
+                          <Clock className="w-5 h-5 text-emerald-400" />
+                          <span>أوقات الصلاة</span>
+                        </div>
+                        {nextPrayer ? (
+                          <div className="space-y-2">
+                            <div className="text-xs text-emerald-300/70">الصلاة القادمة</div>
+                            <div className="text-3xl font-black text-white">{nextPrayer.name}</div>
+                            <div className="text-lg font-mono text-emerald-300">{nextPrayer.time}</div>
+                            <div className="text-xs text-slate-400">
+                              متبقي {nextPrayer.countdown}
+                            </div>
+                            {prayerData?.prayers && (
+                              <div className="mt-3 space-y-1 border-t border-emerald-500/20 pt-3">
+                                {prayerData.prayers
+                                  .filter((p: any) => p.name !== 'الشروق')
+                                  .map((p: any, pi: number) => (
+                                    <div key={pi} className="flex justify-between text-xs">
+                                      <span className="text-slate-300">{p.name}</span>
+                                      <span className="font-mono text-emerald-300">{p.time}</span>
+                                    </div>
+                                  ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="text-emerald-300/50 text-sm animate-pulse">جاري تحميل الأوقات...</div>
+                        )}
+                      </div>
+                    );
+                  }
+
+                  return null;
+                })}
+
+                {/* Fallback static queue if no zones defined */}
+                {!template.zones?.some((z: any) => z.type === 'queue') && (
+                  <div className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 text-center shadow-2xl">
+                    <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold text-sm mb-2">
+                      <UsersRound className="w-5 h-5 text-amber-400" />
+                      <span>الرقم المستدعى حالياً</span>
+                    </div>
+                    <div className="text-6xl font-black font-mono text-amber-400 tracking-wider my-2">
+                      {currentQueueTicket?.ticket || 'A-104'}
+                    </div>
+                    <div className="text-sm text-slate-200 font-semibold mt-2">
+                      {currentQueueTicket?.counter || 'عيادة الاستشارات الطبية 3'}
+                    </div>
+                  </div>
+                )}
+
+                {/* Live Clock */}
                 <div className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
                   <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
                     <Clock className="w-4 h-4" />
-                    <span>التوقيت والطقس المباشر</span>
+                    <span>التوقيت المباشر</span>
                   </div>
                   <div className="text-3xl font-black font-mono text-white tracking-widest">
                     {currentTime}
                   </div>
-                  <div className="text-xs text-slate-400 flex items-center justify-center gap-2">
-                    <CloudSun className="w-4 h-4 text-amber-400" />
-                    <span>الرياض • 32°C سماء صافية</span>
-                  </div>
+                  <div className="text-xs text-slate-400">{hijriDate}</div>
                 </div>
               </div>
             )}
@@ -538,13 +908,12 @@ export default function PlayerPage() {
         /* 2. Direct Playlist Mode (Full Screen) */
         <div className="w-full h-full relative flex items-center justify-center bg-black">
           {currentItem ? (
-            <>
+            <div key={`${currentItem.id}-${currentPlayIndex}`} className={`w-full h-full ${playlistTransition}`}>
               {currentItem.media?.fileType === 'image' && (
                 <img
-                  key={currentItem.id}
                   src={currentItem.media.fileUrl}
                   alt=""
-                  className="w-full h-full object-cover animate-in fade-in duration-700"
+                  className="w-full h-full object-cover"
                 />
               )}
 
@@ -576,13 +945,29 @@ export default function PlayerPage() {
                   </p>
                 </div>
               )}
-            </>
+            </div>
           ) : (
             <div className="text-center text-slate-500">
               <Tv className="w-16 h-16 mx-auto mb-2 opacity-30 text-indigo-400" />
               <p className="text-sm font-semibold">بث المحتوى المباشر</p>
             </div>
           )}
+        </div>
+      )}
+
+      {/* Queue Ticket Overlay (shown when a ticket is called) */}
+      {showQueueTicket && currentQueueTicket && (
+        <div className="absolute inset-0 z-40 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-fade-in">
+          <div className="bg-gradient-to-br from-amber-500 via-amber-400 to-amber-600 p-12 rounded-[2rem] shadow-2xl text-center max-w-lg mx-4 animate-slide-up">
+            <div className="bg-black/20 rounded-2xl p-8">
+              <div className="text-white/80 text-lg font-bold mb-2">التذكرة المستدعاة</div>
+              <div className="text-8xl font-black text-white font-mono tracking-wider mb-4 animate-digit-pulse">
+                {currentQueueTicket.ticket}
+              </div>
+              <div className="w-16 h-1 bg-white/40 rounded-full mx-auto mb-4" />
+              <div className="text-white/90 text-xl font-bold">{currentQueueTicket.counter}</div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -613,6 +998,66 @@ export default function PlayerPage() {
           <span className="text-slate-300 font-bold">{screen?.registrationCode}</span>
         </div>
       </div>
+
+      {/* CSS Animation Keyframes */}
+      <style>{`
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+        @keyframes slide-up {
+          from { opacity: 0; transform: translateY(60px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes slide-down {
+          from { opacity: 0; transform: translateY(-60px) scale(0.95); }
+          to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        @keyframes zoom-out {
+          from { opacity: 0; transform: scale(1.3); }
+          to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes flip {
+          from { opacity: 0; transform: perspective(600px) rotateY(-90deg); }
+          to { opacity: 1; transform: perspective(600px) rotateY(0deg); }
+        }
+        @keyframes digit-pulse {
+          0%, 100% { transform: scale(1); }
+          50% { transform: scale(1.05); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.8s ease-out both;
+        }
+        .animate-slide-up {
+          animation: slide-up 0.8s ease-out both;
+        }
+        .animate-slide-down {
+          animation: slide-down 0.8s ease-out both;
+        }
+        .animate-zoom-out {
+          animation: zoom-out 0.8s ease-out both;
+        }
+        .animate-flip {
+          animation: flip 0.8s ease-out both;
+        }
+        .animate-digit-pulse {
+          animation: digit-pulse 2s ease-in-out infinite;
+        }
+        .animate-ticker {
+          animation: ticker-scroll 30s linear infinite;
+        }
+        @keyframes ticker-scroll {
+          0% { transform: translateX(100%); }
+          100% { transform: translateX(-100%); }
+        }
+        .pulse-green {
+          animation: pulse-green 2s ease-in-out infinite;
+        }
+        @keyframes pulse-green {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
+        }
+      `}</style>
     </div>
   );
 }
