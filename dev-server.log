@@ -1,0 +1,43 @@
+
+> shar@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.1 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.8:3000
+- Environments: .env.local
+✓ Ready in 731ms
+✓ Running next.config.ts took 65ms
+
+ GET /api/auth/config 200 in 1433ms (next.js: 602ms, application-code: 831ms)
+⨯ Error: 9 FAILED_PRECONDITION: The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/screenflow-bc7cb/firestore/indexes?create_composite=ClZwcm9qZWN0cy9zY3JlZW5mbG93LWJjN2NiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9hY3Rpdml0eV9sb2dzL2luZGV4ZXMvXxABGhIKDm9yZ2FuaXphdGlvbklkEAEaDQoJY3JlYXRlZEF0EAIaDAoIX19uYW1lX18QAg
+    at FirestoreDatabase.getActivityLogs (lib\db.ts:807:143)
+    at GET (app\api\stats\route.ts:14:25)
+  805 |   async getActivityLogs(orgId: string, limit = 50) {
+  806 |     const fs = getDb();
+> 807 |     const snap = await fs.collection(COLLECTIONS.activityLogs).where('organizationId', '==', orgId).orderBy('createdAt', 'desc').limit(limit).get();
+      |                                                                                                                                               ^
+  808 |     return snap.docs.map(d => ({ ...(d.data() as object), id: d.id }) as ActivityLog);
+  809 |   }
+  810 | {
+  code: 9,
+  details: 'The query requires an index. You can create it here: https://console.firebase.google.com/v1/r/project/screenflow-bc7cb/firestore/indexes?create_composite=ClZwcm9qZWN0cy9zY3JlZW5mbG93LWJjN2NiL2RhdGFiYXNlcy8oZGVmYXVsdCkvY29sbGVjdGlvbkdyb3Vwcy9hY3Rpdml0eV9sb2dzL2luZGV4ZXMvXxABGhIKDm9yZ2FuaXphdGlvbklkEAEaDQoJY3JlYXRlZEF0EAIaDAoIX19uYW1lX18QAg',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  }
+}
+ GET /api/stats 500 in 3.1s (next.js: 164ms, application-code: 2.9s)
+ GET /api/screens 200 in 627ms (next.js: 164ms, application-code: 464ms)
+ POST /api/auth/login 200 in 691ms (next.js: 129ms, application-code: 563ms)
+ GET /api/stats 200 in 1122ms (next.js: 31ms, application-code: 1091ms)
+ GET /api/stats 200 in 1064ms (next.js: 2ms, application-code: 1061ms)
+ GET /api/screens 200 in 912ms (next.js: 11ms, application-code: 900ms)
+ GET /api/media 200 in 608ms (next.js: 141ms, application-code: 467ms)
+ GET /api/playlists 200 in 680ms (next.js: 140ms, application-code: 541ms)
+ GET /api/templates 200 in 545ms (next.js: 123ms, application-code: 422ms)
+ GET /api/schedules 200 in 549ms (next.js: 125ms, application-code: 423ms)
+ GET /api/queue 200 in 627ms (next.js: 119ms, application-code: 507ms)
+ GET /api/player/init 200 in 399ms (next.js: 118ms, application-code: 281ms)
+ GET /api/screens/pair 405 in 122ms (next.js: 119ms, application-code: 4ms)

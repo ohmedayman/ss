@@ -693,8 +693,10 @@ class FirestoreDatabase implements Database {
   }
   async getPendingCommands(screenId: string) {
     const fs = getDb();
-    const snap = await fs.collection(COLLECTIONS.screenCommands).where('screenId', '==', screenId).where('status', '==', 'pending').get();
-    return snap.docs.map(d => ({ ...(d.data() as object), id: d.id }) as ScreenCommand);
+    const snap = await fs.collection(COLLECTIONS.screenCommands).where('status', '==', 'pending').get();
+    return snap.docs
+      .map(d => ({ ...(d.data() as object), id: d.id }) as ScreenCommand)
+      .filter(c => c.screenId === screenId);
   }
   async markCommandExecuted(commandId: string) {
     const existing = await this.getById<ScreenCommand>(COLLECTIONS.screenCommands, commandId);
@@ -804,8 +806,11 @@ class FirestoreDatabase implements Database {
   }
   async getActivityLogs(orgId: string, limit = 50) {
     const fs = getDb();
-    const snap = await fs.collection(COLLECTIONS.activityLogs).where('organizationId', '==', orgId).orderBy('createdAt', 'desc').limit(limit).get();
-    return snap.docs.map(d => ({ ...(d.data() as object), id: d.id }) as ActivityLog);
+    const snap = await fs.collection(COLLECTIONS.activityLogs).where('organizationId', '==', orgId).get();
+    return snap.docs
+      .map(d => ({ ...(d.data() as object), id: d.id }) as ActivityLog)
+      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      .slice(0, limit);
   }
 
   async getOrganization(id: string) {
