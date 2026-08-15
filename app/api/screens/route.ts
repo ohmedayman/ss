@@ -14,6 +14,7 @@ function generateRegistrationCode(): string {
 
 export async function GET() {
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const screens = await db.getScreens(session.organization.id);
 
   // Calculate online/offline dynamically if heartbeat is older than 35 seconds
@@ -38,6 +39,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
 
     const {

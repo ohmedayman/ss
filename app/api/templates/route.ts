@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 
 export async function GET() {
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const templates = await db.getTemplates(session.organization.id);
   return NextResponse.json({ templates });
 }
@@ -11,6 +12,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
     const {
       name,

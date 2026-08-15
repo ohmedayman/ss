@@ -6,6 +6,7 @@ import { realtime } from '@/lib/realtime';
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { code, name, branchId, activeContentType = 'playlist', activeContentId } = await req.json();
 
     if (!code || !code.trim()) {

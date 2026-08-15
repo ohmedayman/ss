@@ -5,6 +5,7 @@ import { realtime } from '@/lib/realtime';
 
 export async function GET() {
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const services = await db.getQueueServices(session.organization.id);
   const tickets = await db.getQueueTickets(session.organization.id);
   return NextResponse.json({ services, tickets });
@@ -13,6 +14,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const { action, serviceId, counterNumber = 'شباك 1' } = await req.json();
 
     if (action === 'call_next') {

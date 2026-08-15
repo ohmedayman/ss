@@ -24,7 +24,7 @@ async function loadDefaultSession(): Promise<SessionData> {
   };
 }
 
-export async function getSession(): Promise<SessionData> {
+export async function getSession(): Promise<SessionData | null> {
   await db.seedIfEmpty();
 
   const cookieStore = await cookies();
@@ -39,11 +39,17 @@ export async function getSession(): Promise<SessionData> {
         if (org) return { user, organization: org };
       }
     } catch (e) {
-      // Session invalid or user not found -> fall back
+      // Session invalid
     }
   }
 
-  return loadDefaultSession();
+  // Local dev fallback (no Firebase configured)
+  if (!isFirebaseConfigured()) {
+    return loadDefaultSession();
+  }
+
+  // Production with Firebase: no valid session
+  return null;
 }
 
 // Create an HTTP-only session cookie from a Firebase ID token (client-side sign-in)

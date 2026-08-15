@@ -7,6 +7,7 @@ import path from 'path';
 
 export async function GET() {
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const media = await db.getMedia(session.organization.id);
   return NextResponse.json({ media });
 }
@@ -14,6 +15,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const contentType = req.headers.get('content-type') || '';
 
     // Handle multipart form-data (file upload)

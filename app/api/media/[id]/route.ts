@@ -6,6 +6,7 @@ import { deleteFromFirebaseStorage, isStorageConfigured } from '@/lib/storage';
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const item = await db.getMediaById(id);
 
   if (!item || item.organizationId !== session.organization.id) {

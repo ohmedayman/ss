@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 
 export async function GET() {
   const session = await getSession();
+  if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const playlists = await db.getPlaylists(session.organization.id);
   const allMedia = await db.getMedia(session.organization.id);
   const mediaMap = new Map(allMedia.map(m => [m.id, m]));
@@ -23,6 +24,7 @@ export async function GET() {
 export async function POST(req: Request) {
   try {
     const session = await getSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     const body = await req.json();
     const {
       name,
