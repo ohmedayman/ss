@@ -59,9 +59,8 @@ export async function POST(req: Request) {
 
     const regCode = generateRegistrationCode();
 
-    const newScreen = await db.createScreen({
+    const screenData: Record<string, any> = {
       organizationId: session.organization.id,
-      branchId,
       name: name.trim(),
       registrationCode: regCode,
       isPaired: false,
@@ -74,7 +73,10 @@ export async function POST(req: Request) {
       brightness: 100,
       notes,
       tags,
-    });
+    };
+    if (branchId) screenData.branchId = branchId;
+
+    const newScreen = await db.createScreen(screenData as any);
 
     await db.logActivity({
       organizationId: session.organization.id,

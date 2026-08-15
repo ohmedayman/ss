@@ -407,6 +407,68 @@ export default function PlayerPage() {
     }
   };
 
+  // 4b. Report Device Health
+  const reportHealth = async () => {
+    if (!screen && !registrationCode) return;
+    try {
+      const healthPayload: Record<string, any> = {
+        screenId: screen?.id,
+        code: registrationCode,
+        uptimeHours: Math.floor(performance.now() / 3600000),
+      };
+
+      // Battery API
+      try {
+        const battery: any = await (navigator as any).getBattery?.();
+        if (battery) {
+          healthPayload.batteryLevel = Math.round(battery.level * 100);
+          healthPayload.batteryCharging = battery.charging;
+        }
+      } catch (e) {}
+
+      // Network info
+      try {
+        const conn: any = (navigator as any).connection;
+        if (conn) {
+          healthPayload.networkType = conn.effectiveType || conn.type || 'unknown';
+          healthPayload.networkSpeedMbps = conn.downlink ? Math.round(conn.downlink * 10) : undefined;
+        } else if (navigator.onLine) {
+          healthPayload.networkType = 'wifi';
+        } else {
+          healthPayload.networkType = 'offline';
+        }
+      } catch (e) {
+        healthPayload.networkType = navigator.onLine ? 'wifi' : 'offline';
+      }
+
+      // Memory (Chrome only)
+      try {
+        const perfMem: any = (performance as any).memory;
+        if (perfMem) {
+          healthPayload.memoryUsageMb = Math.round(perfMem.usedJSHeapSize / 1048576);
+          healthPayload.memoryTotalMb = Math.round(perfMem.jsHeapSizeLimit / 1048576);
+        }
+      } catch (e) {}
+
+      // Storage estimate
+      try {
+        if (navigator.storage?.estimate) {
+          const est = await navigator.storage.estimate();
+          healthPayload.storageUsedMb = Math.round((est.usage || 0) / 1048576);
+          healthPayload.storageTotalMb = Math.round((est.quota || 0) / 1048576);
+        }
+      } catch (e) {}
+
+      await fetch('/api/player/health', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(healthPayload),
+      });
+    } catch (e) {
+      console.error('Health report failed:', e);
+    }
+  };
+
   // 5. Handle remote commands sent from dashboard
   const handleRemoteCommand = async (command: string, payload?: any) => {
     console.log('Received remote command:', command, payload);
@@ -468,6 +530,10 @@ export default function PlayerPage() {
     // Heartbeat interval every 15s
     const hbInterval = setInterval(sendHeartbeat, 15000);
 
+    // Health report every 30s
+    const healthInterval = setInterval(reportHealth, 30000);
+    reportHealth(); // initial report
+
     // Online/Offline window listeners
     const handleOnline = () => setIsOnline(true);
     const handleOffline = () => setIsOnline(false);
@@ -476,6 +542,7 @@ export default function PlayerPage() {
 
     return () => {
       clearInterval(hbInterval);
+      clearInterval(healthInterval);
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };

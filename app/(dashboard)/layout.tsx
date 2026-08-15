@@ -13,6 +13,7 @@ export default function DashboardLayout({
   const [stats, setStats] = useState<any>(null);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const fetchStats = async () => {
     try {
@@ -28,24 +29,36 @@ export default function DashboardLayout({
 
   useEffect(() => {
     fetchStats();
-    // Poll stats every 20 seconds
     const interval = setInterval(fetchStats, 20000);
     return () => clearInterval(interval);
   }, []);
 
   return (
     <div className="min-h-screen bg-[#f6f7fb] flex text-slate-800">
-      {/* Arabic RTL Sidebar (Fixed on the right side) */}
+      {/* Mobile Hamburger Button */}
+      <button
+        onClick={() => setMobileSidebarOpen(true)}
+        className="fixed top-4 right-4 z-[60] p-2.5 rounded-xl bg-white border border-slate-200 shadow-md text-slate-600 hover:bg-slate-50 lg:hidden cursor-pointer"
+        aria-label="فتح القائمة"
+      >
+        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+          <path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
+
+      {/* Arabic RTL Sidebar */}
       <Sidebar
         storageUsedBytes={stats?.storageUsedBytes}
         storageLimitMb={stats?.storageLimitMb}
         onlineScreens={stats?.onlineScreens}
         totalScreens={stats?.totalScreens}
+        mobileOpen={mobileSidebarOpen}
+        onMobileClose={() => setMobileSidebarOpen(false)}
       />
 
-      {/* Main Content Area (Offset by 16rem / 64 tailwind units for the right sidebar) */}
-      <div className="flex-1 mr-64 flex flex-col min-h-screen">
-        <main className="flex-1 p-8 overflow-y-auto">
+      {/* Main Content Area */}
+      <div className="flex-1 lg:mr-64 flex flex-col min-h-screen">
+        <main className="flex-1 p-4 lg:p-8 overflow-y-auto pt-16 lg:pt-8">
           {children}
         </main>
       </div>

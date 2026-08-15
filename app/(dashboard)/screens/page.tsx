@@ -14,6 +14,15 @@ import {
   LayoutGrid,
   List,
   Eye,
+  Battery,
+  BatteryCharging,
+  Wifi,
+  WifiOff,
+  Thermometer,
+  HardDrive,
+  Clock,
+  Cpu,
+  Activity,
 } from 'lucide-react';
 
 export default function ScreensPage() {
@@ -96,6 +105,82 @@ export default function ScreensPage() {
         subtitle="مراقبة وإدارة جميع شاشات العرض عن بُعد وتحديث محتواها بشكل فوري"
         onOpenPairModal={() => setIsPairModalOpen(true)}
       />
+
+      {/* Health Overview Stats */}
+      {screens.some((s) => s.healthReportedAt) && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {(() => {
+            const healthyScreens = screens.filter((s) => s.isPaired && s.batteryLevel === undefined);
+            const batteryScreens = screens.filter((s) => s.batteryLevel !== undefined);
+            const lowBattery = batteryScreens.filter((s) => s.batteryLevel !== undefined && s.batteryLevel < 20);
+            const hotScreens = screens.filter((s) => s.temperatureC !== undefined && s.temperatureC > 70);
+            const totalStorage = screens.reduce((acc, s) => acc + (s.storageUsedMb || 0), 0);
+
+            return (
+              <>
+                <div className="glass-panel rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center">
+                      <Activity className="w-5 h-5 text-emerald-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-black text-slate-900">
+                        {screens.filter((s) => s.status === 'online' && s.isPaired).length}
+                      </p>
+                      <p className="text-xs text-slate-500">شاشات متصلة</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="glass-panel rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center">
+                      <Wifi className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-black text-slate-900">
+                        {screens.filter((s) => s.networkType && s.networkType !== 'offline').length}
+                      </p>
+                      <p className="text-xs text-slate-500">اتصال مستقر</p>
+                    </div>
+                  </div>
+                </div>
+                <div className="glass-panel rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${lowBattery.length > 0 ? 'bg-rose-50' : 'bg-amber-50'} flex items-center justify-center`}>
+                      <Battery className={`w-5 h-5 ${lowBattery.length > 0 ? 'text-rose-600' : 'text-amber-600'}`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-black text-slate-900">
+                        {batteryScreens.length > 0 ? `${Math.round(batteryScreens.reduce((a, s) => a + (s.batteryLevel || 0), 0) / batteryScreens.length)}%` : '--'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {lowBattery.length > 0 ? `${lowBattery.length} شاشة بطاريتها منخفضة` : 'مستوى البطارية'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div className="glass-panel rounded-2xl p-4 border border-slate-200">
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-xl ${hotScreens.length > 0 ? 'bg-rose-50' : 'bg-purple-50'} flex items-center justify-center`}>
+                      <Thermometer className={`w-5 h-5 ${hotScreens.length > 0 ? 'text-rose-600' : 'text-purple-600'}`} />
+                    </div>
+                    <div>
+                      <p className="text-2xl font-black text-slate-900">
+                        {screens.some((s) => s.temperatureC !== undefined)
+                          ? `${Math.round(screens.filter((s) => s.temperatureC !== undefined).reduce((a, s) => a + (s.temperatureC || 0), 0) / screens.filter((s) => s.temperatureC !== undefined).length)}°C`
+                          : '--'}
+                      </p>
+                      <p className="text-xs text-slate-500">
+                        {hotScreens.length > 0 ? `${hotScreens.length} شاشة ساخنة` : 'متوسط الحرارة'}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </>
+            );
+          })()}
+        </div>
+      )}
 
       {/* Control Bar: Search, Filters, View Mode */}
       <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -265,6 +350,53 @@ export default function ScreensPage() {
                         <span>IP: {screen.ipAddress || '192.168.1.105'}</span>
                       </div>
                     </div>
+
+                    {/* Health Indicators */}
+                    {screen.healthReportedAt && (
+                      <div className="flex items-center gap-2 flex-wrap pt-1">
+                        {screen.batteryLevel !== undefined && (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            screen.batteryLevel < 20 ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                            screen.batteryLevel < 50 ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                            'bg-emerald-50 text-emerald-600 border-emerald-200'
+                          }`}>
+                            {screen.batteryCharging ? <BatteryCharging className="w-3 h-3" /> : <Battery className="w-3 h-3" />}
+                            {screen.batteryLevel}%
+                          </span>
+                        )}
+                        {screen.networkType && (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            screen.networkType === 'offline' ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                            'bg-blue-50 text-blue-600 border-blue-200'
+                          }`}>
+                            {screen.networkType === 'offline' ? <WifiOff className="w-3 h-3" /> : <Wifi className="w-3 h-3" />}
+                            {screen.networkType}
+                          </span>
+                        )}
+                        {screen.temperatureC !== undefined && (
+                          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border ${
+                            screen.temperatureC > 70 ? 'bg-rose-50 text-rose-600 border-rose-200' :
+                            screen.temperatureC > 50 ? 'bg-amber-50 text-amber-600 border-amber-200' :
+                            'bg-blue-50 text-blue-600 border-blue-200'
+                          }`}>
+                            <Thermometer className="w-3 h-3" />
+                            {screen.temperatureC}°C
+                          </span>
+                        )}
+                        {screen.storageUsedMb !== undefined && screen.storageTotalMb !== undefined && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-slate-50 text-slate-600 border-slate-200">
+                            <HardDrive className="w-3 h-3" />
+                            {screen.storageUsedMb}MB/{screen.storageTotalMb}MB
+                          </span>
+                        )}
+                        {screen.uptimeHours !== undefined && screen.uptimeHours > 0 && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-semibold border bg-slate-50 text-slate-600 border-slate-200">
+                            <Clock className="w-3 h-3" />
+                            {screen.uptimeHours}h
+                          </span>
+                        )}
+                      </div>
+                    )}
                   </div>
 
                   {/* Remote Actions Bar */}
@@ -318,6 +450,7 @@ export default function ScreensPage() {
                   <th className="p-4">الشاشة</th>
                   <th className="p-4">كود التسجيل</th>
                   <th className="p-4">الحالة</th>
+                  <th className="p-4">الصحة</th>
                   <th className="p-4">المحتوى المعروض</th>
                   <th className="p-4">الدقة والاتجاه</th>
                   <th className="p-4">آخر اتصال</th>
@@ -363,6 +496,38 @@ export default function ScreensPage() {
                         )}
                       </td>
 
+                      <td className="p-4">
+                        {screen.healthReportedAt ? (
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            {screen.batteryLevel !== undefined && (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${
+                                screen.batteryLevel < 20 ? 'text-rose-600' : screen.batteryLevel < 50 ? 'text-amber-600' : 'text-emerald-600'
+                              }`}>
+                                {screen.batteryCharging ? <BatteryCharging className="w-3 h-3" /> : <Battery className="w-3 h-3" />}
+                                {screen.batteryLevel}%
+                              </span>
+                            )}
+                            {screen.networkType && (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${
+                                screen.networkType === 'offline' ? 'text-rose-600' : 'text-blue-600'
+                              }`}>
+                                {screen.networkType === 'offline' ? <WifiOff className="w-3 h-3" /> : <Wifi className="w-3 h-3" />}
+                              </span>
+                            )}
+                            {screen.temperatureC !== undefined && (
+                              <span className={`inline-flex items-center gap-0.5 text-[10px] font-semibold ${
+                                screen.temperatureC > 70 ? 'text-rose-600' : 'text-slate-500'
+                              }`}>
+                                <Thermometer className="w-3 h-3" />
+                                {screen.temperatureC}°C
+                              </span>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[10px] text-slate-400">غير متوفر</span>
+                        )}
+                      </td>
+
                       <td className="p-4 text-slate-600">
                         {screen.activeContentType === 'playlist'
                           ? 'قائمة الإعلانات الرئيسية'
@@ -376,7 +541,15 @@ export default function ScreensPage() {
                       </td>
 
                       <td className="p-4 text-slate-500 text-[11px]">
-                        {screen.lastHeartbeatAt ? 'منذ دقيقة' : 'غير متصل'}
+                        {screen.lastHeartbeatAt ? (() => {
+                          const diff = Date.now() - new Date(screen.lastHeartbeatAt).getTime();
+                          const mins = Math.floor(diff / 60000);
+                          if (mins < 1) return 'الآن';
+                          if (mins < 60) return `منذ ${mins} د`;
+                          const hrs = Math.floor(mins / 60);
+                          if (hrs < 24) return `منذ ${hrs} س`;
+                          return `منذ ${Math.floor(hrs / 24)} يوم`;
+                        })() : 'غير متصل'}
                       </td>
 
                       <td className="p-4">

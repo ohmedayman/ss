@@ -20,22 +20,22 @@ export async function POST(req: Request) {
 
     if (screen) {
       // Screen already exists (maybe created from player init or unlinked)
-      screen = (await db.updateScreen(screen.id, {
+      const updateData: Record<string, any> = {
         organizationId: session.organization.id,
         name: name && name.trim() ? name.trim() : screen.name,
-        branchId: branchId || screen.branchId,
         isPaired: true,
         pairingToken: token,
         status: 'online',
         lastHeartbeatAt: new Date().toISOString(),
         activeContentType: activeContentType || screen.activeContentType,
         activeContentId: activeContentId || screen.activeContentId || 'pl-general-ads',
-      })) || undefined;
+      };
+      if (branchId) updateData.branchId = branchId;
+      screen = (await db.updateScreen(screen.id, updateData)) || undefined;
     } else {
       // Screen code was entered, create and pair
-      screen = await db.createScreen({
+      const screenData: Record<string, any> = {
         organizationId: session.organization.id,
-        branchId,
         name: name && name.trim() ? name.trim() : `شاشة جديدة (${cleanCode})`,
         registrationCode: cleanCode,
         pairingToken: token,
@@ -49,7 +49,9 @@ export async function POST(req: Request) {
         volume: 80,
         brightness: 100,
         tags: ['شاشة_شاشة'],
-      });
+      };
+      if (branchId) screenData.branchId = branchId;
+      screen = await db.createScreen(screenData as any);
     }
 
     if (!screen) {

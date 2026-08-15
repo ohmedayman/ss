@@ -60,6 +60,18 @@ export interface Screen {
   lastScreenshotAt?: string;
   volume: number; // 0-100
   brightness: number; // 0-100
+  healthReportedAt?: string;
+  batteryLevel?: number; // 0-100, null if not applicable
+  batteryCharging?: boolean;
+  storageUsedMb?: number;
+  storageTotalMb?: number;
+  uptimeHours?: number;
+  cpuUsage?: number; // 0-100
+  memoryUsageMb?: number;
+  memoryTotalMb?: number;
+  networkType?: string; // wifi, ethernet, 4g, offline
+  networkSpeedMbps?: number;
+  temperatureC?: number; // device temperature
   notes?: string;
   tags: string[];
   createdAt: string;
