@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { sendPasswordResetEmail } from 'firebase/auth';
 import {
-  Tv,
   CheckCircle2,
   ArrowRight,
   AlertCircle,
@@ -47,12 +46,11 @@ export default function ForgotPasswordPage() {
       {/* Header / Logo */}
       <header className="w-full px-8 py-5 flex items-center justify-between absolute top-0 left-0 right-0 z-20">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F7931E] flex items-center justify-center shadow-md shadow-orange-500/20">
-            <Tv className="w-5 h-5 text-white" />
-          </div>
-          <span className="text-xl font-black text-slate-800 tracking-tight">
-            Screen<span className="text-[#FF6B35]">Flow</span>
-          </span>
+          <img
+            src="https://i.postimg.cc/Y05shkp1/screenflow-logo-final.png"
+            alt="ScreenFlow"
+            className="h-10 w-auto"
+          />
         </Link>
       </header>
 
