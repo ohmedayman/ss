@@ -4,7 +4,7 @@ import { getSession } from '@/lib/auth';
 
 export async function GET() {
   const session = await getSession();
-  const schedules = db.getSchedules(session.organization.id);
+  const schedules = await db.getSchedules(session.organization.id);
   return NextResponse.json({ schedules });
 }
 
@@ -27,10 +27,10 @@ export async function POST(req: Request) {
     } = body;
 
     if (!name || !name.trim() || !targetId) {
-      return NextResponse.json({ error: 'الاسم والمحتوى المستهدف مطلوبان للجدول' }, { status: 400 });
+      return NextResponse.json({ error: 'مطلوب اسم الجدول والمحتوى المستهدف' }, { status: 400 });
     }
 
-    const schedule = db.createSchedule({
+    const schedule = await db.createSchedule({
       organizationId: session.organization.id,
       name: name.trim(),
       targetType,
@@ -45,13 +45,13 @@ export async function POST(req: Request) {
       isActive,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
       action: 'إنشاء جدول زمني',
       actionType: 'schedule',
-      details: `تم إنشاء جدول جديد: "${schedule.name}" من ${schedule.startTime} إلى ${schedule.endTime}`,
+      details: `تم إنشاء جدول زمني: "${schedule.name}" من ${schedule.startTime} حتى ${schedule.endTime}`,
     });
 
     return NextResponse.json({ success: true, schedule });

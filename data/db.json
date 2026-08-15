@@ -525,6 +525,16 @@
   ],
   "activityLogs": [
     {
+      "organizationId": "org-screenflow-demo",
+      "userId": "usr-admin-1",
+      "userName": "أحمد بن عبد الله آل سعود",
+      "action": "تسجيل دخول",
+      "actionType": "auth",
+      "details": "تم تسجيل الدخول بنجاح بواسطة admin@screenflow.io",
+      "id": "log-itgiei0",
+      "createdAt": "2026-08-15T18:28:50.282Z"
+    },
+    {
       "id": "log-1",
       "organizationId": "org-screenflow-demo",
       "userId": "usr-admin-1",

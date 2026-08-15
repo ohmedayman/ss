@@ -10,7 +10,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
     const session = await getSession();
     const { command, payload } = await req.json();
 
-    const screen = db.getScreenById(id);
+    const screen = await db.getScreenById(id);
     if (!screen || screen.organizationId !== session.organization.id) {
       return NextResponse.json({ error: 'الشاشة غير موجودة' }, { status: 404 });
     }
@@ -28,7 +28,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       return NextResponse.json({ error: 'أمر غير صالح' }, { status: 400 });
     }
 
-    const newCmd = db.addCommand({
+    const newCmd = await db.addCommand({
       screenId: id,
       organizationId: session.organization.id,
       command,
@@ -48,7 +48,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
       set_volume: 'ضبط مستوى الصوت',
     };
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

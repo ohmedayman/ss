@@ -6,13 +6,13 @@ import { realtime } from '@/lib/realtime';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const screen = db.getScreenById(id);
+  const screen = await db.getScreenById(id);
 
   if (!screen || screen.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'الشاشة غير موجودة' }, { status: 404 });
   }
 
-  const commands = db.getPendingCommands(id);
+  const commands = await db.getPendingCommands(id);
 
   return NextResponse.json({ screen, pendingCommands: commands });
 }
@@ -23,12 +23,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getSession();
     const body = await req.json();
 
-    const screen = db.getScreenById(id);
+    const screen = await db.getScreenById(id);
     if (!screen || screen.organizationId !== session.organization.id) {
       return NextResponse.json({ error: 'الشاشة غير موجودة' }, { status: 404 });
     }
 
-    const updated = db.updateScreen(id, {
+    const updated = await db.updateScreen(id, {
       name: body.name !== undefined ? body.name : screen.name,
       orientation: body.orientation !== undefined ? body.orientation : screen.orientation,
       resolution: body.resolution !== undefined ? body.resolution : screen.resolution,
@@ -49,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       volume: updated?.volume,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
@@ -67,20 +67,20 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const screen = db.getScreenById(id);
+  const screen = await db.getScreenById(id);
 
   if (!screen || screen.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'الشاشة غير موجودة' }, { status: 404 });
   }
 
   const screenName = screen.name;
-  const deleted = db.deleteScreen(id, session.organization.id);
+  const deleted = await db.deleteScreen(id, session.organization.id);
 
   if (deleted) {
     // Notify player if connected that it's unlinked
     realtime.notifyScreen(id, 'unlinked', {});
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

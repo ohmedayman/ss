@@ -1,44 +1,73 @@
 import { cookies } from 'next/headers';
-import { db } from './db';
+import { db, DEFAULT_ORG_ID, DEFAULT_USER_ID } from './db';
+import { getAdminAuth, isFirebaseConfigured } from './firebase/admin';
 import { User, Organization } from './types';
 
 const SESSION_COOKIE_NAME = 'sf_session';
-const DEFAULT_ORG_ID = 'org-screenflow-demo';
-const DEFAULT_USER_ID = 'usr-admin-1';
 
 export interface SessionData {
   user: User;
   organization: Organization;
 }
 
-export async function getSession(): Promise<SessionData> {
-  const cookieStore = await cookies();
-  const sessionToken = cookieStore.get(SESSION_COOKIE_NAME)?.value;
-
-  // If a valid session cookie exists, we could decode it.
-  // For demo/development, default to our configured admin user and organization
-  let user = db.getUser(DEFAULT_USER_ID);
-  let org = db.getOrganization(DEFAULT_ORG_ID);
-
+async function loadDefaultSession(): Promise<SessionData> {
+  let user = await db.getUser(DEFAULT_USER_ID);
+  let org = await db.getOrganization(DEFAULT_ORG_ID);
   if (!user || !org) {
-    const data = db.getData();
+    const data = await db.getData();
     user = data.users[0];
     org = data.organizations[0];
   }
-
   return {
     user: user!,
     organization: org!,
   };
 }
 
+export async function getSession(): Promise<SessionData> {
+  await db.seedIfEmpty();
+
+  const cookieStore = await cookies();
+  const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
+
+  if (session && isFirebaseConfigured()) {
+    try {
+      const decoded = await getAdminAuth().verifySessionCookie(session, true);
+      const user = await db.getUser(decoded.uid);
+      if (user) {
+        const org = await db.getOrganization(user.organizationId);
+        if (org) return { user, organization: org };
+      }
+    } catch (e) {
+      // Session invalid or user not found -> fall back
+    }
+  }
+
+  return loadDefaultSession();
+}
+
+// Create an HTTP-only session cookie from a Firebase ID token (client-side sign-in)
+export async function createSessionFromIdToken(idToken: string) {
+  const expiresIn = 60 * 60 * 24 * 7 * 1000; // 7 days
+  const sessionCookie = await getAdminAuth().createSessionCookie(idToken, { expiresIn });
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 7,
+    path: '/',
+  });
+}
+
+// Local/demo fallback session
 export async function setSessionCookie(userId: string) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, userId, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 24 * 7, // 7 days
+    maxAge: 60 * 60 * 24 * 7,
     path: '/',
   });
 }

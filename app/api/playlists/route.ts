@@ -4,8 +4,8 @@ import { getSession } from '@/lib/auth';
 
 export async function GET() {
   const session = await getSession();
-  const playlists = db.getPlaylists(session.organization.id);
-  const allMedia = db.getMedia(session.organization.id);
+  const playlists = await db.getPlaylists(session.organization.id);
+  const allMedia = await db.getMedia(session.organization.id);
   const mediaMap = new Map(allMedia.map(m => [m.id, m]));
 
   // Populate media items
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
 
     const totalDuration = items.reduce((acc: number, item: any) => acc + (parseInt(item.durationSeconds, 10) || 10), 0);
 
-    const newPlaylist = db.createPlaylist({
+    const newPlaylist = await db.createPlaylist({
       organizationId: session.organization.id,
       name: name.trim(),
       description,
@@ -58,13 +58,13 @@ export async function POST(req: Request) {
       })),
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
       action: 'إنشاء قائمة تشغيل',
       actionType: 'playlist',
-      details: `تم إنشاء قائمة التشغيل "${newPlaylist.name}" وتحتوي على ${items.length} عنصر`,
+      details: `تم إنشاء قائمة التشغيل "${newPlaylist.name}" بعدد ${items.length} عناصر`,
     });
 
     return NextResponse.json({ success: true, playlist: newPlaylist });

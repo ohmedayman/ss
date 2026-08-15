@@ -11,15 +11,15 @@ export async function GET(req: Request) {
   let screen: Screen | undefined;
 
   if (screenId) {
-    screen = db.getScreenById(screenId);
+    screen = await db.getScreenById(screenId);
   } else if (token) {
-    screen = db.getScreenByToken(token);
+    screen = await db.getScreenByToken(token);
   } else if (code) {
-    screen = db.getScreenByCode(code);
+    screen = await db.getScreenByCode(code);
   }
 
   if (!screen) {
-    return NextResponse.json({ error: 'الشاشة غير موجودة أو غير مسجلة' }, { status: 404 });
+    return NextResponse.json({ error: 'الشاشة غير موجودة أو غير مقترنة' }, { status: 404 });
   }
 
   // Check if screen has an active schedule running right now
@@ -30,7 +30,7 @@ export async function GET(req: Request) {
   const currentTimeStr = `${currentHour}:${currentMinute}`;
   const currentDateStr = now.toISOString().split('T')[0];
 
-  const schedules = db.getSchedules(screen.organizationId).filter(s => s.isActive);
+  const schedules = (await db.getSchedules(screen.organizationId)).filter(s => s.isActive);
   let effectiveContentType = screen.activeContentType;
   let effectiveContentId = screen.activeContentId;
 
@@ -61,7 +61,7 @@ export async function GET(req: Request) {
     contentType: effectiveContentType,
   };
 
-  const allMedia = db.getMedia(screen.organizationId);
+  const allMedia = await db.getMedia(screen.organizationId);
   const mediaMap: Record<string, MediaItem> = {};
   allMedia.forEach(m => {
     mediaMap[m.id] = m;
@@ -69,9 +69,8 @@ export async function GET(req: Request) {
   payload.allMediaItems = mediaMap;
 
   if (effectiveContentType === 'playlist') {
-    const playlist = db.getPlaylistById(effectiveContentId || 'pl-general-ads');
+    const playlist = await db.getPlaylistById(effectiveContentId || 'pl-general-ads');
     if (playlist) {
-      // populate full media items in playlist items
       const enrichedItems = playlist.items.map(item => ({
         ...item,
         media: item.mediaId ? mediaMap[item.mediaId] : undefined,
@@ -82,17 +81,15 @@ export async function GET(req: Request) {
       };
     }
   } else if (effectiveContentType === 'template') {
-    const template = db.getTemplateById(effectiveContentId || 'tpl-clinic-waiting');
+    const template = await db.getTemplateById(effectiveContentId || 'tpl-clinic-waiting');
     if (template) {
       payload.template = template;
-      // Also provide queue info if template contains queue zone
-      payload.queueServices = db.getQueueServices(screen.organizationId);
-      payload.queueTickets = db.getQueueTickets(screen.organizationId);
-      
-      // If template uses a playlist in one of its zones, resolve it too
+      payload.queueServices = await db.getQueueServices(screen.organizationId);
+      payload.queueTickets = await db.getQueueTickets(screen.organizationId);
+
       const playlistZone = template.zones.find(z => z.type === 'playlist');
       if (playlistZone && playlistZone.contentId) {
-        const pl = db.getPlaylistById(playlistZone.contentId);
+        const pl = await db.getPlaylistById(playlistZone.contentId);
         if (pl) {
           payload.playlist = {
             ...pl,
@@ -105,7 +102,7 @@ export async function GET(req: Request) {
       }
     }
   } else if (effectiveContentType === 'media') {
-    const media = db.getMediaById(effectiveContentId || 'med-1');
+    const media = await db.getMediaById(effectiveContentId || 'med-1');
     if (media) {
       payload.media = media;
     }

@@ -6,7 +6,7 @@ import { realtime } from '@/lib/realtime';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const template = db.getTemplateById(id);
+  const template = await db.getTemplateById(id);
 
   if (!template || template.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'القالب غير موجود' }, { status: 404 });
@@ -21,12 +21,12 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getSession();
     const body = await req.json();
 
-    const template = db.getTemplateById(id);
+    const template = await db.getTemplateById(id);
     if (!template || template.organizationId !== session.organization.id) {
       return NextResponse.json({ error: 'القالب غير موجود' }, { status: 404 });
     }
 
-    const updated = db.updateTemplate(id, {
+    const updated = await db.updateTemplate(id, {
       name: body.name !== undefined ? body.name.trim() : template.name,
       layout: body.layout !== undefined ? body.layout : template.layout,
       zones: body.zones !== undefined ? body.zones : template.zones,
@@ -36,14 +36,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     // Notify connected screens playing this template
-    const screens = db.getScreens(session.organization.id);
+    const screens = await db.getScreens(session.organization.id);
     screens.forEach(scr => {
       if (scr.activeContentType === 'template' && scr.activeContentId === id) {
         realtime.notifyScreen(scr.id, 'template_updated', { templateId: id });
       }
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
@@ -61,17 +61,17 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const template = db.getTemplateById(id);
+  const template = await db.getTemplateById(id);
 
   if (!template || template.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'القالب غير موجود' }, { status: 404 });
   }
 
   const name = template.name;
-  const deleted = db.deleteTemplate(id, session.organization.id);
+  const deleted = await db.deleteTemplate(id, session.organization.id);
 
   if (deleted) {
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

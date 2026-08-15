@@ -9,17 +9,17 @@ export async function POST(req: Request) {
     const { code, name, branchId, activeContentType = 'playlist', activeContentId } = await req.json();
 
     if (!code || !code.trim()) {
-      return NextResponse.json({ error: 'كود التسجيل مطلوب' }, { status: 400 });
+      return NextResponse.json({ error: 'رمز الاقتران مطلوب' }, { status: 400 });
     }
 
     const cleanCode = code.trim().toUpperCase();
-    let screen = db.getScreenByCode(cleanCode);
+    let screen = await db.getScreenByCode(cleanCode);
 
     const token = 'tok_' + Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
 
     if (screen) {
       // Screen already exists (maybe created from player init or unlinked)
-      screen = db.updateScreen(screen.id, {
+      screen = (await db.updateScreen(screen.id, {
         organizationId: session.organization.id,
         name: name && name.trim() ? name.trim() : screen.name,
         branchId: branchId || screen.branchId,
@@ -29,13 +29,13 @@ export async function POST(req: Request) {
         lastHeartbeatAt: new Date().toISOString(),
         activeContentType: activeContentType || screen.activeContentType,
         activeContentId: activeContentId || screen.activeContentId || 'pl-general-ads',
-      }) || undefined;
+      })) || undefined;
     } else {
       // Screen code was entered, create and pair
-      screen = db.createScreen({
+      screen = await db.createScreen({
         organizationId: session.organization.id,
         branchId,
-        name: name && name.trim() ? name.trim() : `شاشة رقمية (${cleanCode})`,
+        name: name && name.trim() ? name.trim() : `شاشة جديدة (${cleanCode})`,
         registrationCode: cleanCode,
         pairingToken: token,
         isPaired: true,
@@ -47,12 +47,12 @@ export async function POST(req: Request) {
         activeContentId: activeContentId || 'pl-general-ads',
         volume: 80,
         brightness: 100,
-        tags: ['شاشة_جديدة'],
+        tags: ['شاشة_شاشة'],
       });
     }
 
     if (!screen) {
-      return NextResponse.json({ error: 'فشل إتمام عملية الاقتران' }, { status: 500 });
+      return NextResponse.json({ error: 'خطأ في إنشاء الشاشة' }, { status: 500 });
     }
 
     // Broadcast to the screen via realtime so the waiting /player transitions immediately to playing!
@@ -72,19 +72,19 @@ export async function POST(req: Request) {
       activeContentId: screen.activeContentId,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
       action: 'اقتران شاشة جديدة',
       actionType: 'screen',
-      details: `تم ربط الشاشة "${screen.name}" بنجاح باستخدام كود ${cleanCode}`,
+      details: `تم ربط الشاشة "${screen.name}" برمز ${cleanCode}`,
     });
 
     return NextResponse.json({
       success: true,
       screen,
-      message: 'تم اقتران الشاشة بنجاح وبدء تشغيل المحتوى',
+      message: 'تم اقتران الشاشة وبدء البث المباشر',
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'فشل الاقتران' }, { status: 500 });

@@ -6,13 +6,13 @@ import { realtime } from '@/lib/realtime';
 export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const playlist = db.getPlaylistById(id);
+  const playlist = await db.getPlaylistById(id);
 
   if (!playlist || playlist.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'قائمة التشغيل غير موجودة' }, { status: 404 });
   }
 
-  const allMedia = db.getMedia(session.organization.id);
+  const allMedia = await db.getMedia(session.organization.id);
   const mediaMap = new Map(allMedia.map(m => [m.id, m]));
 
   const enriched = {
@@ -32,7 +32,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getSession();
     const body = await req.json();
 
-    const playlist = db.getPlaylistById(id);
+    const playlist = await db.getPlaylistById(id);
     if (!playlist || playlist.organizationId !== session.organization.id) {
       return NextResponse.json({ error: 'قائمة التشغيل غير موجودة' }, { status: 404 });
     }
@@ -49,7 +49,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       ? items.reduce((acc: number, item: any) => acc + (parseInt(item.durationSeconds, 10) || 10), 0)
       : playlist.totalDurationSeconds;
 
-    const updated = db.updatePlaylist(id, {
+    const updated = await db.updatePlaylist(id, {
       name: name !== undefined ? name.trim() : playlist.name,
       description: description !== undefined ? description : playlist.description,
       isLoop: isLoop !== undefined ? isLoop : playlist.isLoop,
@@ -69,14 +69,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     });
 
     // Notify all screens playing this playlist to refresh seamlessly
-    const screens = db.getScreens(session.organization.id);
+    const screens = await db.getScreens(session.organization.id);
     screens.forEach(scr => {
       if (scr.activeContentType === 'playlist' && scr.activeContentId === id) {
         realtime.notifyScreen(scr.id, 'playlist_updated', { playlistId: id });
       }
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
@@ -94,17 +94,17 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const playlist = db.getPlaylistById(id);
+  const playlist = await db.getPlaylistById(id);
 
   if (!playlist || playlist.organizationId !== session.organization.id) {
     return NextResponse.json({ error: 'قائمة التشغيل غير موجودة' }, { status: 404 });
   }
 
   const name = playlist.name;
-  const deleted = db.deletePlaylist(id, session.organization.id);
+  const deleted = await db.deletePlaylist(id, session.organization.id);
 
   if (deleted) {
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

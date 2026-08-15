@@ -6,13 +6,13 @@ export async function GET() {
   const session = await getSession();
   const orgId = session.organization.id;
 
-  const screens = db.getScreens(orgId);
-  const media = db.getMedia(orgId);
-  const playlists = db.getPlaylists(orgId);
-  const templates = db.getTemplates(orgId);
-  const schedules = db.getSchedules(orgId);
-  const logs = db.getActivityLogs(orgId, 10);
-  const queueServices = db.getQueueServices(orgId);
+  const screens = await db.getScreens(orgId);
+  const media = await db.getMedia(orgId);
+  const playlists = await db.getPlaylists(orgId);
+  const templates = await db.getTemplates(orgId);
+  const schedules = await db.getSchedules(orgId);
+  const logs = await db.getActivityLogs(orgId, 10);
+  const queueServices = await db.getQueueServices(orgId);
 
   const now = Date.now();
   const onlineScreens = screens.filter(s => {
@@ -23,8 +23,8 @@ export async function GET() {
 
   const offlineScreens = screens.filter(s => !onlineScreens.some(os => os.id === s.id));
 
-  const totalStorageBytes = session.organization.storageUsedBytes;
-  const storageLimitBytes = session.organization.storageLimitMb * 1024 * 1024;
+  const totalStorageBytes = session.organization.storageUsedBytes || 0;
+  const storageLimitBytes = (session.organization.storageLimitMb || 10240) * 1024 * 1024;
   const storageUsagePercent = Math.min(100, Math.round((totalStorageBytes / storageLimitBytes) * 100));
 
   return NextResponse.json({
@@ -39,7 +39,7 @@ export async function GET() {
       totalTemplates: templates.length,
       activeSchedules: schedules.filter(s => s.isActive).length,
       storageUsedBytes: totalStorageBytes,
-      storageLimitMb: session.organization.storageLimitMb,
+      storageLimitMb: session.organization.storageLimitMb || 10240,
       storageUsagePercent,
       activeQueueServices: queueServices.length,
     },

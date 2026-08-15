@@ -6,16 +6,16 @@ export async function POST(req: Request) {
   try {
     const { screenId, code, appVersion, resolution, ipAddress } = await req.json();
 
-    let screen = screenId ? db.getScreenById(screenId) : undefined;
+    let screen = screenId ? await db.getScreenById(screenId) : undefined;
     if (!screen && code) {
-      screen = db.getScreenByCode(code);
+      screen = await db.getScreenByCode(code);
     }
 
     if (!screen) {
       return NextResponse.json({ error: 'الشاشة غير موجودة' }, { status: 404 });
     }
 
-    const updated = db.updateScreen(screen.id, {
+    const updated = await db.updateScreen(screen.id, {
       status: 'online',
       lastHeartbeatAt: new Date().toISOString(),
       appVersion: appVersion || screen.appVersion,
@@ -31,7 +31,7 @@ export async function POST(req: Request) {
     });
 
     // Retrieve pending commands for this screen
-    const pendingCommands = db.getPendingCommands(screen.id);
+    const pendingCommands = await db.getPendingCommands(screen.id);
 
     return NextResponse.json({
       success: true,

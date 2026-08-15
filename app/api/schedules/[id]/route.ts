@@ -8,12 +8,13 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     const session = await getSession();
     const body = await req.json();
 
-    const schedule = db.getData().schedules.find(s => s.id === id);
-    if (!schedule || schedule.organizationId !== session.organization.id) {
+    const allSchedules = await db.getSchedules(session.organization.id);
+    const schedule = allSchedules.find(s => s.id === id);
+    if (!schedule) {
       return NextResponse.json({ error: 'الجدول غير موجود' }, { status: 404 });
     }
 
-    const updated = db.updateSchedule(id, {
+    const updated = await db.updateSchedule(id, {
       name: body.name !== undefined ? body.name.trim() : schedule.name,
       targetType: body.targetType !== undefined ? body.targetType : schedule.targetType,
       targetId: body.targetId !== undefined ? body.targetId : schedule.targetId,
@@ -27,7 +28,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       isActive: body.isActive !== undefined ? body.isActive : schedule.isActive,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
@@ -45,17 +46,18 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const session = await getSession();
-  const schedule = db.getData().schedules.find(s => s.id === id);
+  const allSchedules = await db.getSchedules(session.organization.id);
+  const schedule = allSchedules.find(s => s.id === id);
 
-  if (!schedule || schedule.organizationId !== session.organization.id) {
+  if (!schedule) {
     return NextResponse.json({ error: 'الجدول غير موجود' }, { status: 404 });
   }
 
   const name = schedule.name;
-  const deleted = db.deleteSchedule(id, session.organization.id);
+  const deleted = await db.deleteSchedule(id, session.organization.id);
 
   if (deleted) {
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

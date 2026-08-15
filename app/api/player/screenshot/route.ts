@@ -6,9 +6,9 @@ export async function POST(req: Request) {
   try {
     const { screenId, code, screenshotBase64 } = await req.json();
 
-    let screen = screenId ? db.getScreenById(screenId) : undefined;
+    let screen = screenId ? await db.getScreenById(screenId) : undefined;
     if (!screen && code) {
-      screen = db.getScreenByCode(code);
+      screen = await db.getScreenByCode(code);
     }
 
     if (!screen) {
@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     }
 
     const now = new Date().toISOString();
-    const updated = db.updateScreen(screen.id, {
+    await db.updateScreen(screen.id, {
       screenshotUrl: screenshotBase64,
       lastScreenshotAt: now,
     });

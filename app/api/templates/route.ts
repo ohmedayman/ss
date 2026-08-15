@@ -4,7 +4,7 @@ import { getSession } from '@/lib/auth';
 
 export async function GET() {
   const session = await getSession();
-  const templates = db.getTemplates(session.organization.id);
+  const templates = await db.getTemplates(session.organization.id);
   return NextResponse.json({ templates });
 }
 
@@ -25,7 +25,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'اسم القالب مطلوب' }, { status: 400 });
     }
 
-    const template = db.createTemplate({
+    const template = await db.createTemplate({
       organizationId: session.organization.id,
       name: name.trim(),
       layout,
@@ -35,7 +35,7 @@ export async function POST(req: Request) {
       thumbnailUrl,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,

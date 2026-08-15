@@ -34,7 +34,7 @@ export default function DashboardLayout({
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] flex text-slate-100">
+    <div className="min-h-screen bg-[#f6f7fb] flex text-slate-800">
       {/* Arabic RTL Sidebar (Fixed on the right side) */}
       <Sidebar
         storageUsedBytes={stats?.storageUsedBytes}

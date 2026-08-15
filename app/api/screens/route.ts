@@ -14,21 +14,23 @@ function generateRegistrationCode(): string {
 
 export async function GET() {
   const session = await getSession();
-  const screens = db.getScreens(session.organization.id);
-  
+  const screens = await db.getScreens(session.organization.id);
+
   // Calculate online/offline dynamically if heartbeat is older than 35 seconds
   const now = Date.now();
-  const updatedScreens = screens.map(s => {
+  const updatedScreens: typeof screens = [];
+  for (const s of screens) {
+    let screen = s;
     if (s.isPaired && s.lastHeartbeatAt) {
       const diff = now - new Date(s.lastHeartbeatAt).getTime();
       const isOnline = diff < 45000; // 45 seconds tolerance
       if (isOnline !== (s.status === 'online')) {
-        db.updateScreen(s.id, { status: isOnline ? 'online' : 'offline' });
-        return { ...s, status: isOnline ? 'online' : 'offline' };
+        const updated = await db.updateScreen(s.id, { status: isOnline ? 'online' : 'offline' });
+        screen = updated || s;
       }
     }
-    return s;
-  });
+    updatedScreens.push(screen);
+  }
 
   return NextResponse.json({ screens: updatedScreens });
 }
@@ -55,7 +57,7 @@ export async function POST(req: Request) {
 
     const regCode = generateRegistrationCode();
 
-    const newScreen = db.createScreen({
+    const newScreen = await db.createScreen({
       organizationId: session.organization.id,
       branchId,
       name: name.trim(),
@@ -72,13 +74,13 @@ export async function POST(req: Request) {
       tags,
     });
 
-    db.logActivity({
+    await db.logActivity({
       organizationId: session.organization.id,
       userId: session.user.id,
       userName: session.user.fullName,
       action: 'إضافة شاشة جديدة',
       actionType: 'screen',
-      details: `تمت إضافة شاشة جديدة باسم "${newScreen.name}" بكود اقتران ${newScreen.registrationCode}`,
+      details: `تمت إضافة شاشة جديدة باسم "${newScreen.name}" برمز اقتران ${newScreen.registrationCode}`,
     });
 
     realtime.notifyDashboard(session.organization.id, 'screen_created', newScreen);

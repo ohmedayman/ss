@@ -5,11 +5,7 @@ import {
   Plus,
   Tv,
   Bell,
-  Search,
-  Sparkles,
-  Link as LinkIcon,
   UploadCloud,
-  CheckCircle2,
 } from 'lucide-react';
 import Link from 'next/link';
 
@@ -29,10 +25,10 @@ export default function Header({
   const [hasNotifications, setHasNotifications] = useState(true);
 
   return (
-    <header className="h-18 border-b border-slate-800/80 bg-[#0e1424]/80 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
+    <header className="h-18 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-6 flex items-center justify-between">
       {/* Title & Breadcrumbs */}
       <div>
-        <h1 className="text-lg font-bold text-white tracking-tight flex items-center gap-2">
+        <h1 className="text-lg font-bold text-slate-900 tracking-tight flex items-center gap-2">
           {title}
         </h1>
         {subtitle && <p className="text-xs text-slate-400 mt-0.5">{subtitle}</p>}
@@ -55,9 +51,9 @@ export default function Header({
         {onOpenUploadModal && (
           <button
             onClick={onOpenUploadModal}
-            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 hover:text-white text-xs font-medium border border-slate-700 transition-all cursor-pointer"
+            className="flex items-center gap-2 px-3.5 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 hover:text-slate-800 text-xs font-medium border border-slate-200 transition-all cursor-pointer"
           >
-            <UploadCloud className="w-4 h-4 text-indigo-400" />
+            <UploadCloud className="w-4 h-4 text-indigo-500" />
             <span>رفع وسائط</span>
           </button>
         )}
@@ -66,21 +62,21 @@ export default function Header({
         <Link
           href="/player"
           target="_blank"
-          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-slate-900 border border-slate-700/80 hover:border-indigo-500/50 text-slate-300 hover:text-indigo-300 text-xs font-medium transition-all"
+          className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 text-xs font-medium transition-all"
         >
-          <Tv className="w-3.5 h-3.5 text-indigo-400" />
+          <Tv className="w-3.5 h-3.5 text-indigo-500" />
           <span>فتح المشغل</span>
         </Link>
 
         {/* Notifications Bell */}
         <button
           onClick={() => setHasNotifications(false)}
-          className="relative p-2.5 rounded-xl bg-slate-800/60 hover:bg-slate-800 text-slate-400 hover:text-white border border-slate-700/50 transition-all cursor-pointer"
+          className="relative p-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-500 hover:text-slate-800 border border-slate-200 transition-all cursor-pointer"
           title="الإشعارات والتنبيهات"
         >
           <Bell className="w-4 h-4" />
           {hasNotifications && (
-            <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-[#0e1424]" />
+            <span className="absolute top-2 left-2 w-2 h-2 rounded-full bg-indigo-500 ring-2 ring-white" />
           )}
         </button>
       </div>

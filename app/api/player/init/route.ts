@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 
   // Check by pairing token
   if (token) {
-    const screen = db.getScreenByToken(token);
+    const screen = await db.getScreenByToken(token);
     if (screen && screen.isPaired) {
       return NextResponse.json({
         isPaired: true,
@@ -28,7 +28,7 @@ export async function GET(req: Request) {
 
   // Check by registration code
   if (code) {
-    const screen = db.getScreenByCode(code);
+    const screen = await db.getScreenByCode(code);
     if (screen) {
       return NextResponse.json({
         isPaired: screen.isPaired,
@@ -40,9 +40,10 @@ export async function GET(req: Request) {
 
   // Otherwise generate a new registration code and placeholder screen
   const newCode = generateRandomCode();
-  const org = db.getData().organizations[0];
+  const data = await db.getData();
+  const org = data.organizations[0];
 
-  const screen = db.createScreen({
+  const screen = await db.createScreen({
     organizationId: org ? org.id : 'org-screenflow-demo',
     name: `شاشة جديدة (${newCode})`,
     registrationCode: newCode,
@@ -54,7 +55,7 @@ export async function GET(req: Request) {
     activeContentId: 'pl-general-ads',
     volume: 80,
     brightness: 100,
-    tags: ['جديدة'],
+    tags: ['شاشة'],
   });
 
   return NextResponse.json({
