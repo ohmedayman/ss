@@ -54,10 +54,10 @@ export default function RegisterPage() {
         }
       }
 
-      const res = await fetch('/api/auth/login', {
+      const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(idToken ? { idToken } : { email, password }),
+        body: JSON.stringify({ idToken, fullName, companyName }),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || 'فشل إنشاء الحساب');

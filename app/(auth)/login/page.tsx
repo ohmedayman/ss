@@ -18,8 +18,8 @@ import { getClientAuth } from '@/lib/firebase/client';
 
 export default function LoginPage() {
   const router = useRouter();
-  const [email, setEmail] = useState('admin@screenflow.io');
-  const [password, setPassword] = useState('admin123');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -129,11 +129,6 @@ export default function LoginPage() {
           <div className="hidden lg:block text-center mb-7">
             <h1 className="text-2xl font-black text-slate-900 tracking-tight">تسجيل الدخول</h1>
             <p className="text-xs text-slate-400 mt-1">أدخل بياناتك للوصول إلى لوحة التحكم</p>
-          </div>
-
-          {/* Demo Notice */}
-          <div className="p-3 rounded-xl bg-indigo-50 border border-indigo-100 mb-6 text-xs text-indigo-600 text-center">
-            💡 حساب تجريبي جاهز: <span className="font-mono text-slate-800 font-semibold">admin@screenflow.io</span>
           </div>
 
           {/* Form */}

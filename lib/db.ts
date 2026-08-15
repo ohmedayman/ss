@@ -346,11 +346,14 @@ export interface Database {
   getActivityLogs(orgId: string, limit?: number): Promise<ActivityLog[]>;
 
   getOrganization(id: string): Promise<Organization | undefined>;
+  createOrganization(org: Organization): Promise<Organization>;
   updateOrganization(id: string, updates: Partial<Organization>): Promise<Organization | null>;
   getUser(id: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   updateUser(id: string, updates: Partial<User>): Promise<User | null>;
   createUser(user: User): Promise<User>;
+
+  setDocument(collection: string, id: string, data: object): Promise<void>;
 
   getQueueServices(orgId: string): Promise<QueueService[]>;
   getQueueTickets(orgId: string): Promise<QueueTicket[]>;
@@ -549,6 +552,19 @@ class LocalDatabase implements Database {
   async createUser(user: User) {
     this.data.users.push(user);
     return user;
+  }
+  async createOrganization(org: Organization) {
+    this.data.organizations.push(org);
+    return org;
+  }
+  async setDocument(collection: string, id: string, data: object) {
+    // Generic document set for seeding
+    const anyData = this.data as any;
+    if (!anyData[collection]) anyData[collection] = [];
+    const arr = anyData[collection] as any[];
+    const idx = arr.findIndex((d: any) => d.id === id);
+    if (idx >= 0) arr[idx] = { ...arr[idx], ...data, id };
+    else arr.push({ ...data, id });
   }
 
   async getQueueServices(orgId: string) {
@@ -842,6 +858,14 @@ class FirestoreDatabase implements Database {
   async createUser(user: User) {
     await this.setDoc(COLLECTIONS.users, user.id, user);
     return user;
+  }
+  async createOrganization(org: Organization) {
+    await this.setDoc(COLLECTIONS.organizations, org.id, org);
+    return org;
+  }
+  async setDocument(collection: string, id: string, data: object) {
+    const fs = await getDb();
+    await fs.collection(collection).doc(id).set({ ...data, id } as object, { merge: true });
   }
 
   async getQueueServices(orgId: string) {

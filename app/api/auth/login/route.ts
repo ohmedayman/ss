@@ -57,31 +57,35 @@ export async function POST(req: Request) {
     }
 
     // --- Local/demo fallback (no Firebase) ---
-    if (!email || !password) {
-      return NextResponse.json({ error: 'البريد الإلكتروني وكلمة المرور مطلوبة' }, { status: 400 });
+    if (!isFirebaseConfigured()) {
+      if (!email || !password) {
+        return NextResponse.json({ error: 'البريد الإلكتروني وكلمة المرور مطلوبة' }, { status: 400 });
+      }
+
+      let user = await db.getUserByEmail(email);
+      if (!user) {
+        const data = await db.getData();
+        user = data.users[0];
+      }
+
+      await setSessionCookie(user.id);
+
+      await db.logActivity({
+        organizationId: user.organizationId,
+        userId: user.id,
+        userName: user.fullName,
+        action: 'تسجيل دخول',
+        actionType: 'auth',
+        details: `تم تسجيل الدخول بنجاح بواسطة ${user.email}`,
+      });
+
+      return NextResponse.json({
+        success: true,
+        user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
+      });
     }
 
-    let user = await db.getUserByEmail(email);
-    if (!user) {
-      const data = await db.getData();
-      user = data.users[0];
-    }
-
-    await setSessionCookie(user.id);
-
-    await db.logActivity({
-      organizationId: user.organizationId,
-      userId: user.id,
-      userName: user.fullName,
-      action: 'تسجيل دخول',
-      actionType: 'auth',
-      details: `تم تسجيل الدخول بنجاح بواسطة ${user.email}`,
-    });
-
-    return NextResponse.json({
-      success: true,
-      user: { id: user.id, email: user.email, fullName: user.fullName, role: user.role },
-    });
+    return NextResponse.json({ error: 'يجب تسجيل الدخول عبر Firebase' }, { status: 401 });
   } catch (error: any) {
     return NextResponse.json({ error: error.message || 'حدث خطأ أثناء تسجيل الدخول' }, { status: 500 });
   }
