@@ -3,16 +3,24 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { sendPasswordResetEmail } from 'firebase/auth';
-import { Tv, Mail, CheckCircle2, ArrowRight } from 'lucide-react';
+import {
+  Tv,
+  CheckCircle2,
+  ArrowRight,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react';
 import { getClientAuth } from '@/lib/firebase/client';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setLoading(true);
     setError('');
     try {
       let firebaseReady = false;
@@ -29,71 +37,108 @@ export default function ForgotPasswordPage() {
       if (email) setSent(true);
     } catch (err: any) {
       setError(err?.message || 'حدث خطأ أثناء إرسال رابط الاستعادة');
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-800 flex items-center justify-center p-4 relative overflow-hidden font-['Cairo']">
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="max-w-md w-full card rounded-3xl p-8 relative z-10 shadow-xl">
-        <div className="text-center mb-8">
-          <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-4">
-            <Tv className="w-7 h-7 text-white" />
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden font-['Cairo']">
+      {/* Header / Logo */}
+      <header className="w-full px-8 py-5 flex items-center justify-between absolute top-0 left-0 right-0 z-20">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F7931E] flex items-center justify-center shadow-md shadow-orange-500/20">
+            <Tv className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-2xl font-black tracking-tight text-slate-900">استعادة كلمة المرور</h1>
-          <p className="text-xs text-slate-400 mt-1">أدخل بريدك الإلكتروني لاستلام رابط إعادة التعيين</p>
-        </div>
+          <span className="text-xl font-black text-slate-800 tracking-tight">
+            Screen<span className="text-[#FF6B35]">Flow</span>
+          </span>
+        </Link>
+      </header>
 
-        {sent ? (
-          <div className="text-center space-y-4">
-            <div className="w-12 h-12 rounded-full bg-emerald-50 text-emerald-500 mx-auto flex items-center justify-center border border-emerald-100">
-              <CheckCircle2 className="w-6 h-6" />
-            </div>
-            <p className="text-xs text-slate-500">
-              تم إرسال تعليمات إعادة تعيين كلمة المرور إلى <span className="text-slate-800 font-mono font-semibold">{email}</span>
-            </p>
-            <Link
-              href="/login"
-              className="inline-flex items-center gap-2 text-xs font-bold text-indigo-600 hover:underline"
-            >
-              <ArrowRight className="w-4 h-4" />
-              <span>العودة لتسجيل الدخول</span>
-            </Link>
-          </div>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600">
-                {error}
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-40 relative z-10">
+        <div className="w-full max-w-md">
+          <div className="bg-white rounded-2xl shadow-[0_2px_40px_rgba(0,0,0,0.08)] border border-slate-100 p-8 md:p-10">
+            <h1 className="text-2xl font-bold text-slate-800 mb-1">استعادة كلمة المرور</h1>
+            <p className="text-sm text-slate-400 mb-8">أدخل بريدك الإلكتروني لاستلام رابط إعادة التعيين</p>
+
+            {sent ? (
+              <div className="text-center space-y-4 py-4">
+                <div className="w-14 h-14 rounded-full bg-emerald-50 text-emerald-500 mx-auto flex items-center justify-center border border-emerald-100">
+                  <CheckCircle2 className="w-7 h-7" />
+                </div>
+                <p className="text-sm text-slate-500 leading-relaxed">
+                  تم إرسال تعليمات إعادة تعيين كلمة المرور إلى
+                </p>
+                <p className="text-sm font-mono font-semibold text-slate-800 bg-slate-50 rounded-lg px-3 py-2">
+                  {email}
+                </p>
+                <Link
+                  href="/login"
+                  className="inline-flex items-center gap-2 text-sm font-bold text-[#FF6B35] hover:text-[#E55A2B] transition-colors mt-4"
+                >
+                  <ArrowRight className="w-4 h-4" />
+                  <span>العودة لتسجيل الدخول</span>
+                </Link>
               </div>
+            ) : (
+              <form onSubmit={handleSubmit} className="space-y-5">
+                {error && (
+                  <div className="p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2.5">
+                    <AlertCircle className="w-4 h-4 shrink-0" />
+                    <span>{error}</span>
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-600 mb-2">البريد الإلكتروني</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    placeholder="أدخل بريدك الإلكتروني"
+                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/30 focus:border-[#FF6B35] transition-all"
+                    required
+                  />
+                </div>
+
+                <button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F7931E] hover:from-[#E55A2B] hover:to-[#E08819] text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span>جاري الإرسال...</span>
+                    </>
+                  ) : (
+                    <span>إرسال رابط الاستعادة</span>
+                  )}
+                </button>
+
+                <div className="text-center pt-2">
+                  <Link href="/login" className="text-sm text-slate-400 hover:text-slate-600 transition-colors">
+                    تذكرت كلمة المرور؟{' '}
+                    <span className="font-bold text-[#FF6B35] hover:text-[#E55A2B]">تسجيل الدخول</span>
+                  </Link>
+                </div>
+              </form>
             )}
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">البريد الإلكتروني</label>
-              <input
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="name@company.com"
-                className="input"
-                required
-              />
-            </div>
+          </div>
+        </div>
+      </main>
 
-            <button
-              type="submit"
-              className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs shadow-lg shadow-indigo-500/25 transition-all cursor-pointer"
-            >
-              إرسال رابط الاستعادة
-            </button>
-
-            <div className="text-center pt-2">
-              <Link href="/login" className="text-xs text-slate-400 hover:text-slate-600">
-                تذكرت كلمة المرور؟ تسجيل الدخول
-              </Link>
-            </div>
-          </form>
-        )}
+      {/* Bottom Illustration */}
+      <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
+        <svg className="absolute bottom-0 left-0 right-0 w-full h-48 text-slate-50" viewBox="0 0 1440 320" fill="currentColor" preserveAspectRatio="none">
+          <path d="M0,224L40,213.3C80,203,160,181,240,181.3C320,181,400,203,480,213.3C560,224,640,224,720,208C800,192,880,160,960,165.3C1040,171,1120,213,1200,218.7C1280,224,1360,192,1400,176L1440,160L1440,320L1400,320C1360,320,1280,320,1200,320C1120,320,1040,320,960,320C880,320,800,320,720,320C640,320,560,320,480,320C400,320,320,320,240,320C160,320,80,320,40,320L0,320Z" />
+        </svg>
+        <div className="absolute bottom-32 left-[15%] w-2 h-2 rounded-full bg-[#FF6B35]/20" />
+        <div className="absolute bottom-28 left-[25%] w-3 h-3 rounded-full bg-[#FF6B35]/15" />
+        <div className="absolute bottom-36 left-[70%] w-2 h-2 rounded-full bg-[#FF6B35]/20" />
+        <div className="absolute bottom-24 left-[80%] w-4 h-4 rounded-full bg-[#FF6B35]/10" />
       </div>
     </div>
   );

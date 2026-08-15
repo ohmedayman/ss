@@ -6,13 +6,10 @@ import { useRouter } from 'next/navigation';
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import {
   Tv,
-  Lock,
-  Mail,
-  Sparkles,
+  Eye,
+  EyeOff,
   AlertCircle,
-  Monitor,
-  Play,
-  ShieldCheck,
+  Loader2,
 } from 'lucide-react';
 import { getClientAuth } from '@/lib/firebase/client';
 
@@ -20,6 +17,7 @@ export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
@@ -29,7 +27,6 @@ export default function LoginPage() {
     setError('');
 
     try {
-      // Decide which auth path to use based on backend readiness
       let firebaseReady = false;
       try {
         const cfg = await fetch('/api/auth/config').then(r => r.json());
@@ -48,9 +45,9 @@ export default function LoginPage() {
         } catch (fbErr: any) {
           throw new Error(
             fbErr?.code === 'auth/user-not-found' || fbErr?.code === 'auth/invalid-credential' || fbErr?.code === 'auth/wrong-password'
-              ? 'البريد أو كلمة المرور غير صحيحة'
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
               : fbErr?.code === 'auth/invalid-login-credentials'
-              ? 'البريد أو كلمة المرور غير صحيحة'
+              ? 'البريد الإلكتروني أو كلمة المرور غير صحيحة'
               : fbErr?.message || 'فشل تسجيل الدخول'
           );
         }
@@ -76,126 +73,121 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#f6f7fb] text-slate-800 flex items-center justify-center p-4 relative overflow-hidden font-['Cairo']">
-      {/* Soft Glows */}
-      <div className="absolute top-1/4 right-1/4 w-96 h-96 bg-indigo-200/40 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-80 h-80 bg-cyan-200/40 rounded-full blur-3xl pointer-events-none" />
-
-      <div className="w-full max-w-5xl grid lg:grid-cols-2 gap-0 items-center relative z-10">
-        {/* Brand Side */}
-        <div className="hidden lg:flex flex-col justify-center p-10">
-          <div className="w-14 h-14 rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-5">
-            <Tv className="w-7 h-7 text-white" />
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden font-['Cairo']">
+      {/* Header / Logo */}
+      <header className="w-full px-8 py-5 flex items-center justify-between absolute top-0 left-0 right-0 z-20">
+        <Link href="/" className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#FF6B35] to-[#F7931E] flex items-center justify-center shadow-md shadow-orange-500/20">
+            <Tv className="w-5 h-5 text-white" />
           </div>
-          <h1 className="text-4xl font-black text-slate-900 tracking-tight leading-tight">
-            منصة ScreenFlow لإدارة الشاشات الرقمية
-          </h1>
-          <p className="text-slate-500 mt-3 text-sm leading-relaxed max-w-md">
-            تحكم في شاشاتك الذكية من أي مكان: اربط، جدول، أرسل المحتوى، وراقب كل الشاشات في الوقت الحقيقي.
-          </p>
+          <span className="text-xl font-black text-slate-800 tracking-tight">
+            Screen<span className="text-[#FF6B35]">Flow</span>
+          </span>
+        </Link>
+      </header>
 
-          <div className="mt-8 space-y-4">
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-indigo-500 shadow-sm">
-                <Monitor className="w-4.5 h-4.5" />
-              </div>
-              <span>اقتران فوري عبر كود التسجيل و QR Code</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-cyan-500 shadow-sm">
-                <Play className="w-4.5 h-4.5" />
-              </div>
-              <span>مشغل ذكي يعمل بدون إنترنت + أوامر لحظية</span>
-            </div>
-            <div className="flex items-center gap-3 text-sm text-slate-600">
-              <div className="w-9 h-9 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-emerald-500 shadow-sm">
-                <ShieldCheck className="w-4.5 h-4.5" />
-              </div>
-              <span>استضافة سحابية آمنة مع Firebase</span>
-            </div>
-          </div>
-        </div>
+      {/* Main Content */}
+      <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-40 relative z-10">
+        <div className="w-full max-w-md">
+          {/* Login Card */}
+          <div className="bg-white rounded-2xl shadow-[0_2px_40px_rgba(0,0,0,0.08)] border border-slate-100 p-8 md:p-10">
+            <h1 className="text-2xl font-bold text-slate-800 mb-1">مرحباً بعودتك!</h1>
+            <p className="text-sm text-slate-400 mb-8">سجّل دخولك للوصول إلى لوحة التحكم</p>
 
-        {/* Login Card */}
-        <div className="card rounded-3xl p-8 relative z-10 shadow-xl">
-          <div className="text-center mb-7 lg:hidden">
-            <div className="w-14 h-14 mx-auto rounded-2xl bg-gradient-to-tr from-indigo-600 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/30 mb-3">
-              <Tv className="w-7 h-7 text-white" />
-            </div>
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">ScreenFlow</h1>
-            <p className="text-xs text-slate-400 mt-1">المنصة السحابية لإدارة الشاشات الرقمية</p>
-          </div>
-
-          <div className="hidden lg:block text-center mb-7">
-            <h1 className="text-2xl font-black text-slate-900 tracking-tight">تسجيل الدخول</h1>
-            <p className="text-xs text-slate-400 mt-1">أدخل بياناتك للوصول إلى لوحة التحكم</p>
-          </div>
-
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-4">
             {error && (
-              <div className="p-3 rounded-xl bg-rose-50 border border-rose-200 text-xs text-rose-600 flex items-center gap-2">
+              <div className="mb-5 p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2.5">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span>{error}</span>
               </div>
             )}
 
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                البريد الإلكتروني
-              </label>
-              <div className="relative">
-                <Mail className="w-4 h-4 text-slate-400 absolute top-3 right-3" />
+            <form onSubmit={handleLogin} className="space-y-5">
+              {/* Email */}
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
+                  البريد الإلكتروني
+                </label>
                 <input
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@company.com"
-                  className="input pl-3 pr-9"
+                  placeholder="أدخل بريدك الإلكتروني"
+                  className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/30 focus:border-[#FF6B35] transition-all"
                   required
                 />
               </div>
-            </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-1.5">
-                <label className="block text-xs font-semibold text-slate-600">
+              {/* Password */}
+              <div>
+                <label className="block text-sm font-medium text-slate-600 mb-2">
                   كلمة المرور
                 </label>
-                <Link href="/forgot-password" className="text-[11px] text-indigo-600 hover:underline">
+                <div className="relative">
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder="أدخل كلمة المرور"
+                    className="w-full px-4 py-3 pl-12 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#FF6B35]/30 focus:border-[#FF6B35] transition-all"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
+                  >
+                    {showPassword ? <EyeOff className="w-4.5 h-4.5" /> : <Eye className="w-4.5 h-4.5" />}
+                  </button>
+                </div>
+              </div>
+
+              {/* Forget Password */}
+              <div className="text-left">
+                <Link href="/forgot-password" className="text-sm text-[#FF6B35] hover:text-[#E55A2B] transition-colors font-medium">
                   نسيت كلمة المرور؟
                 </Link>
               </div>
-              <div className="relative">
-                <Lock className="w-4 h-4 text-slate-400 absolute top-3 right-3" />
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="input pl-3 pr-9"
-                  required
-                />
-              </div>
+
+              {/* Submit */}
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3.5 rounded-xl bg-gradient-to-r from-[#FF6B35] to-[#F7931E] hover:from-[#E55A2B] hover:to-[#E08819] text-white font-bold text-sm shadow-lg shadow-orange-500/25 transition-all cursor-pointer flex items-center justify-center gap-2 mt-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    <span>جاري التحقق...</span>
+                  </>
+                ) : (
+                  <span>تسجيل الدخول</span>
+                )}
+              </button>
+            </form>
+
+            {/* Sign Up Link */}
+            <div className="text-center mt-7 text-sm text-slate-400">
+              ليس لديك حساب؟{' '}
+              <Link href="/register" className="text-[#FF6B35] hover:text-[#E55A2B] font-bold transition-colors">
+                أنشئ حساباً جديداً
+              </Link>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 text-white font-bold text-xs shadow-lg shadow-indigo-500/30 transition-all cursor-pointer flex items-center justify-center gap-2 mt-6 disabled:opacity-60"
-            >
-              <Sparkles className="w-4 h-4" />
-              <span>{loading ? 'جاري التحقق...' : 'تسجيل الدخول إلى المنصة'}</span>
-            </button>
-          </form>
-
-          <div className="text-center mt-6 text-xs text-slate-400">
-            ليس لديك حساب بعد؟{' '}
-            <Link href="/register" className="text-indigo-600 hover:underline font-bold">
-              أنشئ حساب جديد
-            </Link>
           </div>
         </div>
+      </main>
+
+      {/* Bottom Illustration */}
+      <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
+        {/* City silhouette */}
+        <svg className="absolute bottom-0 left-0 right-0 w-full h-48 text-slate-50" viewBox="0 0 1440 320" fill="currentColor" preserveAspectRatio="none">
+          <path d="M0,224L40,213.3C80,203,160,181,240,181.3C320,181,400,203,480,213.3C560,224,640,224,720,208C800,192,880,160,960,165.3C1040,171,1120,213,1200,218.7C1280,224,1360,192,1400,176L1440,160L1440,320L1400,320C1360,320,1280,320,1200,320C1120,320,1040,320,960,320C880,320,800,320,720,320C640,320,560,320,480,320C400,320,320,320,240,320C160,320,80,320,40,320L0,320Z" />
+        </svg>
+        {/* Decorative dots */}
+        <div className="absolute bottom-32 left-[15%] w-2 h-2 rounded-full bg-[#FF6B35]/20" />
+        <div className="absolute bottom-28 left-[25%] w-3 h-3 rounded-full bg-[#FF6B35]/15" />
+        <div className="absolute bottom-36 left-[70%] w-2 h-2 rounded-full bg-[#FF6B35]/20" />
+        <div className="absolute bottom-24 left-[80%] w-4 h-4 rounded-full bg-[#FF6B35]/10" />
+        <div className="absolute bottom-40 left-[45%] w-1.5 h-1.5 rounded-full bg-[#F7931E]/25" />
       </div>
     </div>
   );
