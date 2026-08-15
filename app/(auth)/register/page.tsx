@@ -29,12 +29,16 @@ export default function RegisterPage() {
     setError('');
 
     try {
-      const firebaseConfigured = Boolean(
-        process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      );
+      let firebaseReady = false;
+      try {
+        const cfg = await fetch('/api/auth/config').then(r => r.json());
+        firebaseReady = Boolean(cfg.firebaseReady);
+      } catch (e) {
+        firebaseReady = false;
+      }
 
       let idToken: string | null = null;
-      if (firebaseConfigured) {
+      if (firebaseReady) {
         try {
           const auth = getClientAuth();
           const cred = await createUserWithEmailAndPassword(auth, email, password);

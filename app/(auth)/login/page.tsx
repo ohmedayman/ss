@@ -29,12 +29,17 @@ export default function LoginPage() {
     setError('');
 
     try {
-      const firebaseConfigured = Boolean(
-        process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      );
+      // Decide which auth path to use based on backend readiness
+      let firebaseReady = false;
+      try {
+        const cfg = await fetch('/api/auth/config').then(r => r.json());
+        firebaseReady = Boolean(cfg.firebaseReady);
+      } catch (e) {
+        firebaseReady = false;
+      }
 
       let body: Record<string, string>;
-      if (firebaseConfigured) {
+      if (firebaseReady) {
         try {
           const auth = getClientAuth();
           const cred = await signInWithEmailAndPassword(auth, email, password);

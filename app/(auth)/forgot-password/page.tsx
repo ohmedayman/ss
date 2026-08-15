@@ -15,10 +15,14 @@ export default function ForgotPasswordPage() {
     e.preventDefault();
     setError('');
     try {
-      const firebaseConfigured = Boolean(
-        process.env.NEXT_PUBLIC_FIREBASE_API_KEY && process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID
-      );
-      if (firebaseConfigured) {
+      let firebaseReady = false;
+      try {
+        const cfg = await fetch('/api/auth/config').then(r => r.json());
+        firebaseReady = Boolean(cfg.firebaseReady);
+      } catch (e) {
+        firebaseReady = false;
+      }
+      if (firebaseReady) {
         const auth = getClientAuth();
         await sendPasswordResetEmail(auth, email);
       }
