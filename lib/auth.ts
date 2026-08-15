@@ -25,7 +25,7 @@ async function loadDefaultSession(): Promise<SessionData> {
 }
 
 export async function getSession(): Promise<SessionData | null> {
-  await db.seedIfEmpty();
+  try { await db.seedIfEmpty(); } catch (e) { console.warn('seedIfEmpty failed:', e); }
 
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;

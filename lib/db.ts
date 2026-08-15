@@ -696,16 +696,20 @@ class FirestoreDatabase implements Database {
     const orgSnap = await fs.collection(COLLECTIONS.organizations).get();
     if (!orgSnap.empty) return;
 
-    const batch = fs.batch();
-    (Object.keys(seed) as (keyof DatabaseSchema)[]).forEach((key) => {
+    for (const key of Object.keys(seed) as (keyof DatabaseSchema)[]) {
       const items = seed[key];
-      const col = fs.collection(COLLECTIONS[key]) as CollectionReference;
-      items.forEach((item: any) => {
-        const docRef = col.doc(item.id);
-        batch.set(docRef, { ...item });
-      });
-    });
-    await batch.commit();
+      const col = fs.collection(COLLECTIONS[key]);
+      for (const item of items as any[]) {
+        try {
+          const cleaned = Object.fromEntries(
+            Object.entries(item).filter(([_, v]) => v !== undefined)
+          );
+          await col.doc(item.id).set(cleaned, { merge: true });
+        } catch (e) {
+          console.error(`seedIfEmpty: failed to seed ${key}/${item.id}:`, e);
+        }
+      }
+    }
   }
 
   private async list<T>(collection: string, field?: string, value?: string): Promise<T[]> {
