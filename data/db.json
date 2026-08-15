@@ -1,0 +1,640 @@
+{
+  "organizations": [
+    {
+      "id": "org-screenflow-demo",
+      "name": "مجموعة الأفق للحلول الرقمية",
+      "slug": "al-ofuq",
+      "logoUrl": "",
+      "plan": "pro",
+      "storageLimitMb": 10240,
+      "storageUsedBytes": 20370000,
+      "maxScreens": 25,
+      "createdAt": "2026-07-16T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "users": [
+    {
+      "id": "usr-admin-1",
+      "organizationId": "org-screenflow-demo",
+      "email": "admin@screenflow.io",
+      "fullName": "أحمد بن عبد الله آل سعود",
+      "role": "owner",
+      "avatarUrl": "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=200&q=80",
+      "phone": "+966 50 123 4567",
+      "isActive": true,
+      "lastLoginAt": "2026-08-15T18:12:09.046Z",
+      "createdAt": "2026-07-16T18:12:09.047Z"
+    }
+  ],
+  "branches": [
+    {
+      "id": "br-riyadh-main",
+      "organizationId": "org-screenflow-demo",
+      "name": "الفرع الرئيسي - الرياض (طريق الملك فهد)",
+      "city": "الرياض",
+      "address": "برج الأفق، الطابق 14",
+      "phone": "011-4567890",
+      "isActive": true
+    },
+    {
+      "id": "br-jeddah-1",
+      "organizationId": "org-screenflow-demo",
+      "name": "فرع جدة (حي الروضة)",
+      "city": "جدة",
+      "address": "شارع الأمير سلطان",
+      "phone": "012-6543210",
+      "isActive": true
+    }
+  ],
+  "screens": [
+    {
+      "id": "scr-1",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-riyadh-main",
+      "name": "شاشة الاستقبال الرئيسية - الرياض",
+      "registrationCode": "SF-1082",
+      "pairingToken": "tok_scr_1_demo",
+      "isPaired": true,
+      "status": "online",
+      "lastHeartbeatAt": "2026-08-15T18:12:04.047Z",
+      "ipAddress": "192.168.1.105",
+      "appVersion": "v1.4.2",
+      "orientation": "landscape",
+      "resolution": "1920x1080",
+      "activeContentType": "playlist",
+      "activeContentId": "pl-general-ads",
+      "screenshotUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=640&q=70",
+      "lastScreenshotAt": "2026-08-15T18:11:09.047Z",
+      "volume": 80,
+      "brightness": 100,
+      "notes": "مثبتة على الجدار في المدخل الرئيسي بجوار المصاعد",
+      "tags": [
+        "استقبال",
+        "الرياض",
+        "رئيسية"
+      ],
+      "createdAt": "2026-08-08T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "scr-2",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-riyadh-main",
+      "name": "شاشة صالة الانتظار والعيادات",
+      "registrationCode": "SF-4491",
+      "pairingToken": "tok_scr_2_demo",
+      "isPaired": true,
+      "status": "online",
+      "lastHeartbeatAt": "2026-08-15T18:11:57.047Z",
+      "ipAddress": "192.168.1.112",
+      "appVersion": "v1.4.2",
+      "orientation": "landscape",
+      "resolution": "1920x1080",
+      "activeContentType": "template",
+      "activeContentId": "tpl-clinic-waiting",
+      "screenshotUrl": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=640&q=70",
+      "lastScreenshotAt": "2026-08-15T18:09:09.047Z",
+      "volume": 65,
+      "brightness": 90,
+      "notes": "شاشة الانتظار المربوطة بنظام التنبيه الصوتي وأرقام الانتظار",
+      "tags": [
+        "عيادات",
+        "انتظار",
+        "صوت"
+      ],
+      "createdAt": "2026-08-10T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "scr-3",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-jeddah-1",
+      "name": "شاشة المنيو والعروض - فرع جدة",
+      "registrationCode": "SF-7734",
+      "pairingToken": "tok_scr_3_demo",
+      "isPaired": true,
+      "status": "offline",
+      "lastHeartbeatAt": "2026-08-15T15:12:09.047Z",
+      "ipAddress": "10.0.4.15",
+      "appVersion": "v1.4.0",
+      "orientation": "portrait",
+      "resolution": "1080x1920",
+      "activeContentType": "template",
+      "activeContentId": "tpl-menu-board",
+      "screenshotUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=640&q=70",
+      "lastScreenshotAt": "2026-08-15T14:12:09.047Z",
+      "volume": 0,
+      "brightness": 85,
+      "notes": "شاشة عمودية بجانب الكاشير",
+      "tags": [
+        "جدة",
+        "منيو",
+        "عمودية"
+      ],
+      "createdAt": "2026-08-11T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "scr-unpaired-demo",
+      "organizationId": "org-screenflow-demo",
+      "name": "شاشة تجريبية جديدة (جاهزة للاقتران)",
+      "registrationCode": "SF-2026",
+      "isPaired": false,
+      "status": "offline",
+      "orientation": "landscape",
+      "resolution": "1920x1080",
+      "activeContentType": "playlist",
+      "volume": 75,
+      "brightness": 100,
+      "notes": "افتح صفحة /player وأدخل كود SF-2026 لربطها وتجربة البث المباشر فوراً",
+      "tags": [
+        "جديدة",
+        "غير_مقترنة"
+      ],
+      "createdAt": "2026-08-15T18:12:09.046Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "screenCommands": [],
+  "media": [
+    {
+      "id": "med-1",
+      "organizationId": "org-screenflow-demo",
+      "name": "عرض الصيف الترويجي 2026",
+      "fileType": "image",
+      "fileUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=60",
+      "fileSizeBytes": 2450000,
+      "durationSeconds": 10,
+      "width": 1920,
+      "height": 1080,
+      "folder": "إعلانات",
+      "tags": [
+        "صيف",
+        "خصومات",
+        "رئيسي"
+      ],
+      "createdAt": "2026-08-12T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "med-2",
+      "organizationId": "org-screenflow-demo",
+      "name": "فيديو تقديم المنتجات الذكية",
+      "fileType": "video",
+      "fileUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&q=60",
+      "fileSizeBytes": 14800000,
+      "durationSeconds": 15,
+      "width": 1920,
+      "height": 1080,
+      "folder": "فيديو",
+      "tags": [
+        "منتجات",
+        "فيديو",
+        "جودة_عالية"
+      ],
+      "createdAt": "2026-08-13T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "med-3",
+      "organizationId": "org-screenflow-demo",
+      "name": "قائمة المشروبات والقهوة المختصة",
+      "fileType": "image",
+      "fileUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=60",
+      "fileSizeBytes": 3120000,
+      "durationSeconds": 12,
+      "width": 1920,
+      "height": 1080,
+      "folder": "قوائم الطعام",
+      "tags": [
+        "قهوة",
+        "منيو",
+        "مطاعم"
+      ],
+      "createdAt": "2026-08-14T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "med-4",
+      "organizationId": "org-screenflow-demo",
+      "name": "شريط الأخبار والتنبيهات المباشر",
+      "fileType": "ticker_text",
+      "fileUrl": "",
+      "customTickerText": "🎉 مرحباً بكم في منصة ScreenFlow - خصم خاص 20% على جميع اشتراكات الشركات والمتاجر خلال هذا الشهر! 🌟 نتمنى لكم تجربة مميزة وممتعة.",
+      "fileSizeBytes": 256,
+      "durationSeconds": 20,
+      "folder": "نصوص إعلانية",
+      "tags": [
+        "شريط_متحرك",
+        "تنبيهات"
+      ],
+      "createdAt": "2026-08-15T18:12:09.046Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "med-5",
+      "organizationId": "org-screenflow-demo",
+      "name": "موقع طقس الخليج والمناخ",
+      "fileType": "web_url",
+      "fileUrl": "https://weather.com",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1592210454359-9043f067919b?auto=format&fit=crop&w=400&q=60",
+      "fileSizeBytes": 1024,
+      "durationSeconds": 30,
+      "folder": "روابط ويب",
+      "tags": [
+        "طقس",
+        "موقع"
+      ],
+      "createdAt": "2026-08-15T18:12:09.046Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "playlists": [
+    {
+      "id": "pl-general-ads",
+      "organizationId": "org-screenflow-demo",
+      "name": "قائمة الإعلانات الرئيسية (Main Ads Playlist)",
+      "description": "تعرض عروض الصيف وفيديو المنتجات وقائمة القهوة بالتناوب",
+      "isLoop": true,
+      "defaultTransition": "fade",
+      "totalDurationSeconds": 37,
+      "items": [
+        {
+          "id": "pli-1",
+          "playlistId": "pl-general-ads",
+          "mediaId": "med-1",
+          "media": {
+            "id": "med-1",
+            "organizationId": "org-screenflow-demo",
+            "name": "عرض الصيف الترويجي 2026",
+            "fileType": "image",
+            "fileUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
+            "thumbnailUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=60",
+            "fileSizeBytes": 2450000,
+            "durationSeconds": 10,
+            "width": 1920,
+            "height": 1080,
+            "folder": "إعلانات",
+            "tags": [
+              "صيف",
+              "خصومات",
+              "رئيسي"
+            ],
+            "createdAt": "2026-08-12T18:12:09.047Z",
+            "updatedAt": "2026-08-15T18:12:09.046Z"
+          },
+          "orderIndex": 0,
+          "durationSeconds": 10,
+          "transition": "fade",
+          "isMuted": true
+        },
+        {
+          "id": "pli-2",
+          "playlistId": "pl-general-ads",
+          "mediaId": "med-2",
+          "media": {
+            "id": "med-2",
+            "organizationId": "org-screenflow-demo",
+            "name": "فيديو تقديم المنتجات الذكية",
+            "fileType": "video",
+            "fileUrl": "https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4",
+            "thumbnailUrl": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&q=60",
+            "fileSizeBytes": 14800000,
+            "durationSeconds": 15,
+            "width": 1920,
+            "height": 1080,
+            "folder": "فيديو",
+            "tags": [
+              "منتجات",
+              "فيديو",
+              "جودة_عالية"
+            ],
+            "createdAt": "2026-08-13T18:12:09.047Z",
+            "updatedAt": "2026-08-15T18:12:09.046Z"
+          },
+          "orderIndex": 1,
+          "durationSeconds": 15,
+          "transition": "slide_left",
+          "isMuted": false
+        },
+        {
+          "id": "pli-3",
+          "playlistId": "pl-general-ads",
+          "mediaId": "med-3",
+          "media": {
+            "id": "med-3",
+            "organizationId": "org-screenflow-demo",
+            "name": "قائمة المشروبات والقهوة المختصة",
+            "fileType": "image",
+            "fileUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80",
+            "thumbnailUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=60",
+            "fileSizeBytes": 3120000,
+            "durationSeconds": 12,
+            "width": 1920,
+            "height": 1080,
+            "folder": "قوائم الطعام",
+            "tags": [
+              "قهوة",
+              "منيو",
+              "مطاعم"
+            ],
+            "createdAt": "2026-08-14T18:12:09.047Z",
+            "updatedAt": "2026-08-15T18:12:09.046Z"
+          },
+          "orderIndex": 2,
+          "durationSeconds": 12,
+          "transition": "fade",
+          "isMuted": true
+        }
+      ],
+      "createdAt": "2026-08-13T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "pl-offers-morning",
+      "organizationId": "org-screenflow-demo",
+      "name": "قائمة العروض الصباحية",
+      "description": "قائمة خاصة بساعات الصباح الباكر",
+      "isLoop": true,
+      "defaultTransition": "slide_right",
+      "totalDurationSeconds": 22,
+      "items": [
+        {
+          "id": "pli-4",
+          "playlistId": "pl-offers-morning",
+          "mediaId": "med-3",
+          "media": {
+            "id": "med-3",
+            "organizationId": "org-screenflow-demo",
+            "name": "قائمة المشروبات والقهوة المختصة",
+            "fileType": "image",
+            "fileUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80",
+            "thumbnailUrl": "https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=60",
+            "fileSizeBytes": 3120000,
+            "durationSeconds": 12,
+            "width": 1920,
+            "height": 1080,
+            "folder": "قوائم الطعام",
+            "tags": [
+              "قهوة",
+              "منيو",
+              "مطاعم"
+            ],
+            "createdAt": "2026-08-14T18:12:09.047Z",
+            "updatedAt": "2026-08-15T18:12:09.046Z"
+          },
+          "orderIndex": 0,
+          "durationSeconds": 12,
+          "transition": "fade",
+          "isMuted": true
+        },
+        {
+          "id": "pli-5",
+          "playlistId": "pl-offers-morning",
+          "mediaId": "med-1",
+          "media": {
+            "id": "med-1",
+            "organizationId": "org-screenflow-demo",
+            "name": "عرض الصيف الترويجي 2026",
+            "fileType": "image",
+            "fileUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1920&q=80",
+            "thumbnailUrl": "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=400&q=60",
+            "fileSizeBytes": 2450000,
+            "durationSeconds": 10,
+            "width": 1920,
+            "height": 1080,
+            "folder": "إعلانات",
+            "tags": [
+              "صيف",
+              "خصومات",
+              "رئيسي"
+            ],
+            "createdAt": "2026-08-12T18:12:09.047Z",
+            "updatedAt": "2026-08-15T18:12:09.046Z"
+          },
+          "orderIndex": 1,
+          "durationSeconds": 10,
+          "transition": "slide_left",
+          "isMuted": true
+        }
+      ],
+      "createdAt": "2026-08-15T06:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "templates": [
+    {
+      "id": "tpl-clinic-waiting",
+      "organizationId": "org-screenflow-demo",
+      "name": "قالب العيادات وصالات الانتظار (مع أرقام الانتظار والطقس)",
+      "layout": "split_3_sidebar",
+      "backgroundColor": "#0f172a",
+      "headerTitle": "مجمع الأفق الطبي الاستشاري",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=60",
+      "zones": [
+        {
+          "id": "zone-main",
+          "title": "المنطقة الرئيسية (فيديو وتوعية صحية)",
+          "type": "playlist",
+          "contentId": "pl-general-ads"
+        },
+        {
+          "id": "zone-sidebar-top",
+          "title": "شاشة أرقام الانتظار الحالية",
+          "type": "queue_display",
+          "options": {
+            "serviceCode": "A",
+            "title": "الرقم الحالي"
+          }
+        },
+        {
+          "id": "zone-sidebar-clock",
+          "title": "الساعة والطقس والتقويم الهجري",
+          "type": "clock",
+          "options": {
+            "showWeather": true,
+            "city": "الرياض"
+          }
+        },
+        {
+          "id": "zone-bottom-ticker",
+          "title": "الشريط الإخباري المتحرك",
+          "type": "ticker",
+          "text": "🩺 نسعى دائماً لخدمتكم بأعلى معايير الرعاية الصحية • مواعيد العيادات المسائية تبدأ من الساعة 4:00 عصراً • للشكاوى والاستفسارات اتصل على الرقم المجاني 800-12345"
+        }
+      ],
+      "createdAt": "2026-08-13T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    },
+    {
+      "id": "tpl-menu-board",
+      "organizationId": "org-screenflow-demo",
+      "name": "قالب شاشات المطاعم والمقاهي (Menu Board)",
+      "layout": "split_2_horizontal",
+      "backgroundColor": "#18181b",
+      "headerTitle": "كافيه الأفق - النكهة الأصيلة",
+      "thumbnailUrl": "https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=400&q=60",
+      "zones": [
+        {
+          "id": "zone-menu-media",
+          "title": "عرض الأصناف والوجبات",
+          "type": "media",
+          "contentId": "med-3"
+        },
+        {
+          "id": "zone-menu-ticker",
+          "title": "العروض الخاصة والخصومات",
+          "type": "ticker",
+          "text": "☕ احصل على كوكيز مجاني مع كل كوب قهوة مختصة • العرض ساري حتى نهاية الأسبوع!"
+        }
+      ],
+      "createdAt": "2026-08-15T18:12:09.046Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "schedules": [
+    {
+      "id": "sch-1",
+      "organizationId": "org-screenflow-demo",
+      "name": "جدول العروض الصباحية (الأحد إلى الخميس)",
+      "targetType": "playlist",
+      "targetId": "pl-offers-morning",
+      "screenIds": [
+        "scr-1"
+      ],
+      "startDate": "2026-01-01",
+      "endDate": "2026-12-31",
+      "startTime": "08:00",
+      "endTime": "12:00",
+      "daysOfWeek": [
+        0,
+        1,
+        2,
+        3,
+        4
+      ],
+      "priority": 1,
+      "isActive": true,
+      "createdAt": "2026-08-14T18:12:09.047Z",
+      "updatedAt": "2026-08-15T18:12:09.046Z"
+    }
+  ],
+  "activityLogs": [
+    {
+      "id": "log-1",
+      "organizationId": "org-screenflow-demo",
+      "userId": "usr-admin-1",
+      "userName": "أحمد عبد الله",
+      "action": "إسناد قائمة تشغيل",
+      "actionType": "playlist",
+      "details": "تم تعيين قائمة \"قائمة الإعلانات الرئيسية\" على شاشة الاستقبال الرئيسية",
+      "ipAddress": "192.168.1.50",
+      "createdAt": "2026-08-15T16:12:09.047Z"
+    },
+    {
+      "id": "log-2",
+      "organizationId": "org-screenflow-demo",
+      "userId": "usr-admin-1",
+      "userName": "أحمد عبد الله",
+      "action": "إرسال أمر للشاشة",
+      "actionType": "screen",
+      "details": "إرسال أمر تحديث فوري (Reload) إلى شاشة صالة الانتظار",
+      "ipAddress": "192.168.1.50",
+      "createdAt": "2026-08-15T13:12:09.047Z"
+    },
+    {
+      "id": "log-3",
+      "organizationId": "org-screenflow-demo",
+      "userId": "usr-admin-1",
+      "userName": "أحمد عبد الله",
+      "action": "رفع وسائط جديدة",
+      "actionType": "media",
+      "details": "تم رفع صورة \"عرض الصيف الترويجي 2026\"",
+      "ipAddress": "192.168.1.50",
+      "createdAt": "2026-08-15T06:12:09.047Z"
+    },
+    {
+      "id": "log-4",
+      "organizationId": "org-screenflow-demo",
+      "userId": "usr-admin-1",
+      "userName": "أحمد عبد الله",
+      "action": "تسجيل دخول ناجح",
+      "actionType": "auth",
+      "details": "تم تسجيل الدخول إلى لوحة التحكم بنجاح",
+      "ipAddress": "192.168.1.50",
+      "createdAt": "2026-08-14T18:12:09.047Z"
+    }
+  ],
+  "queueServices": [
+    {
+      "id": "qs-1",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-riyadh-main",
+      "name": "عيادة الاستشارات العامة",
+      "codePrefix": "A",
+      "currentNumber": 104,
+      "lastCalledNumber": 104,
+      "averageWaitMinutes": 8,
+      "isActive": true
+    },
+    {
+      "id": "qs-2",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-riyadh-main",
+      "name": "قسم المختبر والتحاليل",
+      "codePrefix": "B",
+      "currentNumber": 42,
+      "lastCalledNumber": 42,
+      "averageWaitMinutes": 5,
+      "isActive": true
+    },
+    {
+      "id": "qs-3",
+      "organizationId": "org-screenflow-demo",
+      "branchId": "br-riyadh-main",
+      "name": "الصيدلية وصرف الأدوية",
+      "codePrefix": "C",
+      "currentNumber": 78,
+      "lastCalledNumber": 78,
+      "averageWaitMinutes": 4,
+      "isActive": true
+    }
+  ],
+  "queueTickets": [
+    {
+      "id": "tkt-1",
+      "organizationId": "org-screenflow-demo",
+      "serviceId": "qs-1",
+      "serviceName": "عيادة الاستشارات العامة",
+      "ticketNumber": "A-104",
+      "status": "serving",
+      "counterNumber": "عيادة 3",
+      "calledAt": "2026-08-15T18:10:09.047Z",
+      "createdAt": "2026-08-15T18:02:09.047Z"
+    },
+    {
+      "id": "tkt-2",
+      "organizationId": "org-screenflow-demo",
+      "serviceId": "qs-1",
+      "serviceName": "عيادة الاستشارات العامة",
+      "ticketNumber": "A-105",
+      "status": "waiting",
+      "createdAt": "2026-08-15T18:07:09.047Z"
+    },
+    {
+      "id": "tkt-3",
+      "organizationId": "org-screenflow-demo",
+      "serviceId": "qs-2",
+      "serviceName": "قسم المختبر والتحاليل",
+      "ticketNumber": "B-42",
+      "status": "serving",
+      "counterNumber": "مختبر 1",
+      "calledAt": "2026-08-15T18:11:09.047Z",
+      "createdAt": "2026-08-15T18:05:29.047Z"
+    }
+  ]
+}
