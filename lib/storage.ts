@@ -5,7 +5,7 @@ export async function uploadToFirebaseStorage(
   filename: string,
   contentType: string
 ): Promise<string> {
-  const bucket = getAdminStorage().bucket();
+  const bucket = (await getAdminStorage()).bucket();
   const safeName = filename.replace(/[^a-zA-Z0-9._-]/g, '_');
   const path = `uploads/${Date.now()}-${safeName}`;
   const file = bucket.file(path);
@@ -21,7 +21,7 @@ export async function deleteFromFirebaseStorage(fileUrl: string): Promise<void> 
     const match = fileUrl.match(/\/o\/(.+)\?alt=media/);
     if (!match) return;
     const path = decodeURIComponent(match[1]);
-    const bucket = getAdminStorage().bucket();
+    const bucket = (await getAdminStorage()).bucket();
     await bucket.file(path).delete();
   } catch (e) {
     // ignore missing files

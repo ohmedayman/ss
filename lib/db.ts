@@ -593,7 +593,7 @@ const COLLECTIONS = {
 class FirestoreDatabase implements Database {
   async seedIfEmpty() {
     const seed = getInitialData();
-    const fs = getDb();
+    const fs = await getDb();
 
     const orgSnap = await fs.collection(COLLECTIONS.organizations).get();
     if (!orgSnap.empty) return;
@@ -611,7 +611,7 @@ class FirestoreDatabase implements Database {
   }
 
   private async list<T>(collection: string, field?: string, value?: string): Promise<T[]> {
-    const fs = getDb();
+    const fs = await getDb();
     let query: Query = fs.collection(collection);
     if (field && value !== undefined) query = query.where(field, '==', value);
     const snap = await query.get();
@@ -619,14 +619,14 @@ class FirestoreDatabase implements Database {
   }
 
   private async getById<T>(collection: string, id: string): Promise<T | undefined> {
-    const fs = getDb();
+    const fs = await getDb();
     const doc = await fs.collection(collection).doc(id).get();
     if (!doc.exists) return undefined;
     return { ...(doc.data() as object), id: doc.id } as T;
   }
 
   private async setDoc(collection: string, id: string, data: object) {
-    const fs = getDb();
+    const fs = await getDb();
     await fs.collection(collection).doc(id).set({ ...data, id } as object, { merge: true });
   }
 
@@ -656,13 +656,13 @@ class FirestoreDatabase implements Database {
   }
   async getScreenByCode(code: string) {
     const clean = code.trim().toUpperCase();
-    const fs = getDb();
+    const fs = await getDb();
     const snap = await fs.collection(COLLECTIONS.screens).where('registrationCode', '==', clean).get();
     const doc = snap.docs[0];
     return doc ? ({ ...(doc.data() as object), id: doc.id } as Screen) : undefined;
   }
   async getScreenByToken(token: string) {
-    const fs = getDb();
+    const fs = await getDb();
     const snap = await fs.collection(COLLECTIONS.screens).where('pairingToken', '==', token).get();
     const doc = snap.docs[0];
     return doc ? ({ ...(doc.data() as object), id: doc.id } as Screen) : undefined;
@@ -682,7 +682,7 @@ class FirestoreDatabase implements Database {
   async deleteScreen(id: string, orgId: string) {
     const existing = await this.getById<Screen>(COLLECTIONS.screens, id);
     if (!existing || existing.organizationId !== orgId) return false;
-    await getDb().collection(COLLECTIONS.screens).doc(id).delete();
+    await (await getDb()).collection(COLLECTIONS.screens).doc(id).delete();
     return true;
   }
 
@@ -692,11 +692,11 @@ class FirestoreDatabase implements Database {
     return newCmd;
   }
   async getPendingCommands(screenId: string) {
-    const fs = getDb();
+    const fs = await getDb();
     const snap = await fs.collection(COLLECTIONS.screenCommands).where('status', '==', 'pending').get();
     return snap.docs
-      .map(d => ({ ...(d.data() as object), id: d.id }) as ScreenCommand)
-      .filter(c => c.screenId === screenId);
+      .map((d: any) => ({ ...(d.data() as object), id: d.id }) as ScreenCommand)
+      .filter((c: ScreenCommand) => c.screenId === screenId);
   }
   async markCommandExecuted(commandId: string) {
     const existing = await this.getById<ScreenCommand>(COLLECTIONS.screenCommands, commandId);
@@ -721,7 +721,7 @@ class FirestoreDatabase implements Database {
   async deleteMedia(id: string, orgId: string) {
     const item = await this.getById<MediaItem>(COLLECTIONS.media, id);
     if (!item || item.organizationId !== orgId) return false;
-    await getDb().collection(COLLECTIONS.media).doc(id).delete();
+    await (await getDb()).collection(COLLECTIONS.media).doc(id).delete();
     const org = await this.getById<Organization>(COLLECTIONS.organizations, orgId);
     if (org) await this.setDoc(COLLECTIONS.organizations, org.id, { ...org, storageUsedBytes: Math.max(0, (org.storageUsedBytes || 0) - item.fileSizeBytes) });
     return true;
@@ -748,7 +748,7 @@ class FirestoreDatabase implements Database {
   async deletePlaylist(id: string, orgId: string) {
     const existing = await this.getById<Playlist>(COLLECTIONS.playlists, id);
     if (!existing || existing.organizationId !== orgId) return false;
-    await getDb().collection(COLLECTIONS.playlists).doc(id).delete();
+    await (await getDb()).collection(COLLECTIONS.playlists).doc(id).delete();
     return true;
   }
 
@@ -773,7 +773,7 @@ class FirestoreDatabase implements Database {
   async deleteTemplate(id: string, orgId: string) {
     const existing = await this.getById<ScreenTemplate>(COLLECTIONS.templates, id);
     if (!existing || existing.organizationId !== orgId) return false;
-    await getDb().collection(COLLECTIONS.templates).doc(id).delete();
+    await (await getDb()).collection(COLLECTIONS.templates).doc(id).delete();
     return true;
   }
 
@@ -795,7 +795,7 @@ class FirestoreDatabase implements Database {
   async deleteSchedule(id: string, orgId: string) {
     const existing = await this.getById<Schedule>(COLLECTIONS.schedules, id);
     if (!existing || existing.organizationId !== orgId) return false;
-    await getDb().collection(COLLECTIONS.schedules).doc(id).delete();
+    await (await getDb()).collection(COLLECTIONS.schedules).doc(id).delete();
     return true;
   }
 
@@ -805,11 +805,11 @@ class FirestoreDatabase implements Database {
     return newLog;
   }
   async getActivityLogs(orgId: string, limit = 50) {
-    const fs = getDb();
+    const fs = await getDb();
     const snap = await fs.collection(COLLECTIONS.activityLogs).where('organizationId', '==', orgId).get();
     return snap.docs
-      .map(d => ({ ...(d.data() as object), id: d.id }) as ActivityLog)
-      .sort((a, b) => (b.createdAt || '').localeCompare(a.createdAt || ''))
+      .map((d: any) => ({ ...(d.data() as object), id: d.id }) as ActivityLog)
+      .sort((a: ActivityLog, b: ActivityLog) => (b.createdAt || '').localeCompare(a.createdAt || ''))
       .slice(0, limit);
   }
 
@@ -827,7 +827,7 @@ class FirestoreDatabase implements Database {
     return this.getById<User>(COLLECTIONS.users, id);
   }
   async getUserByEmail(email: string) {
-    const fs = getDb();
+    const fs = await getDb();
     const snap = await fs.collection(COLLECTIONS.users).where('email', '==', email.toLowerCase()).get();
     const doc = snap.docs[0];
     return doc ? ({ ...(doc.data() as object), id: doc.id } as User) : undefined;

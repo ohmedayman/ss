@@ -32,7 +32,7 @@ export async function getSession(): Promise<SessionData | null> {
 
   if (session && isFirebaseConfigured()) {
     try {
-      const decoded = await getAdminAuth().verifySessionCookie(session, true);
+      const decoded = await (await getAdminAuth()).verifySessionCookie(session, true);
       const user = await db.getUser(decoded.uid);
       if (user) {
         const org = await db.getOrganization(user.organizationId);
@@ -55,7 +55,7 @@ export async function getSession(): Promise<SessionData | null> {
 // Create an HTTP-only session cookie from a Firebase ID token (client-side sign-in)
 export async function createSessionFromIdToken(idToken: string) {
   const expiresIn = 60 * 60 * 24 * 7 * 1000; // 7 days
-  const sessionCookie = await getAdminAuth().createSessionCookie(idToken, { expiresIn });
+  const sessionCookie = await (await getAdminAuth()).createSessionCookie(idToken, { expiresIn });
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE_NAME, sessionCookie, {
     httpOnly: true,

@@ -10,7 +10,7 @@ export async function POST(req: Request) {
 
     // --- Firebase Auth path (production) ---
     if (idToken && isFirebaseConfigured()) {
-      const decoded = await getAdminAuth().verifyIdToken(idToken);
+      const decoded = await (await getAdminAuth()).verifyIdToken(idToken);
       const uid = decoded.uid;
 
       let user = await db.getUser(uid);
