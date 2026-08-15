@@ -359,12 +359,22 @@ export default function PlayerPage() {
       if (!scr) return;
 
       const code = scr.registrationCode;
+      if (!code) return;
+
       const res = await fetch(`/api/player/sync?code=${encodeURIComponent(code)}`);
       if (res.ok) {
         const data = await res.json();
         setContentPayload(data.content);
         setScreen(data.screen);
-        setIsPaired(data.screen.isPaired);
+        setIsPaired(data.screen?.isPaired ?? true);
+
+        // Persist pairing state for refresh
+        if (data.screen?.pairingToken) {
+          localStorage.setItem('sf_player_token', data.screen.pairingToken);
+        }
+        if (data.screen?.registrationCode) {
+          localStorage.setItem('sf_player_code', data.screen.registrationCode);
+        }
 
         // Cache content locally for offline playback
         localStorage.setItem('sf_player_cached_content', JSON.stringify(data.content));
@@ -560,6 +570,13 @@ export default function PlayerPage() {
         const data = JSON.parse(event.data);
         if (data.event === 'paired') {
           setIsPaired(true);
+          // Persist pairing data so player survives refresh
+          if (data.data?.pairingToken) {
+            localStorage.setItem('sf_player_token', data.data.pairingToken);
+          }
+          if (data.data?.screenId) {
+            setScreen((prev: any) => prev ? { ...prev, id: data.data.screenId, isPaired: true } : prev);
+          }
           try {
             confetti({ particleCount: 100, spread: 80 });
           } catch (e) {}

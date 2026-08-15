@@ -37,9 +37,11 @@ export async function getSession(): Promise<SessionData | null> {
       if (user) {
         const org = await db.getOrganization(user.organizationId);
         if (org) return { user, organization: org };
+      } else {
+        console.warn('getSession: user not found for uid:', decoded.uid);
       }
-    } catch (e) {
-      // Session invalid
+    } catch (e: any) {
+      console.warn('getSession: session cookie invalid:', e.message);
     }
   }
 

@@ -950,7 +950,10 @@ class FirestoreDatabase implements Database {
   }
   async setDocument(collection: string, id: string, data: object) {
     const fs = await getDb();
-    await fs.collection(collection).doc(id).set({ ...data, id } as object, { merge: true });
+    const cleaned = Object.fromEntries(
+      Object.entries(data as Record<string, any>).filter(([_, v]) => v !== undefined)
+    );
+    await fs.collection(collection).doc(id).set({ ...cleaned, id } as object, { merge: true });
   }
 
   async getQueueServices(orgId: string) {
