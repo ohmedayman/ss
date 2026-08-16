@@ -35,11 +35,18 @@ export default function Header({
   const [hasNotifications, setHasNotifications] = useState(true);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
 
   const notifRef = useRef<HTMLDivElement>(null);
   const profileRef = useRef<HTMLDivElement>(null);
 
-  // Close dropdowns on outside click
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data) setUserProfile(data); })
+      .catch(() => {});
+  }, []);
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (notifRef.current && !notifRef.current.contains(event.target as Node)) {
@@ -201,19 +208,19 @@ export default function Header({
             className="flex items-center gap-2 p-1.5 sm:px-2.5 sm:py-1.5 rounded-xl bg-white hover:bg-slate-50 border border-slate-200 transition-all cursor-pointer"
           >
             <div className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 to-cyan-500 text-white flex items-center justify-center text-xs font-bold shadow-sm">
-              أ
+              {userProfile?.user?.fullName ? userProfile.user.fullName.charAt(0) : 'م'}
             </div>
-            <span className="text-xs font-semibold text-slate-700 hidden md:inline">أحمد عبد الله</span>
+            <span className="text-xs font-semibold text-slate-700 hidden md:inline">{userProfile?.user?.fullName || 'مستخدم'}</span>
             <ChevronDown className="w-3.5 h-3.5 text-slate-400 hidden sm:inline" />
           </button>
 
           {isProfileOpen && (
             <div className="absolute left-0 mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-150">
               <div className="p-3 border-b border-slate-100 bg-slate-50/50">
-                <p className="font-bold text-xs text-slate-900">أحمد بن عبد الله</p>
-                <p className="text-[10px] text-slate-400 truncate">admin@screenflow.io</p>
+                <p className="font-bold text-xs text-slate-900">{userProfile?.user?.fullName || 'مستخدم جديد'}</p>
+                <p className="text-[10px] text-slate-400 truncate">{userProfile?.user?.email || ''}</p>
                 <span className="inline-block mt-1 text-[9px] px-2 py-0.5 rounded bg-emerald-50 text-emerald-600 font-semibold border border-emerald-100">
-                  باقة الشركات Pro
+                  {userProfile?.organization?.plan === 'pro' ? 'باقة المحترفين' : userProfile?.organization?.plan === 'free' ? 'مجاني' : userProfile?.organization?.plan || 'مجاني'}
                 </span>
               </div>
 
