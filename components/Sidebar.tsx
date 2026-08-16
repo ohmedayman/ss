@@ -60,18 +60,14 @@ export default function Sidebar({
       name: 'استوديو القوالب',
       href: '/templates',
       icon: LayoutTemplate,
-      badge: 'جديد',
-      badgeColor: 'bg-indigo-50 text-indigo-600 border-indigo-200',
     },
     {
-      name: 'أرقام الانتظار (Queue)',
+      name: 'أرقام الانتظار',
       href: '/queue',
       icon: UsersRound,
-      badge: 'SaaS Ready',
-      badgeColor: 'bg-amber-50 text-amber-600 border-amber-200',
     },
     { name: 'سجل الأنشطة', href: '/activity', icon: History },
-    { name: 'إعدادات المؤسسة', href: '/settings', icon: Settings },
+    { name: 'الإعدادات', href: '/settings', icon: Settings },
   ];
 
   const storageUsedMb = (storageUsedBytes / 1024 / 1024).toFixed(1);
@@ -110,9 +106,6 @@ export default function Sidebar({
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-lg text-slate-900 tracking-tight">ScreenFlow</span>
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-indigo-50 text-indigo-600 font-semibold border border-indigo-100">
-                  SaaS
-                </span>
               </div>
               <p className="text-xs text-slate-400">إدارة الشاشات السحابية</p>
             </div>
@@ -136,7 +129,7 @@ export default function Sidebar({
           >
             <div className="flex items-center gap-2">
               <Tv className="w-4 h-4 text-indigo-200" />
-              <span>مشغل الشاشة (Web Player)</span>
+              <span>مشغل الشاشة</span>
             </div>
             <ExternalLink className="w-3.5 h-3.5 text-indigo-200 group-hover:translate-x-[-2px] transition-transform" />
           </a>

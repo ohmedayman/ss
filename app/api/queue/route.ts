@@ -84,6 +84,38 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ticket });
     }
 
+    if (action === 'create_service') {
+      const { name, codePrefix } = await req.json();
+      if (!name || !codePrefix) {
+        return NextResponse.json({ error: 'مطلوب اسم القسم والرمز' }, { status: 400 });
+      }
+
+      const newService = {
+        id: 'qs-' + Math.random().toString(36).substring(2, 9),
+        organizationId: session.organization.id,
+        branchId: '',
+        name,
+        codePrefix: codePrefix.toUpperCase(),
+        currentNumber: 0,
+        lastCalledNumber: 0,
+        averageWaitMinutes: 5,
+        isActive: true,
+      };
+
+      await db.setDocument('queue_services', newService.id, newService);
+
+      await db.logActivity({
+        organizationId: session.organization.id,
+        userId: session.user.id,
+        userName: session.user.fullName,
+        action: 'إنشاء قسم طوابير جديد',
+        actionType: 'system',
+        details: `تم إنشاء قسم "${name}" برمز ${codePrefix}`,
+      });
+
+      return NextResponse.json({ success: true, service: newService });
+    }
+
     return NextResponse.json({ error: 'إجراء غير صالح' }, { status: 400 });
   } catch (error: any) {
     console.error('Queue error:', error);

@@ -284,7 +284,7 @@ export default function TemplatesPage() {
                           <span>الرقم الحالي</span>
                         </div>
                         <div className="text-3xl font-black font-mono text-amber-400 tracking-wider">
-                          A-104
+                          S-1
                         </div>
                         <div className="text-[10px] text-slate-300 mt-1 font-medium">
                           عيادة الاستشارات 3
@@ -366,7 +366,7 @@ export default function TemplatesPage() {
                   type="text"
                   value={headerTitle}
                   onChange={(e) => setHeaderTitle(e.target.value)}
-                  placeholder="مثال: مجمع الأفق الطبي الاستشاري"
+                   placeholder="مثال: فرع الرياض الرئيسي"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -387,7 +387,7 @@ export default function TemplatesPage() {
                     }`}
                   >
                     <div className="font-bold">شريط جانبي + ساعة + انتظار</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">مثالي للعيادات والبنوك والمكاتب</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">مثالي للمتاجر والشركات والمكاتب</div>
                   </button>
 
                   <button
@@ -400,7 +400,7 @@ export default function TemplatesPage() {
                     }`}
                   >
                     <div className="font-bold">شاشة عروض + شريط إخباري</div>
-                    <div className="text-[10px] text-slate-400 mt-0.5">للمطاعم والمقاهي والمحلات</div>
+                    <div className="text-[10px] text-slate-400 mt-0.5">للمتاجر والمحلات والمقاهي</div>
                   </button>
                 </div>
               </div>

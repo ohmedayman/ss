@@ -547,7 +547,7 @@ export default function UploadMediaModal({
                 <option value="يوتيوب">يوتيوب</option>
                 <option value="إعلانات">إعلانات</option>
                 <option value="عروض ترويجية">عروض ترويجية</option>
-                <option value="قوائم الطعام">قوائم الطعام</option>
+                <option value="قوائم المنتجات">قوائم المنتجات</option>
                 <option value="توعية وإرشادات">توعية وإرشادات</option>
                 <option value="لوجوهات">لوجوهات</option>
               </select>

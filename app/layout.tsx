@@ -3,7 +3,7 @@ import './globals.css';
 
 export const metadata: Metadata = {
   title: 'ScreenFlow | المنصة الاحترافية لإدارة الشاشات الرقمية',
-  description: 'منصة سحابية متقدمة لإدارة شبكات الشاشات الرقمية والمحتوى عن بُعد مع دعم أنظمة أرقام انتظار العملاء والتواصل الفوري',
+  description: 'منصة سحابية متقدمة لإدارة شبكات الشاشات الرقمية والمحتوى عن بُعد مع دعم البث المباشر والعروض الترويجية',
 };
 
 export default function RootLayout({
@@ -12,7 +12,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ar" dir="rtl" className="dark">
+    <html lang="ar" dir="rtl">
       <head>
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />

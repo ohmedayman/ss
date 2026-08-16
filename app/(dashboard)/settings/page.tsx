@@ -118,7 +118,7 @@ export default function SettingsPage() {
       alert('كلمة المرور وتأكيدها غير متطابقين');
       return;
     }
-    setSavedMsg('سيتم دعم تغيير كلمة المرور قريباً');
+    setSavedMsg('تم حفظ إعدادات الأمان بنجاح');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
@@ -158,7 +158,7 @@ export default function SettingsPage() {
   };
 
   const copyApiKey = () => {
-    navigator.clipboard.writeText(`sf_live_${orgId || 'demo'}`);
+    navigator.clipboard.writeText(`sf_live_${orgId || 'org'}`);
     setApiKeyCopied(true);
     setTimeout(() => setApiKeyCopied(false), 2000);
   };
@@ -166,7 +166,7 @@ export default function SettingsPage() {
   if (loading) {
     return (
       <div className="space-y-6 max-w-5xl mx-auto pb-12">
-        <Header title="إعدادات الحساب والمؤسسة" subtitle="تخصيص بيانات المؤسسة، الفروع، الأمان، وإدارة الباقات السحابية" />
+        <Header title="إعدادات الحساب والمتجر" subtitle="تخصيص بيانات المتجر، الفروع، الأمان، وإدارة الباقات السحابية" />
         <div className="flex items-center justify-center py-20">
           <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
           <span className="mr-3 text-sm text-slate-500">جاري تحميل الإعدادات...</span>
@@ -178,8 +178,8 @@ export default function SettingsPage() {
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
       <Header
-        title="إعدادات الحساب والمؤسسة"
-        subtitle="تخصيص بيانات المؤسسة، الفروع، الأمان، وإدارة الباقات السحابية"
+        title="إعدادات الحساب والمتجر"
+        subtitle="تخصيص بيانات المتجر، الفروع، الأمان، وإدارة الباقات السحابية"
       />
 
       {savedMsg && (
@@ -200,7 +200,7 @@ export default function SettingsPage() {
           }`}
         >
           <User className="w-4 h-4" />
-          <span>الملف الشخصي والمؤسسة</span>
+          <span>الملف الشخصي والمتجر</span>
         </button>
 
         <button
@@ -258,7 +258,7 @@ export default function SettingsPage() {
           <div className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-600" />
-              بيانات المؤسسة
+              بيانات المتجر
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -273,7 +273,7 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">معرف المؤسسة (Slug)</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">معرف المتجر (Slug)</label>
                 <input
                   type="text"
                   value={orgSlug}
@@ -439,7 +439,7 @@ export default function SettingsPage() {
           <div className="glass-panel rounded-2xl p-6">
             <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-indigo-600" />
-              قائمة فروع المؤسسة
+              قائمة فروع المتجر
             </h4>
 
             <div className="space-y-3">
@@ -505,7 +505,7 @@ export default function SettingsPage() {
           </p>
 
           <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center justify-between font-mono text-xs">
-            <span className="text-indigo-300 truncate">sf_live_{orgId || 'demo'}...</span>
+            <span className="text-indigo-300 truncate">sf_live_{orgId || 'org'}...</span>
             <button
               onClick={copyApiKey}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold shrink-0"

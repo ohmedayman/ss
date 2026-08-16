@@ -69,7 +69,7 @@ export default function PairScreenModal({
         });
       } catch (e) {}
 
-      setSuccessMsg('🎉 تم ربط الشاشة بنجاح وبدء تشغيل المحتوى فورياً!');
+      setSuccessMsg('تم ربط الشاشة بنجاح وبدء تشغيل المحتوى فورياً!');
       setTimeout(() => {
         onSuccess(data.screen);
         onClose();
@@ -199,7 +199,7 @@ export default function PairScreenModal({
                 type="button"
                 onClick={() => {
                   setActiveContentType('template');
-                  setActiveContentId('tpl-clinic-waiting');
+                  setActiveContentId('tpl-store-tools');
                 }}
                 className={`p-3 rounded-xl border text-xs text-right transition-all cursor-pointer ${
                   activeContentType === 'template'
@@ -207,7 +207,7 @@ export default function PairScreenModal({
                     : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                 }`}
               >
-                <div className="font-semibold text-slate-700">قالب العيادات والانتظار</div>
+                <div className="font-semibold text-slate-700">قالب ذكي متعدد المناطق</div>
                 <div className="text-[11px] text-slate-500 mt-0.5">ساعة + طقس + أرقام انتظار</div>
               </button>
             </div>

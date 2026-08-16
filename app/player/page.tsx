@@ -1075,7 +1075,7 @@ export default function PlayerPage() {
                       {currentQueueTicket?.ticket || 'A-104'}
                     </div>
                     <div className="text-sm text-slate-200 font-semibold mt-2">
-                      {currentQueueTicket?.counter || 'عيادة الاستشارات الطبية 3'}
+                       {currentQueueTicket?.counter || 'الاستقبال'}
                     </div>
                   </div>
                 )}
@@ -1102,7 +1102,7 @@ export default function PlayerPage() {
               <span className="text-amber-300">تنبيهات هامة:</span>
               <span>
                 {template.zones?.find((z: any) => z.type === 'ticker')?.text ||
-                  '🩺 نتمنى لكم وافر الصحة والعافية • مواعيد العمل الرسمية من 8:00 صباحاً حتى 10:00 مساءً • لحجز المواعيد يرجى مراجعة الاستقبال'}
+                  'مرحباً بكم في متجرنا • مواعيد العمل الرسمية من 8:00 صباحاً حتى 10:00 مساءً • للاستفسار يرجى مراجعة المبيعات'}
               </span>
             </div>
           </div>

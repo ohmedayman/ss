@@ -32,7 +32,7 @@ export default function Header({
   onOpenUploadModal,
 }: HeaderProps) {
   const router = useRouter();
-  const [hasNotifications, setHasNotifications] = useState(true);
+  const [hasNotifications, setHasNotifications] = useState(false);
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -69,29 +69,7 @@ export default function Header({
     }
   };
 
-  const sampleNotifications = [
-    {
-      id: '1',
-      title: 'شاشة متصلة الآن',
-      desc: 'تم تسجيل دخول شاشة الاستقبال الرئيسية بنجاح.',
-      time: 'منذ دقيقتين',
-      type: 'success',
-    },
-    {
-      id: '2',
-      title: 'جدول زمني نشط',
-      desc: 'تم بدء تشغيل قائمة العروض الصباحية تلقائياً.',
-      time: 'منذ 30 دقيقة',
-      type: 'info',
-    },
-    {
-      id: '3',
-      title: 'شاشة غير متصلة',
-      desc: 'شاشة المنيو - فرع جدة غير متصلة بالشبكة منذ فترة.',
-      time: 'منذ ساعتين',
-      type: 'warning',
-    },
-  ];
+  const sampleNotifications: any[] = [];
 
   return (
     <header className="h-18 border-b border-slate-200 bg-white/80 backdrop-blur-md sticky top-0 z-30 px-4 lg:px-6 flex items-center justify-between">
@@ -135,7 +113,7 @@ export default function Header({
           className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-300 text-slate-600 hover:text-indigo-600 text-xs font-medium transition-all"
         >
           <Tv className="w-3.5 h-3.5 text-indigo-500" />
-          <span className="hidden sm:inline">المشغل (Player)</span>
+          <span className="hidden sm:inline">المشغل</span>
         </Link>
 
         {/* Notifications Bell Dropdown */}
@@ -159,15 +137,17 @@ export default function Header({
               <div className="p-3.5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                 <div className="flex items-center gap-2 font-bold text-xs text-slate-800">
                   <Bell className="w-3.5 h-3.5 text-indigo-600" />
-                  <span>مركز التنبيهات والإشعارات</span>
+                  <span>الإشعارات</span>
                 </div>
-                <span className="text-[10px] bg-indigo-50 text-indigo-600 font-semibold px-2 py-0.5 rounded-full">
-                  3 جديدة
-                </span>
               </div>
 
               <div className="divide-y divide-slate-100 max-h-72 overflow-y-auto">
-                {sampleNotifications.map((notif) => (
+                {sampleNotifications.length === 0 ? (
+                  <div className="p-8 text-center">
+                    <Bell className="w-8 h-8 text-slate-200 mx-auto mb-2" />
+                    <p className="text-xs text-slate-400">لا توجد إشعارات جديدة</p>
+                  </div>
+                ) : sampleNotifications.map((notif) => (
                   <div key={notif.id} className="p-3 hover:bg-slate-50/80 transition-colors text-right flex items-start gap-2.5">
                     <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 mt-0.5 ${
                       notif.type === 'success' ? 'bg-emerald-50 text-emerald-600' :
@@ -240,7 +220,7 @@ export default function Header({
                   className="flex items-center gap-2.5 px-3 py-2 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-50 hover:text-slate-900 transition-colors"
                 >
                   <Settings className="w-3.5 h-3.5 text-slate-400" />
-                  <span>إعدادات المؤسسة</span>
+                  <span>الإعدادات</span>
                 </Link>
 
                 <div className="pt-1 mt-1 border-t border-slate-100">

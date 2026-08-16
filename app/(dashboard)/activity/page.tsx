@@ -56,7 +56,7 @@ export default function ActivityPage() {
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <Header
-        title="سجل الأنشطة والعمليات (Audit & Activity Logs)"
+        title="سجل الأنشطة والعمليات"
         subtitle="توثيق كامل لجميع الأوامر والتعديلات وعمليات تسجيل الدخول على النظام"
       />
 
@@ -76,7 +76,7 @@ export default function ActivityPage() {
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-slate-900 text-sm">{log.action}</span>
                     <span className="text-[10px] px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-mono">
-                      {log.userName || 'المدير العام'}
+                      {log.userName || 'النظام'}
                     </span>
                   </div>
                   <span className="text-[11px] text-slate-500 font-mono">

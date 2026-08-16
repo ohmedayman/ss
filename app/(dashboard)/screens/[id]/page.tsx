@@ -185,7 +185,7 @@ export default function ScreenDetailPage() {
                 {screen.registrationCode}
               </span>
             </div>
-            <p className="text-xs text-slate-500 mt-0.5">غرفة التحكم وإدارة البث المباشر عن بُعد</p>
+            <p className="text-xs text-slate-500 mt-0.5">إدارة الشاشة والبث المباشر عن بُعد</p>
           </div>
         </div>
 
@@ -344,7 +344,7 @@ export default function ScreenDetailPage() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">
                 <span className="text-slate-500 block mb-1">عنوان IP للشاشة</span>
-                <span className="font-mono text-slate-700 font-semibold">{screen.ipAddress || '192.168.1.105'}</span>
+                <span className="font-mono text-slate-700 font-semibold">{screen.ipAddress || 'غير متوفر'}</span>
               </div>
 
               <div className="p-3 rounded-xl bg-slate-50 border border-slate-100">

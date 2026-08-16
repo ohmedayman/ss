@@ -170,7 +170,7 @@ export default function DashboardPage() {
           <div>
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-50 text-indigo-600 text-xs font-semibold border border-indigo-100 mb-3">
               <Sparkles className="w-3.5 h-3.5 text-indigo-500" />
-              <span>مرحباً بك في منصة ScreenFlow SaaS</span>
+              <span>مرحباً بك في منصة ScreenFlow</span>
             </div>
             <h2 className="text-2xl md:text-3xl font-extrabold text-slate-900 tracking-tight">
               تحكم كامل في جميع شاشاتك عن بُعد وبثوانٍ معدودة
@@ -629,11 +629,11 @@ export default function DashboardPage() {
               <div className="w-8 h-8 rounded-lg bg-amber-50 text-amber-500 flex items-center justify-center">
                 <UsersRound className="w-4 h-4" />
               </div>
-              <span className="text-xs font-bold text-amber-600">جاهز للتوسع (SaaS Ready)</span>
+              <span className="text-xs font-bold text-amber-600">جاهز للتوسع</span>
             </div>
             <h4 className="font-bold text-slate-900 text-base">نظام أرقام انتظار العملاء</h4>
             <p className="text-xs text-slate-500 mt-2 leading-relaxed">
-              تم تجهيز بنية النظام المعمارية وقاعدة البيانات لاستيعاب نظام إدارة الطوابير، وتوليد التذاكر، وشاشات النداء الصوتي والعيادات بدون أي تعديلات هيكلية.
+              تم تجهيز بنية النظام المعمارية وقاعدة البيانات لاستيعاب نظام إدارة الطوابير، وتوليد التذاكر، وشاشات العروض والبث المباشر بدون أي تعديلات هيكلية.
             </p>
 
             {/* Quick Stats in Queue Card */}

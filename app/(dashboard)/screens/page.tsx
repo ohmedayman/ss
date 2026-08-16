@@ -345,13 +345,13 @@ export default function ScreensPage() {
                           {screen.activeContentType === 'playlist'
                             ? 'قائمة الإعلانات الرئيسية'
                             : screen.activeContentType === 'template'
-                            ? 'قالب العيادات والانتظار'
+                            ? 'قالب ذكي متعدد المناطق'
                             : 'محتوى مخصص'}
                         </span>
                       </div>
                       <div className="flex items-center gap-4 text-[11px] text-slate-400 pt-1">
                         <span>الصوت: {screen.volume}%</span>
-                        <span>IP: {screen.ipAddress || '192.168.1.105'}</span>
+                        <span>IP: {screen.ipAddress || 'غير متوفر'}</span>
                       </div>
                     </div>
 
@@ -445,7 +445,7 @@ export default function ScreensPage() {
                       className="flex-1 py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center justify-center gap-1.5 shadow-sm shadow-indigo-500/20 transition-all text-center"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      <span>غرفة التحكم</span>
+                      <span>إدارة الشاشة</span>
                     </Link>
 
                     <button
@@ -553,7 +553,7 @@ export default function ScreensPage() {
                         {screen.activeContentType === 'playlist'
                           ? 'قائمة الإعلانات الرئيسية'
                           : screen.activeContentType === 'template'
-                          ? 'قالب العيادات والانتظار'
+                          ? 'قالب ذكي'
                           : 'محتوى مخصص'}
                       </td>
 
