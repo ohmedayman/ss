@@ -42,6 +42,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       notes: body.notes !== undefined ? body.notes : screen.notes,
       tags: body.tags !== undefined ? body.tags : screen.tags,
       isPaired: body.isPaired !== undefined ? body.isPaired : screen.isPaired,
+      canvasLayers: body.canvasLayers !== undefined ? body.canvasLayers : screen.canvasLayers,
+      canvasBackground: body.canvasBackground !== undefined ? body.canvasBackground : screen.canvasBackground,
+      liveStreamUrl: body.liveStreamUrl !== undefined ? body.liveStreamUrl : screen.liveStreamUrl,
     });
 
     // Notify real-time player to refresh content immediately

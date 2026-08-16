@@ -24,6 +24,8 @@ import {
   Clock,
   Settings,
   Paintbrush,
+  Radio,
+  Link2,
 } from 'lucide-react';
 import ScreenCanvasEditor from '@/components/ScreenCanvasEditor';
 import { ScreenLayer } from '@/lib/types';
@@ -46,6 +48,7 @@ export default function ScreenDetailPage() {
   const [name, setName] = useState('');
   const [orientation, setOrientation] = useState('landscape');
   const [activeContentType, setActiveContentType] = useState('playlist');
+  const [liveStreamUrl, setLiveStreamUrl] = useState('');
   const [activeContentId, setActiveContentId] = useState('');
   const [volume, setVolume] = useState(80);
   const [notes, setNotes] = useState('');
@@ -72,6 +75,7 @@ export default function ScreenDetailPage() {
         setNotes(d.screen.notes || '');
         setCanvasLayers(d.screen.canvasLayers || []);
         setCanvasBackground(d.screen.canvasBackground || '#0f172a');
+        setLiveStreamUrl(d.screen.liveStreamUrl || '');
       }
       if (plRes.ok) {
         const d = await plRes.json();
@@ -109,11 +113,12 @@ export default function ScreenDetailPage() {
           name,
           orientation,
           activeContentType,
-          activeContentId: activeContentType === 'canvas' ? 'canvas-layout' : activeContentId,
+          activeContentId: activeContentType === 'canvas' ? 'canvas-layout' : activeContentType === 'live_stream' ? 'live-stream' : activeContentId,
           volume,
           notes,
           canvasLayers: activeContentType === 'canvas' ? canvasLayers : undefined,
           canvasBackground: activeContentType === 'canvas' ? canvasBackground : undefined,
+          liveStreamUrl: activeContentType === 'live_stream' ? liveStreamUrl : undefined,
         }),
       });
 
@@ -412,6 +417,19 @@ export default function ScreenDetailPage() {
                   <Paintbrush className="w-3.5 h-3.5 inline ml-1" />
                   محرر بصري
                 </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveContentType('live_stream')}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                    activeContentType === 'live_stream'
+                      ? 'bg-red-50 border-red-300 text-red-700'
+                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <Radio className="w-3.5 h-3.5 inline ml-1" />
+                  بث مباشر
+                </button>
               </div>
             </div>
 
@@ -425,6 +443,73 @@ export default function ScreenDetailPage() {
                 media={media}
                 orientation={orientation as 'landscape' | 'portrait'}
               />
+            )}
+
+            {/* Live Stream URL Input */}
+            {activeContentType === 'live_stream' && (
+              <div className="space-y-3">
+                <div className="p-4 rounded-xl bg-red-50 border border-red-200">
+                  <div className="flex items-center gap-2 text-red-700 text-xs font-bold mb-2">
+                    <Radio className="w-4 h-4" />
+                    <span>بث مباشر - Facebook Live / YouTube / أي رابط بث</span>
+                  </div>
+                  <p className="text-[11px] text-red-600 mb-3">
+                    الصق رابط البث المباشر هنا. يُعرض على الشاشة بشكل مباشر.
+                  </p>
+                </div>
+                <div>
+                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">رابط البث المباشر</label>
+                  <div className="flex gap-2">
+                    <div className="relative flex-1">
+                      <Link2 className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <input
+                        type="url"
+                        value={liveStreamUrl}
+                        onChange={(e) => setLiveStreamUrl(e.target.value)}
+                        placeholder="https://www.facebook.com/your-page/live"
+                        className="input pl-10"
+                      />
+                    </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setLiveStreamUrl('https://www.facebook.com/your-page/live')}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-blue-50 text-blue-600 border border-blue-200 hover:bg-blue-100 cursor-pointer"
+                    >
+                      Facebook Live
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLiveStreamUrl('https://www.youtube.com/watch?v=XXXX')}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-red-50 text-red-600 border border-red-200 hover:bg-red-100 cursor-pointer"
+                    >
+                      YouTube Live
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setLiveStreamUrl('https://www.twitch.tv/XXXX')}
+                      className="text-[10px] px-2 py-1 rounded-lg bg-purple-50 text-purple-600 border border-purple-200 hover:bg-purple-100 cursor-pointer"
+                    >
+                      Twitch
+                    </button>
+                  </div>
+                </div>
+                {liveStreamUrl && (
+                  <div className="rounded-xl border border-slate-200 overflow-hidden bg-black aspect-video">
+                    <iframe
+                      src={liveStreamUrl.includes('facebook.com')
+                        ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(liveStreamUrl)}&show_text=false&width=1920&autoplay=1`
+                        : liveStreamUrl.includes('youtube.com') || liveStreamUrl.includes('youtu.be')
+                          ? liveStreamUrl.replace('watch?v=', 'embed/').replace('youtube.com', 'youtube.com/embed') + '?autoplay=1'
+                          : liveStreamUrl}
+                      className="w-full h-full border-0"
+                      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                      allowFullScreen
+                    />
+                  </div>
+                )}
+              </div>
             )}
 
             {/* Select specific playlist or template */}

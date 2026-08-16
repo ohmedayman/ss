@@ -38,7 +38,7 @@ export interface Branch {
 
 export type ScreenOrientation = 'landscape' | 'portrait';
 export type ScreenStatus = 'online' | 'offline';
-export type ActiveContentType = 'playlist' | 'template' | 'media' | 'url' | 'queue_display' | 'canvas';
+export type ActiveContentType = 'playlist' | 'template' | 'media' | 'url' | 'queue_display' | 'canvas' | 'live_stream';
 
 export interface ScreenLayer {
   id: string;
@@ -97,6 +97,7 @@ export interface Screen {
   tags: string[];
   canvasLayers?: ScreenLayer[];
   canvasBackground?: string;
+  liveStreamUrl?: string;
   createdAt: string;
   updatedAt: string;
 }

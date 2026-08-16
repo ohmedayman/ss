@@ -1107,6 +1107,20 @@ export default function PlayerPage() {
             </div>
           </div>
         </div>
+      ) : contentPayload?.liveStreamUrl ? (
+        /* Live Stream Mode (Facebook Live / YouTube / Twitch) */
+        <div className="w-full h-full bg-black flex items-center justify-center">
+          <iframe
+            src={contentPayload.liveStreamUrl.includes('facebook.com')
+              ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(contentPayload.liveStreamUrl)}&show_text=false&width=1920&autoplay=1`
+              : contentPayload.liveStreamUrl.includes('youtube.com') || contentPayload.liveStreamUrl.includes('youtu.be')
+                ? contentPayload.liveStreamUrl.replace('watch?v=', 'embed/').replace('youtube.com', 'youtube.com/embed') + '?autoplay=1&mute=1'
+                : contentPayload.liveStreamUrl}
+            className="w-full h-full border-0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+            allowFullScreen
+          />
+        </div>
       ) : contentPayload?.canvasLayers ? (
         /* Canvas Mode (Custom Layout) */
         <div

@@ -56,6 +56,7 @@ export async function GET(req: Request) {
     webUrl?: string;
     canvasLayers?: any[];
     canvasBackground?: string;
+    liveStreamUrl?: string;
     queueServices?: QueueService[];
     queueTickets?: QueueTicket[];
     allMediaItems?: Record<string, MediaItem>;
@@ -114,6 +115,9 @@ export async function GET(req: Request) {
     // Canvas mode: layers are stored on the screen object itself
     payload.canvasLayers = screen.canvasLayers || [];
     payload.canvasBackground = screen.canvasBackground || '#0f172a';
+  } else if (effectiveContentType === 'live_stream') {
+    // Live stream mode: URL is stored on the screen object
+    payload.liveStreamUrl = screen.liveStreamUrl || '';
   }
 
   return NextResponse.json({
