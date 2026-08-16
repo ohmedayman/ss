@@ -40,6 +40,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, branch });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إضافة الفرع' }, { status: 500 });
+    console.error('Create branch error:', error);
+    return NextResponse.json({ error: 'فشل إضافة الفرع' }, { status: 500 });
   }
 }

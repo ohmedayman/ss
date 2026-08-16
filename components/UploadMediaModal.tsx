@@ -177,7 +177,7 @@ export default function UploadMediaModal({
         });
 
         const data = await res.json();
-        if (!res.ok) throw new Error(data.error || 'fails رفع الملف الصوتي');
+        if (!res.ok) throw new Error(data.error || 'فشل رفع الملف الصوتي');
 
         onSuccess(data.media);
         onClose();

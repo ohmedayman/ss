@@ -64,8 +64,7 @@ export async function POST(req: Request) {
 
       let user = await db.getUserByEmail(email);
       if (!user) {
-        const data = await db.getData();
-        user = data.users[0];
+        return NextResponse.json({ error: 'البريد الإلكتروني غير صحيح' }, { status: 401 });
       }
 
       await setSessionCookie(user.id);
@@ -87,6 +86,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ error: 'يجب تسجيل الدخول عبر Firebase' }, { status: 401 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'حدث خطأ أثناء تسجيل الدخول' }, { status: 500 });
+    console.error('Login error:', error);
+    return NextResponse.json({ error: 'حدث خطأ أثناء تسجيل الدخول' }, { status: 500 });
   }
 }

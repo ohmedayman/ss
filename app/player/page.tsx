@@ -19,7 +19,17 @@ import {
   Film,
   Type,
   ExternalLink,
+  Repeat,
 } from 'lucide-react';
+
+function getFacebookEmbedUrl(url: string): string {
+  return `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=1920&autoplay=1`;
+}
+
+function getEmbedUrl(url: string): string {
+  const isFacebook = /facebook\.com|fb\.watch|fb\.com/i.test(url);
+  return isFacebook ? getFacebookEmbedUrl(url) : url;
+}
 
 // QR Display component (renders QR code from URL)
 function QrDisplay({ url }: { url: string }) {
@@ -305,51 +315,96 @@ export default function PlayerPage() {
   // 2. Initialize Player (Register or Get Screen)
   const initPlayer = async () => {
     try {
-      // Check query params for specific code or token
       const urlParams = new URLSearchParams(window.location.search);
-      const codeParam = urlParams.get('code') || urlParams.get('screen') || localStorage.getItem('sf_player_code') || '';
-      const tokenParam = urlParams.get('token') || localStorage.getItem('sf_player_token') || '';
+      const urlCode = urlParams.get('code') || urlParams.get('screen') || '';
+      const urlToken = urlParams.get('token') || '';
+
+      // If a specific screen code is in the URL, use ONLY that — ignore localStorage
+      // This ensures opening /player?screen=SF-XXXX always shows THAT screen
+      let codeParam = '';
+      let tokenParam = '';
+
+      if (urlCode) {
+        codeParam = urlCode;
+        tokenParam = '';
+      } else if (urlToken) {
+        tokenParam = urlToken;
+        codeParam = '';
+      } else {
+        // No URL params — fall back to localStorage (returning to same screen)
+        codeParam = localStorage.getItem('sf_player_code') || '';
+        tokenParam = localStorage.getItem('sf_player_token') || '';
+      }
 
       let query = '';
       if (tokenParam) query = `token=${encodeURIComponent(tokenParam)}`;
       else if (codeParam) query = `code=${encodeURIComponent(codeParam)}`;
+      else {
+        // No code at all — first time visitor, let init create a new screen
+        const res = await fetch('/api/player/init');
+        if (res.ok) {
+          const data = await res.json();
+          const code = data.registrationCode || data.screen?.registrationCode || '';
+          setRegistrationCode(code);
+          setIsPaired(data.isPaired);
+          setScreen(data.screen);
+          if (data.screen?.registrationCode) localStorage.setItem('sf_player_code', data.screen.registrationCode);
+          if (data.screen?.pairingToken) localStorage.setItem('sf_player_token', data.screen.pairingToken);
+          if (code) {
+            const newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('screen', code);
+            window.history.replaceState({}, '', newUrl.toString());
+          }
+          if (data.isPaired) fetchContent(data.screen);
+        }
+        return;
+      }
 
       const res = await fetch(`/api/player/init?${query}`);
-      if (res.ok) {
-        const data = await res.json();
-        const code = data.registrationCode || data.screen?.registrationCode || '';
+      const data = await res.json();
+      const code = data.registrationCode || data.screen?.registrationCode || codeParam;
+
+      if (!res.ok || data.error) {
+        console.error('Player init error:', data.error || 'Unknown error');
         setRegistrationCode(code);
-        setIsPaired(data.isPaired);
-        setScreen(data.screen);
+        setIsPaired(false);
+        setScreen(null);
+        // Retry after 5 seconds
+        setTimeout(() => initPlayer(), 5000);
+        return;
+      }
 
-        if (data.screen?.registrationCode) {
-          localStorage.setItem('sf_player_code', data.screen.registrationCode);
-        }
-        if (data.screen?.pairingToken) {
-          localStorage.setItem('sf_player_token', data.screen.pairingToken);
-        }
+      setRegistrationCode(code);
+      setIsPaired(data.isPaired);
+      setScreen(data.screen);
 
-        // Update URL to include screen code so refresh works
-        if (code && !window.location.search.includes('screen=')) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.set('screen', code);
-          window.history.replaceState({}, '', newUrl.toString());
-        } else if (code && window.location.search.includes('code=')) {
-          const newUrl = new URL(window.location.href);
-          newUrl.searchParams.delete('code');
-          newUrl.searchParams.set('screen', code);
-          window.history.replaceState({}, '', newUrl.toString());
-        }
+      if (data.screen?.registrationCode) {
+        localStorage.setItem('sf_player_code', data.screen.registrationCode);
+      }
+      if (data.screen?.pairingToken) {
+        localStorage.setItem('sf_player_token', data.screen.pairingToken);
+      }
 
-        // Generate QR Code for easy pairing
-        const pairingUrl = `${window.location.origin}/?pair=${code}`;
-        QRCode.toDataURL(pairingUrl, { width: 220, margin: 1 }, (err, url) => {
-          if (!err && url) setQrDataUrl(url);
-        });
+      // Update URL to include screen code so refresh works
+      if (code && !window.location.search.includes('screen=')) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.set('screen', code);
+        window.history.replaceState({}, '', newUrl.toString());
+      } else if (code && window.location.search.includes('code=')) {
+        const newUrl = new URL(window.location.href);
+        newUrl.searchParams.delete('code');
+        newUrl.searchParams.set('screen', code);
+        window.history.replaceState({}, '', newUrl.toString());
+      }
 
-        if (data.isPaired) {
-          fetchContent(data.screen);
-        }
+      // Generate QR Code for easy pairing
+      const pairingUrl = `${window.location.origin}/?pair=${code}`;
+      QRCode.toDataURL(pairingUrl, { width: 220, margin: 1 }, (err, url) => {
+        if (!err && url) setQrDataUrl(url);
+      });
+
+      if (data.isPaired) {
+        fetchContent(data.screen);
       }
     } catch (e) {
       console.error('Failed to init player:', e);
@@ -822,15 +877,20 @@ export default function PlayerPage() {
                     />
                   )}
                   {currentItem.media?.fileType === 'video' && (
-                    <video
-                      ref={videoRef}
-                      src={currentItem.media.fileUrl}
-                      autoPlay
-                      muted={currentItem.isMuted}
-                      loop
-                      playsInline
-                      className="w-full h-full object-cover rounded-2xl shadow-2xl"
-                    />
+                    <div className="relative w-full h-full">
+                      <video
+                        ref={videoRef}
+                        src={currentItem.media.fileUrl}
+                        autoPlay
+                        muted={currentItem.isMuted}
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover rounded-2xl shadow-2xl"
+                      />
+                      <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
+                        <Repeat className="w-4 h-4 text-white/70" />
+                      </div>
+                    </div>
                   )}
                   {currentItem.media?.fileType === 'youtube_video' && (
                     <iframe
@@ -987,6 +1047,20 @@ export default function PlayerPage() {
                     );
                   }
 
+                  if (zone.type === 'web_embed' && zone.url) {
+                    return (
+                      <iframe
+                        key={i}
+                        src={getEmbedUrl(zone.url)}
+                        className="w-full h-full rounded-2xl shadow-2xl border-0"
+                        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+                        allow="autoplay; encrypted-media"
+                        allowFullScreen
+                        title={zone.title}
+                      />
+                    );
+                  }
+
                   return null;
                 })}
 
@@ -1033,6 +1107,70 @@ export default function PlayerPage() {
             </div>
           </div>
         </div>
+      ) : contentPayload?.canvasLayers ? (
+        /* Canvas Mode (Custom Layout) */
+        <div
+          className="w-full h-full relative"
+          style={{ backgroundColor: contentPayload.canvasBackground || '#0f172a' }}
+        >
+          {contentPayload.canvasLayers
+            .filter((l: any) => l.visible !== false)
+            .sort((a: any, b: any) => a.zIndex - b.zIndex)
+            .map((layer: any) => (
+              <div
+                key={layer.id}
+                className="absolute"
+                style={{
+                  left: `${layer.x}%`,
+                  top: `${layer.y}%`,
+                  width: `${layer.width}%`,
+                  height: `${layer.height}%`,
+                  zIndex: layer.zIndex,
+                  opacity: layer.opacity ?? 1,
+                  backgroundColor: layer.backgroundColor || 'transparent',
+                  borderRadius: layer.borderRadius ? `${layer.borderRadius}px` : undefined,
+                }}
+              >
+                {layer.type === 'logo' && layer.fileUrl && (
+                  <img src={layer.fileUrl} alt="" className="w-full h-full object-contain" />
+                )}
+                {layer.type === 'text' && (
+                  <span
+                    style={{
+                      color: layer.fontColor || '#fff',
+                      fontSize: layer.fontSize ? `${layer.fontSize}px` : '24px',
+                      fontWeight: layer.fontWeight || 'normal',
+                    }}
+                    className="flex items-center justify-center w-full h-full px-3 text-center leading-tight"
+                  >
+                    {layer.text}
+                  </span>
+                )}
+                {layer.type === 'clock' && (
+                  <div className="flex flex-col items-center justify-center w-full h-full">
+                    <span className="font-mono font-bold text-white" style={{ fontSize: layer.fontSize ? `${layer.fontSize}px` : '48px' }}>
+                      {currentTime}
+                    </span>
+                    <span className="text-white/60 text-sm mt-1">{hijriDate}</span>
+                  </div>
+                )}
+                {layer.type === 'weather' && weatherData && (
+                  <div className="flex flex-col items-center justify-center w-full h-full text-white">
+                    <CloudSun className="w-10 h-10 text-amber-300" />
+                    <span className="text-2xl font-bold mt-1">{weatherData.temperature}°</span>
+                    <span className="text-sm text-white/60">{weatherData.description}</span>
+                  </div>
+                )}
+                {layer.type === 'ticker' && (
+                  <div className="w-full h-full flex items-center px-4 overflow-hidden" style={{ backgroundColor: layer.backgroundColor || '#1e293b' }}>
+                    <div className="animate-ticker whitespace-nowrap text-white font-semibold" style={{ fontSize: layer.fontSize ? `${layer.fontSize}px` : '18px' }}>
+                      {layer.text}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+        </div>
       ) : (
         /* 2. Direct Playlist Mode (Full Screen) */
         <div className="w-full h-full relative flex items-center justify-center bg-black">
@@ -1047,16 +1185,21 @@ export default function PlayerPage() {
               )}
 
               {currentItem.media?.fileType === 'video' && (
-                <video
-                  key={currentItem.id}
-                  ref={videoRef}
-                  src={currentItem.media.fileUrl}
-                  autoPlay
-                  muted={currentItem.isMuted}
-                  loop
-                  playsInline
-                  className="w-full h-full object-cover"
-                />
+                <div className="relative w-full h-full">
+                  <video
+                    key={currentItem.id}
+                    ref={videoRef}
+                    src={currentItem.media.fileUrl}
+                    autoPlay
+                    muted={currentItem.isMuted}
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
+                    <Repeat className="w-4 h-4 text-white/70" />
+                  </div>
+                </div>
               )}
 
               {currentItem.media?.fileType === 'youtube_video' && (
@@ -1103,14 +1246,23 @@ export default function PlayerPage() {
                 </div>
               )}
 
-              {currentItem.media?.fileType === 'web_url' && (
-                <iframe
-                  src={currentItem.media.fileUrl}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
-                  title="Web Player"
-                />
-              )}
+              {currentItem.media?.fileType === 'web_url' && (() => {
+                const url = currentItem.media.fileUrl || currentItem.media.customUrl || '';
+                const isFacebook = /facebook\.com|fb\.watch|fb\.com/i.test(url);
+                const embedUrl = isFacebook
+                  ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=1920&autoplay=1`
+                  : url;
+                return (
+                  <iframe
+                    src={embedUrl}
+                    className="w-full h-full border-0"
+                    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+                    title={currentItem.media.name || 'Web Player'}
+                    allow="autoplay; encrypted-media"
+                    allowFullScreen
+                  />
+                );
+              })()}
 
               {currentItem.media?.fileType === 'ticker_text' && (
                 <div className="w-full h-full bg-gradient-to-tr from-indigo-950 via-slate-900 to-[#0b0f19] flex items-center justify-center p-12 text-center">

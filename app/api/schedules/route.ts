@@ -58,6 +58,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, schedule });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إنشاء الجدول' }, { status: 500 });
+    console.error('Create schedule error:', error);
+    return NextResponse.json({ error: 'فشل إنشاء الجدول' }, { status: 500 });
   }
 }

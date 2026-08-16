@@ -58,15 +58,15 @@ export default function QueuePage() {
         setLastCalledTicket(d.ticket);
         await loadQueueData();
 
-        // Audio Chime simulation via Web Audio API
+        // Audio Chime
         try {
           const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
           const osc = ctx.createOscillator();
           const gain = ctx.createGain();
           osc.connect(gain);
           gain.connect(ctx.destination);
-          osc.frequency.setValueAtTime(587.33, ctx.currentTime); // D5
-          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15); // A5
+          osc.frequency.setValueAtTime(587.33, ctx.currentTime);
+          osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
           gain.gain.setValueAtTime(0.3, ctx.currentTime);
           gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
           osc.start(ctx.currentTime);
@@ -80,25 +80,93 @@ export default function QueuePage() {
     }
   };
 
+  const issueTicket = async (serviceId: string) => {
+    try {
+      const res = await fetch('/api/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'issue_ticket',
+          serviceId,
+        }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        await loadQueueData();
+        // Print ticket to thermal printer
+        printTicket(d.ticket);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
+  const printTicket = (ticket: any) => {
+    const printWindow = window.open('', '_blank', 'width=300,height=500');
+    if (!printWindow) return;
+    printWindow.document.write(`
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <style>
+          @media print {
+            @page { size: 80mm auto; margin: 2mm; }
+            body { margin: 0; padding: 0; }
+          }
+          body {
+            font-family: 'Courier New', monospace;
+            width: 72mm;
+            padding: 3mm;
+            text-align: center;
+            direction: rtl;
+          }
+          .logo { font-size: 10px; font-weight: bold; margin-bottom: 4px; }
+          .line { border-top: 1px dashed #000; margin: 4px 0; }
+          .ticket-number { font-size: 36px; font-weight: bold; margin: 8px 0; }
+          .service-name { font-size: 12px; margin: 4px 0; }
+          .date { font-size: 9px; color: #666; }
+          .counter { font-size: 10px; margin-top: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="logo">ScreenFlow</div>
+        <div class="line"></div>
+        <div class="service-name">${ticket.serviceName || 'خدمة عامة'}</div>
+        <div class="line"></div>
+        <div class="ticket-number">${ticket.ticketNumber}</div>
+        <div class="line"></div>
+        <div class="counter">${ticket.counterNumber || 'شباك الاستقبال'}</div>
+        <div class="date">${new Date(ticket.createdAt).toLocaleString('ar-SA')}</div>
+      </body>
+      </html>
+    `);
+    printWindow.document.close();
+    printWindow.focus();
+    setTimeout(() => {
+      printWindow.print();
+      printWindow.close();
+    }, 300);
+  };
+
   return (
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       {/* Header */}
       <Header
-        title="نظام أرقام انتظار العملاء (Queue Management)"
-        subtitle="الهندسة المعمارية التوسعية الجاهزة لإدارة الطوابير والاستدعاء الصوتي على الشاشات"
+        title="نظام إدارة أرقام الزبائن"
+        subtitle="إصدار أرقام انتظار للزبائن وعرضها على الشاشات + طباعة على الطابعة الحرارية"
       />
 
-      {/* SaaS Architecture Banner */}
+      {/* Info Banner */}
       <div className="rounded-3xl p-6 md:p-8 bg-gradient-to-r from-amber-950/40 via-slate-900 to-[#0e1424] border border-amber-500/30">
         <div className="flex items-center gap-2 text-amber-400 text-xs font-bold mb-2">
           <Sparkles className="w-4 h-4" />
-          <span>بنية تحتية مستقبلية متكاملة (SaaS Extensible Architecture)</span>
+          <span>نظام إدارة الزبائن</span>
         </div>
         <h2 className="text-xl md:text-2xl font-extrabold text-white">
-          جاهز لتفعيل خدمات إدارة الطوابير في العيادات والبنوك والمطاعم
+          إصدار أرقام انتظار للزبائن + طباعة حرارية + عرض مباشر على الشاشات
         </h2>
         <p className="text-xs md:text-sm text-slate-300 mt-2 max-w-3xl leading-relaxed">
-          تم تأسيس جداول قاعدة البيانات والـ APIs لتشمل الخدمات والفروع وإصدار التذاكر والنداء المباشر. عند طلب تفعيل النظام، يتم البث التلقائي للأرقام على قوالب الشاشات الرقمية دون أي إعادة كتابة للكود.
+          ا issuing أرقام للزبائن عند الدخول، طباعة على ورق حراري، وعرض مباشر على الشاشات الرقمية. الأرقام تتطلب تلقائياً وتُعرض بوضوح.
         </p>
       </div>
 
@@ -158,12 +226,21 @@ export default function QueuePage() {
 
               {/* Call Next Button */}
               <button
-                onClick={() => callNext(svc.id, `مكتب ${svc.codePrefix}`)}
+                onClick={() => callNext(svc.id, `شباك ${svc.codePrefix}`)}
                 disabled={callingId === svc.id}
                 className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-500 hover:from-indigo-500 hover:to-indigo-400 disabled:opacity-50 text-white font-bold text-xs shadow-md shadow-indigo-600/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
               >
                 <Volume2 className="w-4 h-4" />
-                <span>{callingId === svc.id ? 'جاري النداء...' : 'نداء العميل التالي (Call Next)'}</span>
+                <span>{callingId === svc.id ? 'جاري النداء...' : 'نداء الزبون التالي'}</span>
+              </button>
+
+              {/* Issue Ticket Button */}
+              <button
+                onClick={() => issueTicket(svc.id)}
+                className="w-full py-2.5 px-4 rounded-xl bg-amber-500 hover:bg-amber-400 text-white font-bold text-xs shadow-md shadow-amber-500/20 flex items-center justify-center gap-2 transition-all cursor-pointer"
+              >
+                <Plus className="w-4 h-4" />
+                <span>إصدار تذكرة + طباعة</span>
               </button>
             </div>
           ))}
@@ -182,7 +259,7 @@ export default function QueuePage() {
             <thead className="bg-slate-50 text-slate-500 border-b border-slate-100">
               <tr>
                 <th className="p-3">رقم التذكرة</th>
-                <th className="p-3">الخدمة / العيادة</th>
+                <th className="p-3">الخدمة</th>
                 <th className="p-3">الشباك / المكتب</th>
                 <th className="p-3">الحالة</th>
                 <th className="p-3">وقت النداء</th>

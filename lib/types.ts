@@ -38,7 +38,28 @@ export interface Branch {
 
 export type ScreenOrientation = 'landscape' | 'portrait';
 export type ScreenStatus = 'online' | 'offline';
-export type ActiveContentType = 'playlist' | 'template' | 'media' | 'url' | 'queue_display';
+export type ActiveContentType = 'playlist' | 'template' | 'media' | 'url' | 'queue_display' | 'canvas';
+
+export interface ScreenLayer {
+  id: string;
+  type: 'image' | 'video' | 'text' | 'clock' | 'weather' | 'ticker' | 'logo';
+  mediaId?: string;
+  fileUrl?: string;
+  text?: string;
+  x: number; // 0-100 percent
+  y: number;
+  width: number; // 0-100 percent
+  height: number;
+  zIndex: number;
+  opacity?: number; // 0-1
+  backgroundColor?: string;
+  fontSize?: number;
+  fontColor?: string;
+  fontWeight?: string;
+  borderRadius?: number;
+  tickerSpeed?: number;
+  visible?: boolean;
+}
 
 export interface Screen {
   id: string;
@@ -74,6 +95,8 @@ export interface Screen {
   temperatureC?: number; // device temperature
   notes?: string;
   tags: string[];
+  canvasLayers?: ScreenLayer[];
+  canvasBackground?: string;
   createdAt: string;
   updatedAt: string;
 }

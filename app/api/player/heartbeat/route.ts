@@ -39,6 +39,7 @@ export async function POST(req: Request) {
       pendingCommands,
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Heartbeat error' }, { status: 500 });
+    console.error('Heartbeat error:', error);
+    return NextResponse.json({ error: 'خطأ في نبض القلب' }, { status: 500 });
   }
 }

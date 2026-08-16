@@ -62,7 +62,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ success: true, screen: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل تحديث الشاشة' }, { status: 500 });
+    console.error('Update screen error:', error);
+    return NextResponse.json({ error: 'فشل تحديث الشاشة' }, { status: 500 });
   }
 }
 

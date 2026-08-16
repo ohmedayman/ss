@@ -87,7 +87,8 @@ export async function POST(req: Request) {
       user: { id: newUser.id, email: newUser.email, fullName: newUser.fullName, role: newUser.role },
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'حدث خطأ أثناء إنشاء الحساب' }, { status: 500 });
+    console.error('Register error:', error);
+    return NextResponse.json({ error: 'حدث خطأ أثناء إنشاء الحساب' }, { status: 500 });
   }
 }
 

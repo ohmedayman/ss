@@ -18,10 +18,10 @@ async function loadDefaultSession(): Promise<SessionData> {
     user = data.users[0];
     org = data.organizations[0];
   }
-  return {
-    user: user!,
-    organization: org!,
-  };
+  if (!user || !org) {
+    throw new Error('No default user or organization found');
+  }
+  return { user, organization: org };
 }
 
 export async function getSession(): Promise<SessionData | null> {

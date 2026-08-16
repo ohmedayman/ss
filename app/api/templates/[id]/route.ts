@@ -56,7 +56,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ success: true, template: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل تحديث القالب' }, { status: 500 });
+    console.error('Update template error:', error);
+    return NextResponse.json({ error: 'فشل تحديث القالب' }, { status: 500 });
   }
 }
 

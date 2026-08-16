@@ -35,20 +35,34 @@ export async function GET(req: Request) {
     try {
       const screen = await db.getScreenByCode(code);
       if (screen) {
-        // Make sure the code is saved for future refreshes
         return NextResponse.json({
           isPaired: screen.isPaired,
           screen,
           registrationCode: screen.registrationCode,
         });
       }
+      // Code provided but screen not found — don't create new, return error
+      // The screen might exist but the lookup failed temporarily
+      console.warn(`Player init: code ${code} provided but screen not found, returning error`);
+      return NextResponse.json({
+        isPaired: false,
+        registrationCode: code,
+        screen: null,
+        error: `الشاشة برمز ${code} غير موجودة. تأكد من صحة الرمز.`,
+      }, { status: 404 });
     } catch (e) {
       console.error('Player init code lookup failed:', e);
+      // On error, still pass the code back so player can retry
+      return NextResponse.json({
+        isPaired: false,
+        registrationCode: code,
+        screen: null,
+        error: 'حدث خطأ أثناء البحث عن الشاشة',
+      });
     }
   }
 
-  // ONLY create a new screen if there is truly no code/token at all
-  // (first-time visitor with empty localStorage)
+  // No code/token at all — first time visitor, create new screen
   const newCode = generateRandomCode();
   const data = await db.getData();
   const org = data.organizations[0];

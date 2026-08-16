@@ -71,6 +71,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, playlist: newPlaylist });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إنشاء قائمة التشغيل' }, { status: 500 });
+    console.error('Create playlist error:', error);
+    return NextResponse.json({ error: 'فشل إنشاء قائمة التشغيل' }, { status: 500 });
   }
 }

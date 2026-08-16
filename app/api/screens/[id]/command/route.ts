@@ -60,6 +60,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
 
     return NextResponse.json({ success: true, command: newCmd });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إرسال الأمر' }, { status: 500 });
+    console.error('Send command error:', error);
+    return NextResponse.json({ error: 'فشل إرسال الأمر' }, { status: 500 });
   }
 }

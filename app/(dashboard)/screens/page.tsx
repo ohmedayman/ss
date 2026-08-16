@@ -423,24 +423,22 @@ export default function ScreensPage() {
                       <Camera className="w-3.5 h-3.5 text-cyan-500" />
                     </button>
 
-                    {screen.isPaired && (
-                      <button
-                        onClick={() => {
-                          const url = `${window.location.origin}/player?screen=${screen.registrationCode}`;
-                          navigator.clipboard.writeText(url);
-                          setCopiedId(screen.id);
-                          setTimeout(() => setCopiedId(null), 2000);
-                        }}
-                        title="نسخ رابط المشغل"
-                        className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
-                      >
-                        {copiedId === screen.id ? (
-                          <ExternalLink className="w-3.5 h-3.5 text-emerald-500" />
-                        ) : (
-                          <Copy className="w-3.5 h-3.5 text-violet-500" />
-                        )}
-                      </button>
-                    )}
+                    <button
+                      onClick={() => {
+                        const url = `${window.location.origin}/player?screen=${screen.registrationCode}`;
+                        navigator.clipboard.writeText(url);
+                        setCopiedId(screen.id);
+                        setTimeout(() => setCopiedId(null), 2000);
+                      }}
+                      title="نسخ رابط المشغل"
+                      className="p-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+                    >
+                      {copiedId === screen.id ? (
+                        <ExternalLink className="w-3.5 h-3.5 text-emerald-500" />
+                      ) : (
+                        <Copy className="w-3.5 h-3.5 text-violet-500" />
+                      )}
+                    </button>
 
                     <Link
                       href={`/screens/${screen.id}`}
@@ -584,24 +582,22 @@ export default function ScreensPage() {
                           >
                             <RotateCw className="w-3.5 h-3.5 text-indigo-500" />
                           </button>
-                          {screen.isPaired && (
-                            <button
-                              onClick={() => {
-                                const url = `${window.location.origin}/player?screen=${screen.registrationCode}`;
-                                navigator.clipboard.writeText(url);
-                                setCopiedId(screen.id);
-                                setTimeout(() => setCopiedId(null), 2000);
-                              }}
-                              className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 transition-colors"
-                              title="نسخ رابط المشغل"
-                            >
-                              {copiedId === screen.id ? (
-                                <ExternalLink className="w-3.5 h-3.5 text-emerald-500" />
-                              ) : (
-                                <Copy className="w-3.5 h-3.5 text-violet-500" />
-                              )}
-                            </button>
-                          )}
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/player?screen=${screen.registrationCode}`;
+                              navigator.clipboard.writeText(url);
+                              setCopiedId(screen.id);
+                              setTimeout(() => setCopiedId(null), 2000);
+                            }}
+                            className="p-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-500 border border-slate-200 transition-colors"
+                            title="نسخ رابط المشغل"
+                          >
+                            {copiedId === screen.id ? (
+                              <ExternalLink className="w-3.5 h-3.5 text-emerald-500" />
+                            ) : (
+                              <Copy className="w-3.5 h-3.5 text-violet-500" />
+                            )}
+                          </button>
                           <Link
                             href={`/screens/${screen.id}`}
                             className="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition-colors"

@@ -134,6 +134,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, media: mediaItem });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'خطأ في إضافة الوسائط' }, { status: 500 });
+    console.error('Media upload error:', error);
+    return NextResponse.json({ error: 'خطأ في إضافة الوسائط' }, { status: 500 });
   }
 }

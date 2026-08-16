@@ -54,6 +54,8 @@ export async function GET(req: Request) {
     template?: ScreenTemplate;
     media?: MediaItem;
     webUrl?: string;
+    canvasLayers?: any[];
+    canvasBackground?: string;
     queueServices?: QueueService[];
     queueTickets?: QueueTicket[];
     allMediaItems?: Record<string, MediaItem>;
@@ -108,6 +110,10 @@ export async function GET(req: Request) {
     }
   } else if (effectiveContentType === 'url') {
     payload.webUrl = effectiveContentId || 'https://www.alarabiya.net';
+  } else if (effectiveContentType === 'canvas') {
+    // Canvas mode: layers are stored on the screen object itself
+    payload.canvasLayers = screen.canvasLayers || [];
+    payload.canvasBackground = screen.canvasBackground || '#0f172a';
   }
 
   return NextResponse.json({

@@ -45,8 +45,48 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ticket });
     }
 
+    if (action === 'issue_ticket') {
+      if (!serviceId) {
+        return NextResponse.json({ error: 'مطلوب تحديد الخدمة' }, { status: 400 });
+      }
+
+      const service = await db.getQueueServiceById(serviceId);
+      if (!service) {
+        return NextResponse.json({ error: 'الخدمة غير موجودة' }, { status: 404 });
+      }
+
+      const newNumber = (service.currentNumber || 0) + 1;
+      await db.updateQueueService(serviceId, { currentNumber: newNumber });
+
+      const ticket = {
+        id: 'tkt-' + Math.random().toString(36).substring(2, 9),
+        organizationId: session.organization.id,
+        serviceId: service.id,
+        serviceName: service.name,
+        ticketNumber: `${service.codePrefix}-${newNumber}`,
+        status: 'waiting' as const,
+        counterNumber: '',
+        calledAt: '',
+        createdAt: new Date().toISOString(),
+      };
+
+      await db.createQueueTicket(ticket);
+
+      await db.logActivity({
+        organizationId: session.organization.id,
+        userId: session.user.id,
+        userName: session.user.fullName,
+        action: 'إصدار تذكرة جديدة',
+        actionType: 'system',
+        details: `تم إصدار التذكرة ${ticket.ticketNumber} (${ticket.serviceName})`,
+      });
+
+      return NextResponse.json({ success: true, ticket });
+    }
+
     return NextResponse.json({ error: 'إجراء غير صالح' }, { status: 400 });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'خطأ في استدعاء التذكرة' }, { status: 500 });
+    console.error('Queue error:', error);
+    return NextResponse.json({ error: 'خطأ في استدعاء التذكرة' }, { status: 500 });
   }
 }

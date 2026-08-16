@@ -23,7 +23,10 @@ import {
   Wifi,
   Clock,
   Settings,
+  Paintbrush,
 } from 'lucide-react';
+import ScreenCanvasEditor from '@/components/ScreenCanvasEditor';
+import { ScreenLayer } from '@/lib/types';
 
 export default function ScreenDetailPage() {
   const params = useParams();
@@ -33,6 +36,7 @@ export default function ScreenDetailPage() {
   const [screen, setScreen] = useState<any>(null);
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [templates, setTemplates] = useState<any[]>([]);
+  const [media, setMedia] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
@@ -45,13 +49,16 @@ export default function ScreenDetailPage() {
   const [activeContentId, setActiveContentId] = useState('');
   const [volume, setVolume] = useState(80);
   const [notes, setNotes] = useState('');
+  const [canvasLayers, setCanvasLayers] = useState<ScreenLayer[]>([]);
+  const [canvasBackground, setCanvasBackground] = useState('#0f172a');
 
   const loadData = async () => {
     try {
-      const [scrRes, plRes, tplRes] = await Promise.all([
+      const [scrRes, plRes, tplRes, mediaRes] = await Promise.all([
         fetch(`/api/screens/${screenId}`),
         fetch('/api/playlists'),
         fetch('/api/templates'),
+        fetch('/api/media'),
       ]);
 
       if (scrRes.ok) {
@@ -63,6 +70,8 @@ export default function ScreenDetailPage() {
         setActiveContentId(d.screen.activeContentId || '');
         setVolume(d.screen.volume || 80);
         setNotes(d.screen.notes || '');
+        setCanvasLayers(d.screen.canvasLayers || []);
+        setCanvasBackground(d.screen.canvasBackground || '#0f172a');
       }
       if (plRes.ok) {
         const d = await plRes.json();
@@ -71,6 +80,10 @@ export default function ScreenDetailPage() {
       if (tplRes.ok) {
         const d = await tplRes.json();
         setTemplates(d.templates || []);
+      }
+      if (mediaRes.ok) {
+        const d = await mediaRes.json();
+        setMedia(d.media || []);
       }
     } catch (e) {
       console.error(e);
@@ -96,9 +109,11 @@ export default function ScreenDetailPage() {
           name,
           orientation,
           activeContentType,
-          activeContentId,
+          activeContentId: activeContentType === 'canvas' ? 'canvas-layout' : activeContentId,
           volume,
           notes,
+          canvasLayers: activeContentType === 'canvas' ? canvasLayers : undefined,
+          canvasBackground: activeContentType === 'canvas' ? canvasBackground : undefined,
         }),
       });
 
@@ -354,7 +369,7 @@ export default function ScreenDetailPage() {
             {/* Type Switcher */}
             <div>
               <label className="block text-xs font-semibold text-slate-600 mb-1.5">نوع المحتوى</label>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-2">
                 <button
                   type="button"
                   onClick={() => {
@@ -382,10 +397,35 @@ export default function ScreenDetailPage() {
                       : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
                   }`}
                 >
-                  قالب ذكي (Template)
+                  قالب ذكي
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setActiveContentType('canvas')}
+                  className={`p-2.5 rounded-xl border text-xs font-semibold transition-all cursor-pointer ${
+                    activeContentType === 'canvas'
+                      ? 'bg-indigo-50 border-indigo-300 text-indigo-700'
+                      : 'bg-white border-slate-200 text-slate-500 hover:bg-slate-50'
+                  }`}
+                >
+                  <Paintbrush className="w-3.5 h-3.5 inline ml-1" />
+                  محرر بصري
                 </button>
               </div>
             </div>
+
+            {/* Canvas Editor */}
+            {activeContentType === 'canvas' && (
+              <ScreenCanvasEditor
+                layers={canvasLayers}
+                onChange={setCanvasLayers}
+                background={canvasBackground}
+                onBackgroundChange={setCanvasBackground}
+                media={media}
+                orientation={orientation as 'landscape' | 'portrait'}
+              />
+            )}
 
             {/* Select specific playlist or template */}
             {activeContentType === 'playlist' ? (

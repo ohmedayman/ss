@@ -29,6 +29,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Screenshot upload error' }, { status: 500 });
+    console.error('Screenshot error:', error);
+    return NextResponse.json({ error: 'خطأ في رفع لقطة الشاشة' }, { status: 500 });
   }
 }

@@ -90,6 +90,7 @@ export async function POST(req: Request) {
       message: 'تم اقتران الشاشة وبدء البث المباشر',
     });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل الاقتران' }, { status: 500 });
+    console.error('Pair screen error:', error);
+    return NextResponse.json({ error: 'فشل الاقتران' }, { status: 500 });
   }
 }

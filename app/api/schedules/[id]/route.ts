@@ -40,7 +40,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ success: true, schedule: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل تحديث الجدول' }, { status: 500 });
+    console.error('Update schedule error:', error);
+    return NextResponse.json({ error: 'فشل تحديث الجدول' }, { status: 500 });
   }
 }
 

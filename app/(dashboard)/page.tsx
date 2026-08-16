@@ -383,7 +383,7 @@ export default function DashboardPage() {
             <CalendarClock className="w-5 h-5" />
           </div>
           <h4 className="font-bold text-slate-900 text-sm mt-3">جدولة محتوى</h4>
-          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">定时 العرض حسب اليوم والوقت</p>
+          <p className="text-[11px] text-slate-400 mt-1 leading-relaxed">تخصيص العرض حسب اليوم والوقت</p>
         </Link>
       </div>
 

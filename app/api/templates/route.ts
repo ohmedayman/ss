@@ -48,6 +48,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, template });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إنشاء القالب' }, { status: 500 });
+    console.error('Create template error:', error);
+    return NextResponse.json({ error: 'فشل إنشاء القالب' }, { status: 500 });
   }
 }

@@ -51,6 +51,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, screen: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'Health report error' }, { status: 500 });
+    console.error('Health report error:', error);
+    return NextResponse.json({ error: 'خطأ في تقرير الحالة' }, { status: 500 });
   }
 }

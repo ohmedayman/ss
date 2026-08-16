@@ -175,18 +175,35 @@ function getInitialData(): DatabaseSchema {
 
   const defaultTemplates: ScreenTemplate[] = [
     {
+      id: 'tpl-store-tools',
+      organizationId: orgId,
+      name: 'قالب محل الأدوات المنزلية',
+      layout: 'retail_promo',
+      backgroundColor: '#1a1a2e',
+      headerTitle: 'عالم الأدوات المنزلية - عروض لا تُفوَّت',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1558618666-fcd25c85f82e?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-tools-main', title: 'عرض المنتجات والعروض', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-tools-ticker', title: 'شريط العروض', type: 'ticker', text: '🔧 خصم 30% على جميع أدوات الكهرباء • شراء 3 أدوات واحصل على 1 مجاناً • توصيل مجاني للطلبات فوق 150 ريال' },
+        { id: 'zone-tools-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-tools-qr', title: 'تواصل معنا', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'للطلب والاستفسار' } }
+      ],
+      createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
+      updatedAt: now,
+    },
+    {
       id: 'tpl-clinic-waiting',
       organizationId: orgId,
-      name: 'قالب العيادات وصالات الانتظار (مع أرقام الانتظار والطقس)',
+      name: 'قالب العيادات وصالات الانتظار',
       layout: 'split_3_sidebar',
       backgroundColor: '#0f172a',
       headerTitle: 'مجمع الأفق الطبي الاستشاري',
       thumbnailUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-main', title: 'المنطقة الرئيسية (فيديو وتوعية صحية)', type: 'playlist', contentId: 'pl-general-ads' },
-        { id: 'zone-sidebar-top', title: 'شاشة أرقام الانتظار الحالية', type: 'queue_display', options: { serviceCode: 'A', title: 'الرقم الحالي' } },
-        { id: 'zone-sidebar-clock', title: 'الساعة والطقس والتقويم الهجري', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
-        { id: 'zone-bottom-ticker', title: 'الشريط الإخباري المتحرك', type: 'ticker', text: '🩺 نسعى دائماً لخدمتكم بأعلى معايير الرعاية الصحية • مواعيد العيادات المسائية تبدأ من الساعة 4:00 عصراً • للشكاوى والاستفسارات اتصل على الرقم المجاني 800-12345' }
+        { id: 'zone-main', title: 'المنطقة الرئيسية', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-sidebar-top', title: 'شاشة أرقام الانتظار', type: 'queue_display', options: { serviceCode: 'A', title: 'الرقم الحالي' } },
+        { id: 'zone-sidebar-clock', title: 'الساعة والطقس', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-bottom-ticker', title: 'الشريط الإخباري', type: 'ticker', text: '🩺 نسعى دائماً لخدمتكم بأعلى معايير الرعاية الصحية • مواعيد العيادات المسائية تبدأ من الساعة 4:00 عصراً' }
       ],
       createdAt: new Date(Date.now() - 3600000 * 48).toISOString(),
       updatedAt: now,
@@ -194,100 +211,342 @@ function getInitialData(): DatabaseSchema {
     {
       id: 'tpl-menu-board',
       organizationId: orgId,
-      name: 'قالب شاشات المطاعم والمقاهي (Menu Board)',
+      name: 'قالب المطاعم والمقاهي',
       layout: 'split_2_horizontal',
       backgroundColor: '#18181b',
       headerTitle: 'كافيه الأفق - النكهة الأصيلة',
       thumbnailUrl: 'https://images.unsplash.com/photo-1442512595331-e89e73853f31?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-menu-media', title: 'عرض الأصناف والوجبات', type: 'media', contentId: 'med-3' },
-        { id: 'zone-menu-ticker', title: 'العروض الخاصة والخصومات', type: 'ticker', text: '☕ احصل على كوكيز مجاني مع كل كوب قهوة مختصة • العرض ساري حتى نهاية الأسبوع!' }
+        { id: 'zone-menu-media', title: 'عرض الأصناف', type: 'media', contentId: 'med-3' },
+        { id: 'zone-menu-ticker', title: 'العروض الخاصة', type: 'ticker', text: '☕ احصل على كوكيز مجاني مع كل كوب قهوة مختصة • العرض ساري حتى نهاية الأسبوع!' }
       ],
       createdAt: now,
       updatedAt: now,
     },
     {
-      id: genId('tpl'),
+      id: 'tpl-retail-promo',
       organizationId: orgId,
-      name: 'قالب المطاعم والمقاهي (Restaurant Menu Board)',
-      layout: 'menu_board',
-      backgroundColor: '#1c1917',
-      headerTitle: 'مطعم الديوان - أشهى المأكولات العربية',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=60',
-      zones: [
-        { id: 'zone-restaurant-media', title: 'عرض الأصناف والوجبات', type: 'media', contentId: 'med-3' },
-        { id: 'zone-restaurant-ticker', title: 'العروض والخصومات', type: 'ticker', text: '🍽️ عرض الغداء المميز: وجبة كاملة بـ 39 ريال فقط! • مشروبات مجانية مع الوجبات العائلية • الخصم يشمل جميع أصناف القائمة الجديدة' },
-        { id: 'zone-restaurant-clock', title: 'الساعة وساعات العمل', type: 'clock', options: { showWeather: false } }
-      ],
-      createdAt: now,
-      updatedAt: now,
-    },
-    {
-      id: genId('tpl'),
-      organizationId: orgId,
-      name: 'قالب المتاجر والسوبرماركت (Retail Promo)',
+      name: 'قالب المتاجر والسوبرماركت',
       layout: 'retail_promo',
       backgroundColor: '#1e3a5f',
       headerTitle: 'هايبر ماركت الأفق - عروض لا تُفوَّت',
       thumbnailUrl: 'https://images.unsplash.com/photo-1604719312566-8912e9227c6a?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-retail-playlist', title: 'العرض الرئيسي للمنتجات', type: 'playlist', contentId: 'pl-general-ads' },
-        { id: 'zone-retail-countdown', title: 'العرض اللحظي - سعر خاص لفترة محدودة', type: 'countdown', options: { targetDate: '2026-12-31', label: 'نهاية العروض' } },
-        { id: 'zone-retail-ticker', title: 'شريط عروض المتجر', type: 'ticker', text: '🛒 خصم 50% على جميع منتجات العناية بالبشرة • شراء 2احصل على 1 مجاناً على الخضروات والفواكه الطازجة • عرض نهاية الأسبوع: توصيل مجاني للطلبات فوق 200 ريال' }
+        { id: 'zone-retail-playlist', title: 'العرض الرئيسي', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-retail-countdown', title: 'عرض لحظي', type: 'countdown', options: { targetDate: '2026-12-31', label: 'نهاية العروض' } },
+        { id: 'zone-retail-ticker', title: 'شريط العروض', type: 'ticker', text: '🛒 خصم 50% على جميع منتجات العناية بالبشرة • شراء 2احصل على 1 مجاناً على الخضروات والفواكه الطازجة' }
       ],
       createdAt: now,
       updatedAt: now,
     },
     {
-      id: genId('tpl'),
+      id: 'tpl-electronics',
       organizationId: orgId,
-      name: 'قالب الشركات والمكاتب (Corporate)',
+      name: 'قالب متاجر الإلكترونيات',
+      layout: 'split_2_vertical',
+      backgroundColor: '#0a0a1a',
+      headerTitle: 'محل الأفق للإلكترونيات',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1468495244123-6c6c332eeece?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-elec-main', title: 'عرض أحدث المنتجات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-elec-ticker', title: 'العروض والخصومات', type: 'ticker', text: '📱 آيفون 16 برو بخصم 15% • سماعات AirPods بـ 399 ريال فقط • ضمان شامل لمدة سنتين على جميع الأجهزة' },
+        { id: 'zone-elec-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-real-estate',
+      organizationId: orgId,
+      name: 'قالب العقارات والتطوير العقاري',
       layout: 'corporate',
-      backgroundColor: '#0f172a',
-      headerTitle: 'شركة الأفق للحلول الرقمية',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=60',
+      backgroundColor: '#1a2332',
+      headerTitle: 'شركة الأفق العقارية - أحلامك تبدأ من هنا',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-corp-playlist', title: 'عرض مشاريع وإنجازات الشركة', type: 'playlist', contentId: 'pl-general-ads' },
-        { id: 'zone-corp-clock', title: 'الساعة والتقويم', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
-        { id: 'zone-corp-ticker', title: 'آخر أخبار الشركة والقطاع', type: 'ticker', text: '📊 نتائج الربع الأول: نمو 35% في الإيرادات • إطلاق منصة جديدة للتجارة الإلكترونية قريباً • توظيف 20 موظف جديد في أقسام التطوير والتصميم' },
-        { id: 'zone-corp-qr', title: 'تواصل معنا عبر QR', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'امسح للطلب' } }
+        { id: 'zone-re-main', title: 'مشاريعنا المميزة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-re-ticker', title: 'فرص استثمارية', type: 'ticker', text: '🏢 فيلا فاخرة بحي الملقا بـ 1.2 مليون ريال • شقة استوديو في حي العليا 280 ألف ريال فقط • تقسيط حتى 5 سنوات بدون فوائد' },
+        { id: 'zone-re-clock', title: 'الساعة والتقويم', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-re-qr', title: 'تصفح المشاريع', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'تصفح العروض' } }
       ],
       createdAt: now,
       updatedAt: now,
     },
     {
-      id: genId('tpl'),
+      id: 'tpl-beauty-salon',
       organizationId: orgId,
-      name: 'قالب المساجد (Mosque)',
-      layout: 'mosque',
-      backgroundColor: '#1a4731',
-      headerTitle: 'مسجد الرحمة - أوقات الصلاة',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=60',
+      name: 'قالب الصالونات وغرف التجميل',
+      layout: 'split_2_horizontal',
+      backgroundColor: '#2d1b4e',
+      headerTitle: 'صالون جلامور - جمالك أمانة',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1560066984-138dadb4c035?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-mosque-prayer', title: 'أوقات الصلاة الحالية والقادمة', type: 'prayer_times', options: { city: 'الرياض', method: 'UmmAlQura' } },
-        { id: 'zone-mosque-clock', title: 'الساعة والتاريخ الهجري', type: 'clock', options: { showWeather: false } },
-        { id: 'zone-mosque-ticker', title: 'إعلانات المسجد وال activities', type: 'ticker', text: '🕌 صلاة الجمعة الساعة 12:15 ظهراً • درس ديني بعد صلاة المغرب يومياً • مجمع الخيرات مفتوح للنساء يوم السبت والأحد من 9 صباحاً' }
+        { id: 'zone-beauty-main', title: 'خدمات التجميل والعروض', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-beauty-ticker', title: 'العروض الحصرية', type: 'ticker', text: '💇‍♀️ قص وصبغة بـ 199 ريال فقط • مانيكير وباديكير مجاناً مع أي حجز • عرض العروسة: باقة كاملة بخصم 40%' },
+        { id: 'zone-beauty-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
       ],
       createdAt: now,
       updatedAt: now,
     },
     {
-      id: genId('tpl'),
+      id: 'tpl-hotel',
       organizationId: orgId,
-      name: 'قالب الصالات الرياضية (Gym)',
+      name: 'قالب الفنادق والمنتجعات',
+      layout: 'corporate',
+      backgroundColor: '#1a1a2e',
+      headerTitle: 'فندق الأفق الذهبي - راحتك أولاً',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-hotel-main', title: 'مرافق和服务 الفندق', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-hotel-ticker', title: 'العروض الفندقية', type: 'ticker', text: '🏨 غرفة مميزة بـ 299 ريال شامل الإفطار • باقة عائلية 3 ليالي بسعر 2 • وصول مبكر ومغادرة متأخرة مجاناً' },
+        { id: 'zone-hotel-clock', title: 'الساعة ودرجة الحرارة', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-hotel-qr', title: 'حجز مباشر', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'احجز الآن' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-pharmacy',
+      organizationId: orgId,
+      name: 'قالب الصيدليات',
+      layout: 'split_2_vertical',
+      backgroundColor: '#0a3d2a',
+      headerTitle: 'صيدلية الشفاء - صحتك تبدأ من هنا',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1587854692152-cbe660dbde88?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-pharma-main', title: 'خدمات الصيدلية', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-pharma-ticker', title: 'نصائح صحية وعروض', type: 'ticker', text: '💊 فيتامينات مناعية بخصم 25% • قياس ضغط الدم مجاني يومياً • استشارة صيدلانية مجانية لجميع المرضى' },
+        { id: 'zone-pharma-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-school',
+      organizationId: orgId,
+      name: 'قالب المدارس والجامعات',
+      layout: 'corporate',
+      backgroundColor: '#1a2744',
+      headerTitle: 'أكاديمية المستقبل - نبني الغد',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1580582932707-520aed937b7b?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-school-main', title: 'أخبار المدرسة والأنشطة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-school-ticker', title: 'إعلانات دراسية', type: 'ticker', text: '📚 امتحانات الفصل تبدأ الأسبوع القادم • مسابقة العلوم الأسبوع المقبل • رحلة ميدانية للطلاب يوم الخميس' },
+        { id: 'zone-school-clock', title: 'الساعة والتقويم الدراسي', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-car-showroom',
+      organizationId: orgId,
+      name: 'قالب معارض السيارات',
+      layout: 'split_2_horizontal',
+      backgroundColor: '#0a0a0a',
+      headerTitle: 'معرض السيارات الأرقى',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1494976388531-d1058494cdd8?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-car-main', title: 'أحدث الموديلات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-car-ticker', title: 'عروض السيارات', type: 'ticker', text: '🚗 تويوتا كامري 2026 بقسط 1,800 شهرياً • تأمين شامل مجاني لمدة سنة • صيانة مجانية لأول 30,000 كم' },
+        { id: 'zone-car-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-wedding',
+      organizationId: orgId,
+      name: 'قالب قاعات الأفراح والمناسبات',
+      layout: 'full',
+      backgroundColor: '#2d1b4e',
+      headerTitle: 'قاعة الماسة - احتفالات لا تُنسى',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1519167758481-83f550bb49b3?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-wed-main', title: 'صور ومقاطع فيديو', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-wed-ticker', title: 'رسائل التهنئة', type: 'ticker', text: '🎉 مبارك للعروس والعريس • نتمنى لكم حياة سعيدة • اليوم نحتفل بزفاف الأسرة الكريمة' },
+        { id: 'zone-wed-clock', title: 'الساعة والتقويم', type: 'clock', options: { showWeather: false } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-gym',
+      organizationId: orgId,
+      name: 'قالب الصالات الرياضية',
       layout: 'gym',
       backgroundColor: '#18181b',
       headerTitle: 'صالة فيت برو - تحدي جديد كل يوم',
       thumbnailUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?auto=format&fit=crop&w=400&q=60',
       zones: [
-        { id: 'zone-gym-playlist', title: 'فيديوهات التمارين والتدريب', type: 'playlist', contentId: 'pl-general-ads' },
-        { id: 'zone-gym-countdown', title: 'التمارين الجماعية القادمة', type: 'countdown', options: { targetDate: '2026-12-31', label: 'بداية التمرين' } },
+        { id: 'zone-gym-playlist', title: 'فيديوهات التمارين', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-gym-countdown', title: 'التمارين القادمة', type: 'countdown', options: { targetDate: '2026-12-31', label: 'بداية التمرين' } },
         { id: 'zone-gym-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
-        { id: 'zone-gym-ticker', title: 'نصائح رياضية وhealth tips', type: 'ticker', text: '💪 تمرين اليوم: قوة الأطراف العلوية - 4 مجموعات x 12 تكرار • نصيحة: اشرب 3 لتر ماء يومياً • عرض الأعضاء الجدد: دورة تأهيل مجانية مع أي اشتراك سنوي' }
+        { id: 'zone-gym-ticker', title: 'نصائح رياضية', type: 'ticker', text: '💪 تمرين اليوم: قوة الأطراف العلوية • نصيحة: اشرب 3 لتر ماء يومياً • عرض الأعضاء الجدد: دورة تأهيل مجانية' }
       ],
       createdAt: now,
       updatedAt: now,
-    }
+    },
+    {
+      id: 'tpl-mosque',
+      organizationId: orgId,
+      name: 'قالب المساجد',
+      layout: 'mosque',
+      backgroundColor: '#1a4731',
+      headerTitle: 'مسجد الرحمة - أوقات الصلاة',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1519817650390-64a93db51149?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-mosque-prayer', title: 'أوقات الصلاة', type: 'prayer_times', options: { city: 'الرياض', method: 'UmmAlQura' } },
+        { id: 'zone-mosque-clock', title: 'الساعة والتاريخ الهجري', type: 'clock', options: { showWeather: false } },
+        { id: 'zone-mosque-ticker', title: 'إعلانات المسجد', type: 'ticker', text: '🕌 صلاة الجمعة الساعة 12:15 ظهراً • درس ديني بعد صلاة المغرب يومياً' }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-corporate',
+      organizationId: orgId,
+      name: 'قالب الشركات والمكاتب',
+      layout: 'corporate',
+      backgroundColor: '#0f172a',
+      headerTitle: 'شركة الأفق للحلول الرقمية',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1497366216548-37526070297c?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-corp-playlist', title: 'مشاريع وإنجازات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-corp-clock', title: 'الساعة والتقويم', type: 'clock', options: { showWeather: true, city: 'الرياض' } },
+        { id: 'zone-corp-ticker', title: 'أخبار الشركة', type: 'ticker', text: '📊 نتائج الربع الأول: نمو 35% • إطلاق منصة جديدة للتجارة الإلكترونية قريباً • توظيف 20 موظف جديد' },
+        { id: 'zone-corp-qr', title: 'تواصل معنا', type: 'qr_display', options: { qrUrl: 'https://screenflow.app', label: 'امسح للطلب' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-restaurant-menu',
+      organizationId: orgId,
+      name: 'قالب سوالف المنيو',
+      layout: 'menu_board',
+      backgroundColor: '#1c1917',
+      headerTitle: 'مطعم الديوان - أشهى المأكولات العربية',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-restaurant-media', title: 'عرض الأصناف', type: 'media', contentId: 'med-3' },
+        { id: 'zone-restaurant-ticker', title: 'العروض والخصومات', type: 'ticker', text: '🍽️ عرض الغداء المميز: وجبة كاملة بـ 39 ريال فقط! • مشروبات مجانية مع الوجبات العائلية' },
+        { id: 'zone-restaurant-clock', title: 'الساعة', type: 'clock', options: { showWeather: false } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-lunch-offers',
+      organizationId: orgId,
+      name: 'قالب عروض الغداء السريع',
+      layout: 'split_2_horizontal',
+      backgroundColor: '#2d1517',
+      headerTitle: 'مطعم فست فود - وجبات سريعة لذيذة',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1561758033-d89a9ad46330?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-lunch-media', title: 'الوجبات والمقوات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-lunch-ticker', title: 'عروض الغداء', type: 'ticker', text: '🍔 برجر + بطاطس + مشروب = 29 ريال فقط! • عرض العائلة: 4 وجبات بـ 99 ريال • خصم 20% على الطلبات الإلكترونية' },
+        { id: 'zone-lunch-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-fresh-produce',
+      organizationId: orgId,
+      name: 'قالب الخضروات والفواكه الطازجة',
+      layout: 'retail_promo',
+      backgroundColor: '#1a3320',
+      headerTitle: 'سوق الطازج - فواكه وخضروات طازجة يومياً',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1610832958506-aa56368176cf?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-fresh-media', title: 'عرض المنتجات الطازجة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-fresh-ticker', title: 'عروض يومية', type: 'ticker', text: '🍎 تفاح طازج 2 كيلو بـ 10 ريال • موز بـ 5 ريال للكيلو • عصير طبيعي بـ 8 ريال فقط' },
+        { id: 'zone-fresh-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-bakery',
+      organizationId: orgId,
+      name: 'قالب المخابز والحلويات',
+      layout: 'split_2_vertical',
+      backgroundColor: '#3d2b1f',
+      headerTitle: 'مخبز الطازج - طعم أصيل منذ 1985',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-bakery-media', title: 'المنتجات والمعجنات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-bakery-ticker', title: 'العروض اليومية', type: 'ticker', text: '🥐 كرواسون طازج بـ 3 ريال • عرض العائلة: 2 خبز عربي + صامولي بـ 5 ريال • كعكة اليوم 15 ريال فقط' },
+        { id: 'zone-bakery-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-clothing',
+      organizationId: orgId,
+      name: 'قالب متاجر الملابس',
+      layout: 'split_2_horizontal',
+      backgroundColor: '#1a1a2e',
+      headerTitle: 'بوتيك الأناقة - ستايلك يعكس شخصيتك',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-clothes-media', title: 'أحدث الموديلات', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-clothes-ticker', title: 'عروض الموضة', type: 'ticker', text: '👗 تخفيضات نهاية الموسم: خصم حتى 60% • شراء 3 قطع والرابعة مجاناً • تشكيلة الصيف الجديدة وصلت!' },
+        { id: 'zone-clothes-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-jewelry',
+      organizationId: orgId,
+      name: 'قالب محلات المجوهرات',
+      layout: 'full',
+      backgroundColor: '#1a1510',
+      headerTitle: 'دار الماس - جمال لا ينتهي',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1515562141589-67f0d569b62e?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-jewelry-media', title: 'مجوهرات مميزة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-jewelry-ticker', title: 'عروض ذهبية', type: 'ticker', text: '💍 خاتم الماس بخصم 20% • سلسلة ذهب عيار 21 بـ 2,500 ريال • تأمين مجاني على جميع المشتريات' },
+        { id: 'zone-jewelry-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-spa',
+      organizationId: orgId,
+      name: 'قالب منتجعات السبا والاسترخاء',
+      layout: 'split_2_horizontal',
+      backgroundColor: '#2d1b4e',
+      headerTitle: 'منتجع سيل فير - استرخاء تام',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1540555700478-4be289fbec6d?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-spa-media', title: 'خدمات الاسترخاء', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-spa-ticker', title: 'عروض السبا', type: 'ticker', text: '🧖 جلسة مساج/swedish بـ 199 ريال • باقة العروسين الكاملة بخصم 30% • جلسة فردية مجانية مع أي باقة عائلية' },
+        { id: 'zone-spa-clock', title: 'الساعة وأوقات العمل', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'tpl-icecream',
+      organizationId: orgId,
+      name: 'قالب محلات الآيس كريم والحلويات الباردة',
+      layout: 'split_2_vertical',
+      backgroundColor: '#1a2a3a',
+      headerTitle: 'كريماtoFloat - حلوة الحياة',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1497034825429-c343d7c6a68f?auto=format&fit=crop&w=400&q=60',
+      zones: [
+        { id: 'zone-ice-media', title: 'نكهاتنا المميزة', type: 'playlist', contentId: 'pl-general-ads' },
+        { id: 'zone-ice-ticker', title: 'الحلاو)', type: 'ticker', text: '🍦 قهوة تركية بـ 12 ريال • 3 كرات آيس كريم بـ 18 ريال • عرض الصيف: وجبتين والثالثة مجاناً' },
+        { id: 'zone-ice-clock', title: 'الساعة', type: 'clock', options: { showWeather: true, city: 'الرياض' } }
+      ],
+      createdAt: now,
+      updatedAt: now,
+    },
   ];
 
   const defaultScreens: Screen[] = [
@@ -348,15 +607,15 @@ function getInitialData(): DatabaseSchema {
   ];
 
   const defaultQueueServices: QueueService[] = [
-    { id: 'qs-1', organizationId: orgId, branchId: branchRiyadh, name: 'عيادة الاستشارات العامة', codePrefix: 'A', currentNumber: 104, lastCalledNumber: 104, averageWaitMinutes: 8, isActive: true },
-    { id: 'qs-2', organizationId: orgId, branchId: branchRiyadh, name: 'قسم المختبر والتحاليل', codePrefix: 'B', currentNumber: 42, lastCalledNumber: 42, averageWaitMinutes: 5, isActive: true },
-    { id: 'qs-3', organizationId: orgId, branchId: branchRiyadh, name: 'الصيدلية وصرف الأدوية', codePrefix: 'C', currentNumber: 78, lastCalledNumber: 78, averageWaitMinutes: 4, isActive: true }
+    { id: 'qs-1', organizationId: orgId, branchId: branchRiyadh, name: 'قسم المبيعات', codePrefix: 'S', currentNumber: 12, lastCalledNumber: 12, averageWaitMinutes: 3, isActive: true },
+    { id: 'qs-2', organizationId: orgId, branchId: branchRiyadh, name: 'قسم الخدمات والتركيب', codePrefix: 'T', currentNumber: 5, lastCalledNumber: 5, averageWaitMinutes: 10, isActive: true },
+    { id: 'qs-3', organizationId: orgId, branchId: branchRiyadh, name: 'قسم الشكاوى والمرتجعات', codePrefix: 'R', currentNumber: 3, lastCalledNumber: 3, averageWaitMinutes: 5, isActive: true },
   ];
 
   const defaultQueueTickets: QueueTicket[] = [
-    { id: 'tkt-1', organizationId: orgId, serviceId: 'qs-1', serviceName: 'عيادة الاستشارات العامة', ticketNumber: 'A-104', status: 'serving', counterNumber: 'عيادة 3', calledAt: new Date(Date.now() - 120000).toISOString(), createdAt: new Date(Date.now() - 600000).toISOString() },
-    { id: 'tkt-2', organizationId: orgId, serviceId: 'qs-1', serviceName: 'عيادة الاستشارات العامة', ticketNumber: 'A-105', status: 'waiting', createdAt: new Date(Date.now() - 300000).toISOString() },
-    { id: 'tkt-3', organizationId: orgId, serviceId: 'qs-2', serviceName: 'قسم المختبر والتحاليل', ticketNumber: 'B-42', status: 'serving', counterNumber: 'مختبر 1', calledAt: new Date(Date.now() - 60000).toISOString(), createdAt: new Date(Date.now() - 400000).toISOString() }
+    { id: 'tkt-1', organizationId: orgId, serviceId: 'qs-1', serviceName: 'قسم المبيعات', ticketNumber: 'S-12', status: 'serving', counterNumber: 'شباك 1', calledAt: new Date(Date.now() - 120000).toISOString(), createdAt: new Date(Date.now() - 600000).toISOString() },
+    { id: 'tkt-2', organizationId: orgId, serviceId: 'qs-1', serviceName: 'قسم المبيعات', ticketNumber: 'S-11', status: 'waiting', createdAt: new Date(Date.now() - 300000).toISOString() },
+    { id: 'tkt-3', organizationId: orgId, serviceId: 'qs-2', serviceName: 'قسم الخدمات والتركيب', ticketNumber: 'T-5', status: 'serving', counterNumber: 'شباك 2', calledAt: new Date(Date.now() - 60000).toISOString(), createdAt: new Date(Date.now() - 400000).toISOString() }
   ];
 
   return {
@@ -443,7 +702,10 @@ export interface Database {
   setDocument(collection: string, id: string, data: object): Promise<void>;
 
   getQueueServices(orgId: string): Promise<QueueService[]>;
+  getQueueServiceById(id: string): Promise<QueueService | undefined>;
+  updateQueueService(id: string, updates: Partial<QueueService>): Promise<void>;
   getQueueTickets(orgId: string): Promise<QueueTicket[]>;
+  createQueueTicket(ticket: QueueTicket): Promise<void>;
   callNextTicket(serviceId: string, counterNumber: string): Promise<QueueTicket | null>;
 
   seedIfEmpty(): Promise<void>;
@@ -677,8 +939,18 @@ class LocalDatabase implements Database {
   async getQueueServices(orgId: string) {
     return this.data.queueServices.filter(q => q.organizationId === orgId);
   }
+  async getQueueServiceById(id: string) {
+    return this.data.queueServices.find(q => q.id === id);
+  }
+  async updateQueueService(id: string, updates: Partial<QueueService>) {
+    const svc = this.data.queueServices.find(q => q.id === id);
+    if (svc) Object.assign(svc, updates);
+  }
   async getQueueTickets(orgId: string) {
     return this.data.queueTickets.filter(t => t.organizationId === orgId);
+  }
+  async createQueueTicket(ticket: QueueTicket) {
+    this.data.queueTickets.push(ticket);
   }
   async callNextTicket(serviceId: string, counterNumber: string) {
     const service = this.data.queueServices.find(s => s.id === serviceId);
@@ -945,6 +1217,8 @@ class FirestoreDatabase implements Database {
     return newBranch;
   }
   async deleteBranch(id: string, orgId: string) {
+    const existing = await this.getById<Branch>(COLLECTIONS.branches, id);
+    if (!existing || existing.organizationId !== orgId) return false;
     await (await getDb()).collection(COLLECTIONS.branches).doc(id).delete();
     return true;
   }
@@ -956,11 +1230,13 @@ class FirestoreDatabase implements Database {
   }
   async getActivityLogs(orgId: string, limit = 50) {
     const fs = await getDb();
-    const snap = await fs.collection(COLLECTIONS.activityLogs).where('organizationId', '==', orgId).get();
+    const snap = await fs.collection(COLLECTIONS.activityLogs)
+      .where('organizationId', '==', orgId)
+      .orderBy('createdAt', 'desc')
+      .limit(limit)
+      .get();
     return snap.docs
-      .map((d: any) => ({ ...(d.data() as object), id: d.id }) as ActivityLog)
-      .sort((a: ActivityLog, b: ActivityLog) => (b.createdAt || '').localeCompare(a.createdAt || ''))
-      .slice(0, limit);
+      .map((d: any) => ({ ...(d.data() as object), id: d.id }) as ActivityLog);
   }
 
   async getOrganization(id: string) {
@@ -1008,20 +1284,35 @@ class FirestoreDatabase implements Database {
   async getQueueServices(orgId: string) {
     return this.list<QueueService>(COLLECTIONS.queueServices, 'organizationId', orgId);
   }
+  async getQueueServiceById(id: string) {
+    return this.getById<QueueService>(COLLECTIONS.queueServices, id);
+  }
+  async updateQueueService(id: string, updates: Partial<QueueService>) {
+    await this.setDoc(COLLECTIONS.queueServices, id, updates);
+  }
   async getQueueTickets(orgId: string) {
     return this.list<QueueTicket>(COLLECTIONS.queueTickets, 'organizationId', orgId);
   }
-  async callNextTicket(serviceId: string, counterNumber: string) {
-    const service = await this.getById<QueueService>(COLLECTIONS.queueServices, serviceId);
-    if (!service) return null;
-    const newNumber = (service.currentNumber || 0) + 1;
-    await this.setDoc(COLLECTIONS.queueServices, serviceId, { ...service, currentNumber: newNumber, lastCalledNumber: newNumber });
-    const ticket: QueueTicket = {
-      id: genId('tkt'), organizationId: service.organizationId, serviceId: service.id, serviceName: service.name,
-      ticketNumber: `${service.codePrefix}-${newNumber}`, status: 'called', counterNumber,
-      calledAt: new Date().toISOString(), createdAt: new Date().toISOString(),
-    };
+  async createQueueTicket(ticket: QueueTicket) {
     await this.setDoc(COLLECTIONS.queueTickets, ticket.id, ticket);
+  }
+  async callNextTicket(serviceId: string, counterNumber: string) {
+    const fs = await getDb();
+    const serviceRef = fs.collection(COLLECTIONS.queueServices).doc(serviceId);
+    let ticket: QueueTicket | null = null;
+    await fs.runTransaction(async (txn: any) => {
+      const snap = await txn.get(serviceRef);
+      if (!snap.exists) return;
+      const service = snap.data() as QueueService;
+      const newNumber = (service.currentNumber || 0) + 1;
+      txn.update(serviceRef, { currentNumber: newNumber, lastCalledNumber: newNumber });
+      ticket = {
+        id: genId('tkt'), organizationId: service.organizationId, serviceId: service.id, serviceName: service.name,
+        ticketNumber: `${service.codePrefix}-${newNumber}`, status: 'called', counterNumber,
+        calledAt: new Date().toISOString(), createdAt: new Date().toISOString(),
+      };
+      txn.set(fs.collection(COLLECTIONS.queueTickets).doc(ticket.id), ticket);
+    });
     return ticket;
   }
 }

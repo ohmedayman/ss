@@ -47,7 +47,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       items,
     } = body;
 
-    const totalDuration = items
+    const totalDuration = items && Array.isArray(items)
       ? items.reduce((acc: number, item: any) => acc + (parseInt(item.durationSeconds, 10) || 10), 0)
       : playlist.totalDurationSeconds;
 
@@ -89,7 +89,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
     return NextResponse.json({ success: true, playlist: updated });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل تحديث قائمة التشغيل' }, { status: 500 });
+    console.error('Update playlist error:', error);
+    return NextResponse.json({ error: 'فشل تحديث قائمة التشغيل' }, { status: 500 });
   }
 }
 

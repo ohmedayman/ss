@@ -17,23 +17,20 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   const screens = await db.getScreens(session.organization.id);
 
-  // Calculate online/offline dynamically if heartbeat is older than 35 seconds
+  // Calculate online/offline dynamically without persisting to DB on every read
   const now = Date.now();
-  const updatedScreens: typeof screens = [];
-  for (const s of screens) {
-    let screen = s;
+  const screensWithStatus = screens.map(s => {
     if (s.isPaired && s.lastHeartbeatAt) {
       const diff = now - new Date(s.lastHeartbeatAt).getTime();
-      const isOnline = diff < 45000; // 45 seconds tolerance
+      const isOnline = diff < 45000;
       if (isOnline !== (s.status === 'online')) {
-        const updated = await db.updateScreen(s.id, { status: isOnline ? 'online' : 'offline' });
-        screen = updated || s;
+        return { ...s, status: isOnline ? 'online' : 'offline' as const };
       }
     }
-    updatedScreens.push(screen);
-  }
+    return s;
+  });
 
-  return NextResponse.json({ screens: updatedScreens });
+  return NextResponse.json({ screens: screensWithStatus });
 }
 
 export async function POST(req: Request) {
@@ -91,6 +88,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ success: true, screen: newScreen });
   } catch (error: any) {
-    return NextResponse.json({ error: error.message || 'فشل إضافة الشاشة' }, { status: 500 });
+    console.error('Create screen error:', error);
+    return NextResponse.json({ error: 'فشل إضافة الشاشة' }, { status: 500 });
   }
 }
