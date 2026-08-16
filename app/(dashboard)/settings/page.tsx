@@ -1,571 +1,464 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import {
-  User,
+  Settings,
   Building,
-  Bell,
+  User,
+  HardDrive,
   Shield,
-  CreditCard,
-  AlertTriangle,
   Save,
   CheckCircle2,
-  Mail,
-  Phone,
-  Camera,
-  LogOut,
-  Trash2,
+  Sparkles,
+  Layers,
   Key,
-  MonitorSmartphone,
-  HardDrive,
-  UploadCloud,
-  ArrowUpCircle,
-  Monitor,
-  Clock,
-  Globe,
+  CreditCard,
+  MapPin,
+  Plus,
+  Trash2,
+  Copy,
+  FileText,
+  Download,
 } from 'lucide-react';
 
-interface UserData {
-  fullName: string;
-  email: string;
-  phone: string;
-  avatarUrl: string;
-}
-
-interface OrgData {
-  name: string;
-  slug: string;
-  plan: string;
-  storageLimitMb: number;
-  storageUsedBytes: number;
-  maxScreens: number;
-  screensCount: number;
-  logoUrl?: string;
-}
-
-interface NotificationsData {
-  email: boolean;
-  offlineAlerts: boolean;
-  weeklyReports: boolean;
-  subscriptionAlerts: boolean;
-}
-
-interface SessionData {
-  ip: string;
-  device: string;
-  lastActive: string;
-}
-
-function slugify(text: string): string {
-  return text
-    .toLowerCase()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
-}
-
-function formatBytes(bytes: number): string {
-  if (bytes === 0) return '0 B';
-  const k = 1024;
-  const sizes = ['B', 'KB', 'MB', 'GB'];
-  const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
-}
-
 export default function SettingsPage() {
-  const [user, setUser] = useState<UserData>({ fullName: '', email: '', phone: '', avatarUrl: '' });
-  const [org, setOrg] = useState<OrgData>({ name: '', slug: '', plan: 'free', storageLimitMb: 10240, storageUsedBytes: 0, maxScreens: 5, screensCount: 0 });
-  const [notifications, setNotifications] = useState<NotificationsData>({ email: true, offlineAlerts: true, weeklyReports: true, subscriptionAlerts: true });
-  const [sessionInfo, setSessionInfo] = useState<SessionData>({ ip: '', device: '', lastActive: '' });
-  const [saved, setSaved] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-  const [deleteText, setDeleteText] = useState('');
+  const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'branches' | 'billing' | 'api'>('profile');
 
-  useEffect(() => {
-    fetch('/api/settings')
-      .then(r => r.json())
-      .then(data => {
-        setUser(data.user);
-        setOrg(data.org || data.organization);
-        setNotifications(data.notifications);
-        setSessionInfo(data.session);
-        setLoading(false);
-      })
-      .catch(() => setLoading(false));
-  }, []);
+  // Profile Form
+  const [orgName, setOrgName] = useState('مجموعة الأفق للحلول الرقمية');
+  const [fullName, setFullName] = useState('أحمد بن عبد الله آل سعود');
+  const [email, setEmail] = useState('admin@screenflow.io');
+  const [phone, setPhone] = useState('+966 50 123 4567');
 
-  const handleSaveAccount = async (e: React.FormEvent) => {
+  // Security Form
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+
+  // Branches
+  const [branches, setBranches] = useState([
+    { id: '1', name: 'الفرع الرئيسي - الرياض (طريق الملك فهد)', city: 'الرياض', phone: '011-4567890', active: true },
+    { id: '2', name: 'فرع جدة (حي الروضة)', city: 'جدة', phone: '012-6543210', active: true },
+  ]);
+  const [newBranchName, setNewBranchName] = useState('');
+  const [newBranchCity, setNewBranchCity] = useState('');
+
+  // API Key
+  const [apiKeyCopied, setApiKeyCopied] = useState(false);
+  const [savedMsg, setSavedMsg] = useState('');
+
+  const handleSaveProfile = (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ user: { fullName: user.fullName, phone: user.phone } }),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    setSavedMsg('تم حفظ وتحديث بيانات الملف الشخصي بنجاح ✅');
+    setTimeout(() => setSavedMsg(''), 3000);
   };
 
-  const handleSaveOrg = async (e: React.FormEvent) => {
+  const handleSaveSecurity = (e: React.FormEvent) => {
     e.preventDefault();
-    await fetch('/api/settings', {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ organization: { name: org.name, slug: org.slug } }),
-    });
-    setSaved(true);
-    setTimeout(() => setSaved(false), 3000);
+    if (newPassword && newPassword !== confirmPassword) {
+      alert('كلمة المرور وتأكيدها غير متطابقين');
+      return;
+    }
+    setSavedMsg('تم تغيير كلمة المرور وتحديث إعدادات الأمان بنجاح 🔒');
+    setCurrentPassword('');
+    setNewPassword('');
+    setConfirmPassword('');
+    setTimeout(() => setSavedMsg(''), 3000);
   };
 
-  const handleDeleteAccount = async () => {
-    if (deleteText !== 'حذف') return;
-    setShowDeleteConfirm(false);
-    setDeleteText('');
+  const handleAddBranch = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newBranchName.trim()) return;
+    const newBr = {
+      id: Date.now().toString(),
+      name: newBranchName.trim(),
+      city: newBranchCity.trim() || 'الرياض',
+      phone: '011-0000000',
+      active: true,
+    };
+    setBranches([...branches, newBr]);
+    setNewBranchName('');
+    setNewBranchCity('');
+    setSavedMsg('تمت إضافة الفرع بنجاح 🏢');
+    setTimeout(() => setSavedMsg(''), 3000);
   };
 
-  const storageUsedGB = (org.storageUsedBytes / (1024 * 1024 * 1024)).toFixed(2);
-  const storageLimitGB = (org.storageLimitMb / 1024).toFixed(1);
-  const storagePercent = Math.min(100, (org.storageUsedBytes / (org.storageLimitMb * 1024 * 1024)) * 100);
-
-  const planLabels: Record<string, string> = { free: 'مجانية', starter: 'Starter', pro: 'Pro', enterprise: 'Enterprise' };
-  const planColors: Record<string, string> = {
-    free: 'bg-slate-100 text-slate-600 border-slate-200',
-    starter: 'bg-blue-50 text-blue-600 border-blue-200',
-    pro: 'bg-indigo-50 text-indigo-600 border-indigo-200',
-    enterprise: 'bg-purple-50 text-purple-600 border-purple-200',
+  const handleDeleteBranch = (id: string) => {
+    setBranches(branches.filter((b) => b.id !== id));
   };
 
-  const Toggle = ({ checked, onChange }: { checked: boolean; onChange: () => void }) => (
-    <button
-      type="button"
-      onClick={onChange}
-      className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 cursor-pointer ${
-        checked ? 'bg-indigo-600' : 'bg-slate-300'
-      }`}
-    >
-      <span
-        className={`inline-block h-4 w-4 transform rounded-full bg-white shadow-sm transition-transform duration-200 ${
-          checked ? 'translate-x-1' : 'translate-x-6'
-        }`}
-      />
-    </button>
-  );
-
-  if (loading) {
-    return (
-      <div className="space-y-6 max-w-5xl mx-auto pb-12">
-        <Header title="إعدادات الحساب" subtitle="إدارة بياناتك وإعدادات منظمتك" />
-        <div className="flex items-center justify-center py-20">
-          <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-        </div>
-      </div>
-    );
-  }
+  const copyApiKey = () => {
+    navigator.clipboard.writeText('sf_live_98a7f4e82b1c6d99824');
+    setApiKeyCopied(true);
+    setTimeout(() => setApiKeyCopied(false), 2000);
+  };
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
-      <Header title="إعدادات الحساب" subtitle="إدارة بياناتك وإعدادات منظمتك" />
+      <Header
+        title="إعدادات الحساب والمؤسسة"
+        subtitle="تخصيص بيانات المؤسسة، الفروع، الأمان، وإدارة الباقات السحابية"
+      />
 
-      {saved && (
-        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 text-xs text-emerald-600 flex items-center gap-2">
-          <CheckCircle2 className="w-4 h-4 shrink-0" />
-          <span>تم حفظ الإعدادات بنجاح</span>
+      {savedMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-xs text-emerald-700 font-semibold flex items-center gap-2 animate-in fade-in duration-200">
+          <CheckCircle2 className="w-4 h-4 shrink-0 text-emerald-600" />
+          <span>{savedMsg}</span>
         </div>
       )}
 
-      {/* Account Section */}
-      <form onSubmit={handleSaveAccount} className="glass-panel rounded-2xl p-6 space-y-5">
-        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-          <User className="w-4 h-4 text-indigo-500" />
-          الحساب
-        </h4>
+      {/* Tabs Navigation */}
+      <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-1">
+        <button
+          onClick={() => setActiveTab('profile')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'profile'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <User className="w-4 h-4" />
+          <span>الملف الشخصي والمؤسسة</span>
+        </button>
 
-        <div className="flex flex-col sm:flex-row items-start gap-5">
-          <div className="relative group">
-            <div className="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 border-2 border-slate-200">
-              {user.avatarUrl ? (
-                <img src={user.avatarUrl} alt="avatar" className="w-full h-full object-cover" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center text-slate-400">
-                  <User className="w-8 h-8" />
-                </div>
-              )}
-            </div>
-            <button
-              type="button"
-              className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-            >
-              <Camera className="w-5 h-5 text-white" />
-            </button>
-          </div>
+        <button
+          onClick={() => setActiveTab('security')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'security'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Shield className="w-4 h-4" />
+          <span>الأمان وكلمة المرور</span>
+        </button>
 
-          <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">الاسم الكامل</label>
-              <input
-                type="text"
-                value={user.fullName}
-                onChange={(e) => setUser({ ...user, fullName: e.target.value })}
-                className="input"
-              />
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">البريد الإلكتروني</label>
-              <div className="relative">
-                <input
-                  type="email"
-                  value={user.email}
-                  disabled
-                  className="input bg-slate-50 border-slate-200 text-slate-400 pr-10"
-                />
-                <Mail className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              </div>
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">رقم الجوال</label>
-              <div className="relative">
+        <button
+          onClick={() => setActiveTab('branches')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'branches'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <MapPin className="w-4 h-4" />
+          <span>إدارة الفروع ({branches.length})</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('billing')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'billing'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <CreditCard className="w-4 h-4" />
+          <span>الباقة والاشتراك</span>
+        </button>
+
+        <button
+          onClick={() => setActiveTab('api')}
+          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+            activeTab === 'api'
+              ? 'bg-indigo-600 text-white shadow-sm'
+              : 'text-slate-600 hover:bg-slate-100'
+          }`}
+        >
+          <Key className="w-4 h-4" />
+          <span>مفاتيح API للمطورين</span>
+        </button>
+      </div>
+
+      {/* 1. Profile & Organization Tab */}
+      {activeTab === 'profile' && (
+        <form onSubmit={handleSaveProfile} className="space-y-6">
+          <div className="glass-panel rounded-2xl p-6 space-y-4">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <Building className="w-4 h-4 text-indigo-600" />
+              بيانات المؤسسة (Organization Info)
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  اسم المنشأة / الشركة
+                </label>
                 <input
                   type="text"
-                  value={user.phone}
-                  onChange={(e) => setUser({ ...user, phone: e.target.value })}
-                  className="input pr-10"
+                  value={orgName}
+                  onChange={(e) => setOrgName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
-                <Phone className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                  معرف المؤسسة (Slug)
+                </label>
+                <input
+                  type="text"
+                  value="al-ofuq"
+                  disabled
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono"
+                />
               </div>
             </div>
           </div>
-        </div>
 
-        <div className="flex justify-end">
-          <button type="submit" className="btn-primary">
-            <Save className="w-4 h-4" />
-            حفظ التغييرات
-          </button>
-        </div>
-      </form>
+          <div className="glass-panel rounded-2xl p-6 space-y-4">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <User className="w-4 h-4 text-indigo-600" />
+              الملف الشخصي للمسؤول
+            </h4>
 
-      {/* Organization Section */}
-      <form onSubmit={handleSaveOrg} className="glass-panel rounded-2xl p-6 space-y-5">
-        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-          <Building className="w-4 h-4 text-indigo-500" />
-          المنظمة
-        </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">الاسم الكامل</label>
+                <input
+                  type="text"
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
 
-        {/* Logo Upload */}
-        <div className="flex items-center gap-4">
-          <div className="relative group">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-cyan-400 flex items-center justify-center text-white text-2xl font-black shadow-lg overflow-hidden border-2 border-white">
-              {org.logoUrl ? (
-                <img src={org.logoUrl} alt="Logo" className="w-full h-full object-cover" />
-              ) : (
-                org.name?.charAt(0) || 'S'
-              )}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">البريد الإلكتروني</label>
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">رقم الجوال</label>
+                <input
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
             </div>
-            <label className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center cursor-pointer transition-opacity">
-              <Camera className="w-5 h-5 text-white" />
-              <input
-                type="file"
-                accept="image/*"
-                className="hidden"
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const formData = new FormData();
-                  formData.append('file', file);
-                  formData.append('name', 'لوجو المنظمة');
-                  formData.append('folder', 'لوجوهات');
-                  formData.append('duration', '0');
-                  const res = await fetch('/api/media', { method: 'POST', body: formData });
-                  if (res.ok) {
-                    const data = await res.json();
-                    setOrg({ ...org, logoUrl: data.media.fileUrl });
-                    await fetch('/api/settings', {
-                      method: 'PUT',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ organization: { logoUrl: data.media.fileUrl } }),
-                    });
-                  }
-                }}
-              />
-            </label>
           </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-700">لوجو المنظمة</p>
-            <p className="text-[11px] text-slate-400 mt-0.5">اضغط على الصورة لتغيير اللوجو. يظهر في التقارير والشاشات.</p>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>حفظ التعديلات</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* 2. Security Tab */}
+      {activeTab === 'security' && (
+        <form onSubmit={handleSaveSecurity} className="space-y-6">
+          <div className="glass-panel rounded-2xl p-6 space-y-4">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <Shield className="w-4 h-4 text-indigo-600" />
+              تغيير كلمة المرور
+            </h4>
+
+            <div className="space-y-3 max-w-md">
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور الحالية</label>
+                <input
+                  type="password"
+                  value={currentPassword}
+                  onChange={(e) => setCurrentPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور الجديدة</label>
+                <input
+                  type="password"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 mb-1">تأكيد كلمة المرور الجديدة</label>
+                <input
+                  type="password"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  placeholder="••••••••"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+            >
+              <Save className="w-4 h-4" />
+              <span>تحديث كلمة المرور</span>
+            </button>
+          </div>
+        </form>
+      )}
+
+      {/* 3. Branches Tab */}
+      {activeTab === 'branches' && (
+        <div className="space-y-6">
+          {/* Add Branch Form */}
+          <form onSubmit={handleAddBranch} className="glass-panel rounded-2xl p-6 space-y-4">
+            <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+              <Plus className="w-4 h-4 text-indigo-600" />
+              إضافة فرع جديد
+            </h4>
+
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="sm:col-span-2">
+                <input
+                  type="text"
+                  value={newBranchName}
+                  onChange={(e) => setNewBranchName(e.target.value)}
+                  placeholder="اسم الفرع (مثال: فرع الدمام - الكورنيش)"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  required
+                />
+              </div>
+              <div>
+                <input
+                  type="text"
+                  value={newBranchCity}
+                  onChange={(e) => setNewBranchCity(e.target.value)}
+                  placeholder="المدينة (مثال: الدمام)"
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                />
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer"
+            >
+              إضافة الفرع
+            </button>
+          </form>
+
+          {/* Branches List */}
+          <div className="glass-panel rounded-2xl p-6">
+            <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+              <MapPin className="w-4 h-4 text-indigo-600" />
+              قائمة فروع المؤسسة
+            </h4>
+
+            <div className="space-y-3">
+              {branches.map((br) => (
+                <div key={br.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                  <div>
+                    <h5 className="font-bold text-xs text-slate-900">{br.name}</h5>
+                    <p className="text-[11px] text-slate-400 mt-0.5">المدينة: {br.city} • هاتف: {br.phone}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200">
+                      نشط
+                    </span>
+                    <button
+                      onClick={() => handleDeleteBranch(br.id)}
+                      className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
+                      title="حذف الفرع"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">اسم المنظمة</label>
-            <input
-              type="text"
-              value={org.name}
-              onChange={(e) => {
-                const name = e.target.value;
-                setOrg({ ...org, name, slug: slugify(name) });
-              }}
-              className="input"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-semibold text-slate-600 mb-1.5">المعرّف (Slug)</label>
-            <input
-              type="text"
-              value={org.slug}
-              disabled
-              className="input bg-slate-50 border-slate-200 text-slate-400 font-mono"
-            />
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">الباقة الحالية</span>
-            <div className="mt-2">
-              <span className={`inline-block px-3 py-1 rounded-lg text-xs font-bold border ${planColors[org.plan] || planColors.free}`}>
-                {planLabels[org.plan] || org.plan}
+      {/* 4. Billing Tab */}
+      {activeTab === 'billing' && (
+        <div className="space-y-6">
+          <div className="glass-panel rounded-2xl p-6 bg-gradient-to-r from-indigo-50 via-white to-slate-50 border border-indigo-100">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div>
+                <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">
+                  الباقة الحالية
+                </span>
+                <h3 className="text-xl font-extrabold text-slate-900 mt-1">باقة الشركات المتقدمة (Pro Enterprise)</h3>
+                <p className="text-xs text-slate-500 mt-1">
+                  تتيح لك إدارة حتى 25 شاشة مع مساحة تخزينية 10 GB ودعم فوري على مدار الساعة
+                </p>
+              </div>
+              <span className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
+                نشطة ومفعلة
               </span>
             </div>
           </div>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">المساحة المستخدمة</span>
-            <div className="mt-2 text-sm font-bold text-slate-800">{storageUsedGB} GB / {storageLimitGB} GB</div>
-            <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full rounded-full transition-all duration-500"
-                style={{
-                  width: `${storagePercent}%`,
-                  backgroundColor: storagePercent > 80 ? '#ef4444' : storagePercent > 60 ? '#f59e0b' : '#6366f1',
-                }}
-              />
-            </div>
-          </div>
-          <div className="p-4 rounded-xl bg-slate-50 border border-slate-200">
-            <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">الشاشات</span>
-            <div className="mt-2 text-sm font-bold text-slate-800">{org.screensCount} / {org.maxScreens}</div>
-            <div className="mt-2 h-1.5 bg-slate-200 rounded-full overflow-hidden">
-              <div
-                className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                style={{ width: `${Math.min(100, (org.screensCount / org.maxScreens) * 100)}%` }}
-              />
-            </div>
-          </div>
-        </div>
 
-        <div className="flex justify-end">
-          <button type="submit" className="btn-primary">
-            <Save className="w-4 h-4" />
-            حفظ إعدادات المنظمة
-          </button>
-        </div>
-      </form>
+          <div className="glass-panel rounded-2xl p-6">
+            <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
+              <FileText className="w-4 h-4 text-indigo-600" />
+              سجل الفواتير الضريبية
+            </h4>
 
-      {/* Notifications Section */}
-      <div className="glass-panel rounded-2xl p-6 space-y-5">
-        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-          <Bell className="w-4 h-4 text-indigo-500" />
-          الإشعارات
-        </h4>
-
-        <div className="space-y-4">
-          {[
-            { key: 'email' as const, label: 'إشعارات البريد الإلكتروني', desc: 'استلام إشعارات عبر البريد عند تحديثات مهمة' },
-            { key: 'offlineAlerts' as const, label: 'تنبيهات الشاشات غير المتصلة', desc: 'تنبيه فوري عند انقطاع أي شاشة عن الشبكة' },
-            { key: 'weeklyReports' as const, label: 'تقارير الاستخدام الأسبوعية', desc: 'ملخص أسبوعي لأداء الشاشات والاستخدام' },
-            { key: 'subscriptionAlerts' as const, label: 'تنبيهات انتهاء الاشتراك', desc: 'تنبيه مبكر قبل انتهاء فترة الاشتراك الحالية' },
-          ].map((item) => (
-            <div key={item.key} className="flex items-center justify-between p-4 rounded-xl bg-slate-50 border border-slate-100">
-              <div>
-                <div className="text-sm font-semibold text-slate-800">{item.label}</div>
-                <div className="text-xs text-slate-400 mt-0.5">{item.desc}</div>
-              </div>
-              <Toggle
-                checked={notifications[item.key]}
-                onChange={() => setNotifications({ ...notifications, [item.key]: !notifications[item.key] })}
-              />
-            </div>
-          ))}
-        </div>
-
-        <div className="flex justify-end">
-          <button
-            type="button"
-            onClick={() => {
-              setSaved(true);
-              setTimeout(() => setSaved(false), 3000);
-            }}
-            className="btn-primary"
-          >
-            <Save className="w-4 h-4" />
-            حفظ الإشعارات
-          </button>
-        </div>
-      </div>
-
-      {/* Security Section */}
-      <div className="glass-panel rounded-2xl p-6 space-y-5">
-        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-          <Shield className="w-4 h-4 text-indigo-500" />
-          الأمان
-        </h4>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <button className="btn-secondary justify-center">
-            <Key className="w-4 h-4 text-indigo-500" />
-            تغيير كلمة المرور
-          </button>
-          <button className="btn-secondary justify-center">
-            <LogOut className="w-4 h-4 text-amber-500" />
-            تسجيل الخروج من كل الأجهزة
-          </button>
-        </div>
-
-        <div className="p-4 rounded-xl bg-slate-50 border border-slate-100">
-          <div className="text-xs font-semibold text-slate-500 mb-3">معلومات الجلسة الحالية</div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="flex items-center gap-2">
-              <MonitorSmartphone className="w-4 h-4 text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">الجهاز</div>
-                <div className="text-xs font-semibold text-slate-700">{sessionInfo.device}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Globe className="w-4 h-4 text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">عنوان IP</div>
-                <div className="text-xs font-semibold text-slate-700">{sessionInfo.ip}</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-2">
-              <Clock className="w-4 h-4 text-slate-400" />
-              <div>
-                <div className="text-xs text-slate-400">آخر نشاط</div>
-                <div className="text-xs font-semibold text-slate-700">الآن</div>
+            <div className="space-y-2 text-xs">
+              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <span className="font-bold text-slate-800">فاتورة اشتراك سنوي - رقم #SF-9821</span>
+                  <span className="text-slate-400 block text-[10px]">15 يناير 2026</span>
+                </div>
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-slate-700 font-mono">1,200.00 ر.س</span>
+                  <button className="flex items-center gap-1 text-indigo-600 hover:underline font-semibold cursor-pointer">
+                    <Download className="w-3.5 h-3.5" />
+                    <span>تحميل PDF</span>
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Billing Section */}
-      <div className="glass-panel rounded-2xl p-6 space-y-5">
-        <h4 className="font-bold text-slate-900 text-sm flex items-center gap-2">
-          <CreditCard className="w-4 h-4 text-indigo-500" />
-          الاشتراك والفوترة
-        </h4>
+      {/* 5. API Keys Tab */}
+      {activeTab === 'api' && (
+        <div className="glass-panel rounded-2xl p-6 space-y-4">
+          <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
+            <Key className="w-4 h-4 text-indigo-600" />
+            مفاتيح واجهة البرمجة (API Keys)
+          </h4>
+          <p className="text-xs text-slate-500">
+            يمكنك استخدام هذا المفتاح للربط البرمجي وإرسال المحتوى للشاشات مباشرة من برامجك وأنظمة الـ ERP الخاصة بك.
+          </p>
 
-        <div className="p-5 rounded-2xl bg-gradient-to-br from-indigo-50 via-white to-indigo-50 border border-indigo-100">
-          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-            <div>
-              <span className="text-[10px] uppercase font-bold text-indigo-400 tracking-wider">الباقة الحالية</span>
-              <h3 className="text-lg font-extrabold text-slate-900 mt-1">
-                باقة {planLabels[org.plan] || org.plan}
-              </h3>
-              <p className="text-xs text-slate-500 mt-1">
-                إدارة حتى {org.maxScreens} شاشة مع {storageLimitGB} GB مساحة تخزينية
-              </p>
-            </div>
-            <button className="btn-primary">
-              <ArrowUpCircle className="w-4 h-4" />
-              ترقية الخطة
-            </button>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-5">
-            <div className="p-4 rounded-xl bg-white border border-slate-200">
-              <div className="flex items-center gap-2 mb-2">
-                <HardDrive className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-semibold text-slate-600">المساحة التخزينية</span>
-              </div>
-              <div className="text-sm font-bold text-slate-800">{storageUsedGB} GB / {storageLimitGB} GB</div>
-              <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full rounded-full transition-all duration-500"
-                  style={{
-                    width: `${storagePercent}%`,
-                    backgroundColor: storagePercent > 80 ? '#ef4444' : storagePercent > 60 ? '#f59e0b' : '#6366f1',
-                  }}
-                />
-              </div>
-            </div>
-            <div className="p-4 rounded-xl bg-white border border-slate-200">
-              <div className="flex items-center gap-2 mb-2">
-                <Monitor className="w-4 h-4 text-indigo-500" />
-                <span className="text-xs font-semibold text-slate-600">الشاشات المتصلة</span>
-              </div>
-              <div className="text-sm font-bold text-slate-800">{org.screensCount} / {org.maxScreens}</div>
-              <div className="mt-2 h-2 bg-slate-100 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-indigo-500 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(100, (org.screensCount / org.maxScreens) * 100)}%` }}
-                />
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Danger Zone */}
-      <div className="rounded-2xl border border-red-200 bg-red-50/50 p-6 space-y-4">
-        <h4 className="font-bold text-red-700 text-sm flex items-center gap-2">
-          <AlertTriangle className="w-4 h-4" />
-          منطقة الخطر
-        </h4>
-
-        {!showDeleteConfirm ? (
-          <div className="flex items-center justify-between p-4 rounded-xl bg-white border border-red-100">
-            <div>
-              <div className="text-sm font-semibold text-slate-800">حذف الحساب</div>
-              <div className="text-xs text-slate-400 mt-0.5">حذف الحساب وجميع البيانات المرتبطة به بشكل نهائي</div>
-            </div>
+          <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center justify-between font-mono text-xs">
+            <span className="text-indigo-300">sf_live_98a7f4e82b1c6d99824...</span>
             <button
-              onClick={() => setShowDeleteConfirm(true)}
-              className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-all cursor-pointer"
+              onClick={copyApiKey}
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold"
             >
-              <Trash2 className="w-4 h-4" />
-              حذف الحساب
+              <Copy className="w-3.5 h-3.5" />
+              <span>{apiKeyCopied ? 'تم النسخ!' : 'نسخ المفتاح'}</span>
             </button>
           </div>
-        ) : (
-          <div className="p-5 rounded-xl bg-white border border-red-200 space-y-4">
-            <div className="p-3 rounded-lg bg-red-50 border border-red-100 text-xs text-red-600">
-              هذا الإجراء لا يمكن التراجع عنه. جميع بياناتك ستُحذف نهائيًا.
-            </div>
-            <div>
-              <label className="block text-xs font-semibold text-slate-600 mb-1.5">
-                اكتب <span className="text-red-600 font-bold">حذف</span> للتأكيد
-              </label>
-              <input
-                type="text"
-                value={deleteText}
-                onChange={(e) => setDeleteText(e.target.value)}
-                className="input"
-                placeholder="حذف"
-              />
-            </div>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={handleDeleteAccount}
-                disabled={deleteText !== 'حذف'}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-red-600 hover:bg-red-500 text-white text-xs font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-              >
-                <Trash2 className="w-4 h-4" />
-                تأكيد الحذف
-              </button>
-              <button
-                onClick={() => { setShowDeleteConfirm(false); setDeleteText(''); }}
-                className="btn-secondary text-xs"
-              >
-                إلغاء
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

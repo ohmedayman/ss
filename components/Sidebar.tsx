@@ -26,6 +26,9 @@ interface SidebarProps {
   totalScreens?: number;
   mobileOpen?: boolean;
   onMobileClose?: () => void;
+  logoUrl?: string;
+  userName?: string;
+  planName?: string;
 }
 
 export default function Sidebar({
@@ -35,6 +38,9 @@ export default function Sidebar({
   totalScreens = 4,
   mobileOpen = false,
   onMobileClose,
+  logoUrl,
+  userName = '',
+  planName = '',
 }: SidebarProps) {
   const pathname = usePathname();
 
@@ -94,9 +100,13 @@ export default function Sidebar({
         {/* Brand Header */}
         <div className="p-5 border-b border-slate-100 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group" onClick={handleNavClick}>
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
-              <Tv className="w-5 h-5 text-white" />
-            </div>
+            {logoUrl ? (
+              <img src={logoUrl} alt="Logo" className="w-10 h-10 rounded-xl object-cover shadow-md" />
+            ) : (
+              <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 via-indigo-500 to-cyan-400 flex items-center justify-center shadow-lg shadow-indigo-500/20 group-hover:scale-105 transition-transform">
+                <Tv className="w-5 h-5 text-white" />
+              </div>
+            )}
             <div>
               <div className="flex items-center gap-1.5">
                 <span className="font-bold text-lg text-slate-900 tracking-tight">ScreenFlow</span>
@@ -189,11 +199,11 @@ export default function Sidebar({
           <div className="flex items-center justify-between pt-1">
             <div className="flex items-center gap-2.5">
               <div className="w-8 h-8 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center text-xs font-bold text-indigo-600">
-                أ
+                {userName ? userName.charAt(0) : 'أ'}
               </div>
               <div className="overflow-hidden">
-                <p className="text-xs font-semibold text-slate-800 truncate">أحمد عبد الله</p>
-                <p className="text-[10px] text-emerald-600 font-medium">باقة الشركات (Pro)</p>
+                <p className="text-xs font-semibold text-slate-800 truncate">{userName || 'مستخدم جديد'}</p>
+                <p className="text-[10px] text-emerald-600 font-medium">{planName || 'مجاني'}</p>
               </div>
             </div>
             <span className="w-2 h-2 rounded-full bg-emerald-500 pulse-green" title="متصل الآن" />

@@ -5,21 +5,34 @@ import Header from '@/components/Header';
 import {
   ListVideo,
   Plus,
+  Play,
   Clock,
   Trash2,
+  Edit,
   ArrowUp,
   ArrowDown,
   X,
+  CheckCircle2,
+  Sparkles,
+  Layers,
+  Image as ImageIcon,
   Film,
+  Globe,
   Type,
+  Shuffle,
+  Monitor,
+  Send,
 } from 'lucide-react';
 
 export default function PlaylistsPage() {
   const [playlists, setPlaylists] = useState<any[]>([]);
   const [mediaItems, setMediaItems] = useState<any[]>([]);
+  const [screens, setScreens] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [isEditorOpen, setIsEditorOpen] = useState(false);
   const [isMediaPickerOpen, setIsMediaPickerOpen] = useState(false);
+  const [assignModalPl, setAssignModalPl] = useState<any | null>(null);
+  const [assignSuccessMsg, setAssignSuccessMsg] = useState('');
 
   // Active Editing Playlist State
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -32,9 +45,10 @@ export default function PlaylistsPage() {
 
   const loadData = async () => {
     try {
-      const [plRes, medRes] = await Promise.all([
+      const [plRes, medRes, scrRes] = await Promise.all([
         fetch('/api/playlists'),
         fetch('/api/media'),
+        fetch('/api/screens'),
       ]);
 
       if (plRes.ok) {
@@ -44,6 +58,10 @@ export default function PlaylistsPage() {
       if (medRes.ok) {
         const d = await medRes.json();
         setMediaItems(d.media || []);
+      }
+      if (scrRes.ok) {
+        const d = await scrRes.json();
+        setScreens(d.screens || []);
       }
     } catch (e) {
       console.error(e);
@@ -148,6 +166,30 @@ export default function PlaylistsPage() {
     }
   };
 
+  const assignToScreen = async (screenId: string) => {
+    if (!assignModalPl) return;
+    try {
+      const res = await fetch(`/api/screens/${screenId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activeContentType: 'playlist',
+          activeContentId: assignModalPl.id,
+        }),
+      });
+
+      if (res.ok) {
+        setAssignSuccessMsg(`تم إسناد قائمة "${assignModalPl.name}" للشاشة وبدء البث فورياً! 🎉`);
+        setTimeout(() => {
+          setAssignModalPl(null);
+          setAssignSuccessMsg('');
+        }, 1500);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const calculateTotalDuration = () => {
     return items.reduce((acc, item) => acc + (parseInt(item.durationSeconds, 10) || 10), 0);
   };
@@ -162,7 +204,7 @@ export default function PlaylistsPage() {
 
       {/* Action Bar */}
       <div className="glass-panel rounded-2xl p-4 flex items-center justify-between">
-        <div className="text-xs text-slate-500">
+        <div className="text-xs text-slate-600">
           لديك <span className="font-bold text-indigo-600">{playlists.length}</span> قائمة تشغيل جاهزة للبث
         </div>
 
@@ -181,16 +223,16 @@ export default function PlaylistsPage() {
           return (
             <div
               key={pl.id}
-              className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-200 group"
+              className="glass-panel rounded-2xl overflow-hidden flex flex-col border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all group"
             >
               {/* Item Carousel Preview */}
-              <div className="p-4 border-b border-slate-100 bg-slate-50">
+              <div className="p-4 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
-                    <ListVideo className="w-4 h-4 text-indigo-500" />
+                    <ListVideo className="w-4 h-4 text-indigo-600" />
                     <h3 className="font-bold text-slate-900 text-sm truncate">{pl.name}</h3>
                   </div>
-                  <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-mono border border-indigo-100">
+                  <span className="text-[11px] px-2 py-0.5 rounded bg-indigo-50 text-indigo-600 font-mono border border-indigo-100 font-semibold">
                     {pl.totalDurationSeconds} ثانية
                   </span>
                 </div>
@@ -201,7 +243,7 @@ export default function PlaylistsPage() {
                     pl.items.map((it: any, idx: number) => (
                       <div
                         key={idx}
-                        className="relative w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-700"
+                        className="relative w-16 h-12 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-200"
                         title={it.media?.name || `عنصر ${idx + 1}`}
                       >
                         {it.media?.fileType === 'image' && (
@@ -212,11 +254,11 @@ export default function PlaylistsPage() {
                           />
                         )}
                         {it.media?.fileType === 'video' && (
-                          <div className="w-full h-full flex items-center justify-center bg-indigo-950 text-indigo-400">
+                          <div className="w-full h-full flex items-center justify-center bg-slate-900 text-indigo-400">
                             <Film className="w-4 h-4" />
                           </div>
                         )}
-                        <span className="absolute bottom-0.5 right-0.5 text-[8px] bg-black/80 text-white px-1 rounded">
+                        <span className="absolute bottom-0.5 right-0.5 text-[8px] bg-black/80 text-white px-1 rounded font-mono">
                           {it.durationSeconds}s
                         </span>
                       </div>
@@ -242,14 +284,24 @@ export default function PlaylistsPage() {
 
                   <div className="flex items-center gap-1.5">
                     <button
+                      onClick={() => setAssignModalPl(pl)}
+                      className="px-2.5 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold flex items-center gap-1 transition-colors cursor-pointer"
+                      title="تشغيل هذه القائمة على شاشة"
+                    >
+                      <Send className="w-3 h-3" />
+                      <span>إسناد لشاشة</span>
+                    </button>
+
+                    <button
                       onClick={() => openEditPlaylist(pl)}
-                      className="px-3 py-1.5 rounded-lg bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
+                      className="px-2.5 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-medium transition-colors cursor-pointer"
                     >
                       تعديل
                     </button>
+
                     <button
                       onClick={() => deletePlaylist(pl.id, pl.name)}
-                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                      className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                       title="حذف"
                     >
                       <Trash2 className="w-3.5 h-3.5" />
@@ -262,12 +314,60 @@ export default function PlaylistsPage() {
         })}
       </div>
 
+      {/* Quick Assign to Screen Modal */}
+      {assignModalPl && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900 text-sm">
+                  تشغيل قائمة "{assignModalPl.name}" على شاشة
+                </h3>
+              </div>
+              <button
+                onClick={() => setAssignModalPl(null)}
+                className="p-1 text-slate-400 hover:text-slate-700"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {assignSuccessMsg ? (
+              <div className="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl text-xs font-semibold text-center">
+                {assignSuccessMsg}
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {screens.map((scr) => (
+                  <button
+                    key={scr.id}
+                    onClick={() => assignToScreen(scr.id)}
+                    className="w-full p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-right flex items-center justify-between transition-all cursor-pointer group"
+                  >
+                    <div>
+                      <div className="font-bold text-xs text-slate-800 group-hover:text-indigo-900">{scr.name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">كود: {scr.registrationCode}</div>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      scr.status === 'online' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {scr.status === 'online' ? 'متصل الآن' : 'غير متصل'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Playlist Visual Builder & Editor Modal */}
       {isEditorOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4 overflow-y-auto">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-200 max-h-[90vh] flex flex-col">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 overflow-y-auto">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-3xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
               <div className="flex items-center gap-3">
                 <div className="w-10 h-10 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center">
                   <ListVideo className="w-5 h-5" />
@@ -276,7 +376,7 @@ export default function PlaylistsPage() {
                   <h3 className="font-bold text-slate-900 text-base">
                     {editingId ? 'تعديل قائمة التشغيل' : 'إنشاء قائمة تشغيل جديدة'}
                   </h3>
-                  <p className="text-xs text-slate-500">
+                  <p className="text-xs text-slate-400">
                     المدة الإجمالية الحالية: <span className="font-bold text-indigo-600 font-mono">{calculateTotalDuration()} ثانية</span>
                   </p>
                 </div>
@@ -294,7 +394,7 @@ export default function PlaylistsPage() {
               {/* Form Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     اسم قائمة التشغيل <span className="text-rose-500">*</span>
                   </label>
                   <input
@@ -302,19 +402,19 @@ export default function PlaylistsPage() {
                     value={playlistName}
                     onChange={(e) => setPlaylistName(e.target.value)}
                     placeholder="مثال: عروض المساء الترويجية"
-                    className="input"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                     required
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     التأثير الانتقالي الافتراضي
                   </label>
                   <select
                     value={defaultTransition}
                     onChange={(e) => setDefaultTransition(e.target.value)}
-                    className="input"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   >
                     <option value="fade">تلاشي (Fade)</option>
                     <option value="slide_left">انزلاق يسار (Slide Left)</option>
@@ -325,7 +425,7 @@ export default function PlaylistsPage() {
                 </div>
 
                 <div className="sm:col-span-2">
-                  <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
                     الوصف (اختياري)
                   </label>
                   <input
@@ -333,7 +433,7 @@ export default function PlaylistsPage() {
                     value={playlistDesc}
                     onChange={(e) => setPlaylistDesc(e.target.value)}
                     placeholder="أدخل وصفاً توضيحياً للهدف من هذه القائمة..."
-                    className="input"
+                    className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                 </div>
               </div>
@@ -341,7 +441,7 @@ export default function PlaylistsPage() {
               {/* Items Sequencer Timeline */}
               <div>
                 <div className="flex items-center justify-between mb-3">
-                  <label className="block text-xs font-bold text-slate-700">
+                  <label className="block text-xs font-bold text-slate-800">
                     عناصر وتتابع العرض ({items.length} عناصر)
                   </label>
                   <button
@@ -355,9 +455,9 @@ export default function PlaylistsPage() {
                 </div>
 
                 {items.length === 0 ? (
-                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50">
+                  <div className="border-2 border-dashed border-slate-200 rounded-2xl p-8 text-center bg-slate-50/50">
                     <ListVideo className="w-10 h-10 mx-auto mb-2 text-slate-300" />
-                    <p className="text-xs font-semibold text-slate-500">القائمة فارغة حالياً</p>
+                    <p className="text-xs font-semibold text-slate-600">القائمة فارغة حالياً</p>
                     <p className="text-[11px] text-slate-400 mt-1">
                       اضغط على زر "إضافة عنصر من المكتبة" لاختيار الصور والفيديوهات
                     </p>
@@ -367,15 +467,15 @@ export default function PlaylistsPage() {
                     {items.map((item, idx) => (
                       <div
                         key={item.id || idx}
-                        className="flex items-center justify-between p-3 rounded-xl bg-white border border-slate-200 gap-3"
+                        className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 gap-3"
                       >
                         {/* Order badge & preview */}
                         <div className="flex items-center gap-3">
-                          <span className="w-6 h-6 rounded-full bg-slate-100 text-slate-600 flex items-center justify-center text-xs font-bold font-mono">
+                          <span className="w-6 h-6 rounded-full bg-white border border-slate-200 text-slate-600 flex items-center justify-center text-xs font-bold font-mono">
                             {idx + 1}
                           </span>
 
-                          <div className="w-12 h-9 rounded-lg bg-slate-950 overflow-hidden shrink-0 border border-slate-700 flex items-center justify-center">
+                          <div className="w-12 h-9 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
                             {item.media?.fileType === 'image' && (
                               <img src={item.media.fileUrl} alt="" className="w-full h-full object-cover" />
                             )}
@@ -399,7 +499,7 @@ export default function PlaylistsPage() {
                         <div className="flex items-center gap-3">
                           {/* Duration input */}
                           <div className="flex items-center gap-1.5 text-xs text-slate-500">
-                            <Clock className="w-3.5 h-3.5 text-indigo-500" />
+                            <Clock className="w-3.5 h-3.5 text-indigo-600" />
                             <input
                               type="number"
                               min="1"
@@ -410,7 +510,7 @@ export default function PlaylistsPage() {
                                 newItems[idx].durationSeconds = parseInt(e.target.value, 10) || 5;
                                 setItems(newItems);
                               }}
-                              className="w-16 px-2 py-1 rounded-lg bg-slate-50 border border-slate-200 text-center font-mono text-xs text-slate-800"
+                              className="w-16 px-2 py-1 rounded-lg bg-white border border-slate-200 text-center font-mono text-xs text-slate-800"
                             />
                             <span className="text-[10px]">ثانية</span>
                           </div>
@@ -421,7 +521,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'up')}
                               disabled={idx === 0}
-                              className="p-1 rounded bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-500 border border-slate-200"
+                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600"
                               title="تحريك لأعلى"
                             >
                               <ArrowUp className="w-3.5 h-3.5" />
@@ -430,7 +530,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'down')}
                               disabled={idx === items.length - 1}
-                              className="p-1 rounded bg-white hover:bg-slate-100 disabled:opacity-30 text-slate-500 border border-slate-200"
+                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600"
                               title="تحريك لأسفل"
                             >
                               <ArrowDown className="w-3.5 h-3.5" />
@@ -441,7 +541,7 @@ export default function PlaylistsPage() {
                           <button
                             type="button"
                             onClick={() => removeItem(idx)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -457,14 +557,14 @@ export default function PlaylistsPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditorOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !playlistName.trim()}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/25"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20"
                 >
                   {saving ? 'جاري الحفظ...' : 'حفظ قائمة التشغيل'}
                 </button>
@@ -476,8 +576,8 @@ export default function PlaylistsPage() {
 
       {/* Media Picker Modal */}
       {isMediaPickerOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-          <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-2xl overflow-hidden shadow-2xl p-6">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl p-6">
             <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
               <h3 className="font-bold text-slate-900 text-sm">اختر عنصراً من مكتبة الوسائط</h3>
               <button
@@ -493,9 +593,9 @@ export default function PlaylistsPage() {
                 <div
                   key={med.id}
                   onClick={() => addItemFromMedia(med)}
-                  className="p-2 rounded-xl bg-white border border-slate-200 hover:border-indigo-400 cursor-pointer group transition-all"
+                  className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-500 cursor-pointer group transition-all"
                 >
-                  <div className="aspect-video bg-slate-950 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
+                  <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
                     {med.fileType === 'image' && (
                       <img src={med.fileUrl} alt="" className="w-full h-full object-cover" />
                     )}

@@ -11,6 +11,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   const [stats, setStats] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<any>(null);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
@@ -27,8 +28,21 @@ export default function DashboardLayout({
     }
   };
 
+  const fetchUserProfile = async () => {
+    try {
+      const res = await fetch('/api/auth/me');
+      if (res.ok) {
+        const data = await res.json();
+        setUserProfile(data);
+      }
+    } catch (e) {
+      console.error('Failed to fetch user profile:', e);
+    }
+  };
+
   useEffect(() => {
     fetchStats();
+    fetchUserProfile();
     const interval = setInterval(fetchStats, 20000);
     return () => clearInterval(interval);
   }, []);
@@ -54,6 +68,9 @@ export default function DashboardLayout({
         totalScreens={stats?.totalScreens}
         mobileOpen={mobileSidebarOpen}
         onMobileClose={() => setMobileSidebarOpen(false)}
+        logoUrl={userProfile?.organization?.logoUrl}
+        userName={userProfile?.user?.fullName}
+        planName={userProfile?.organization?.plan === 'free' ? 'مجاني' : userProfile?.organization?.plan === 'starter' ? 'المبتدئ' : userProfile?.organization?.plan === 'pro' ? 'المحترف' : userProfile?.organization?.plan === 'enterprise' ? 'المؤسسات' : 'مجاني'}
       />
 
       {/* Main Content Area */}
