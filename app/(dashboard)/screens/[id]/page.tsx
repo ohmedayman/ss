@@ -186,7 +186,7 @@ export default function ScreenDetailPage() {
           </div>
 
           <a
-            href={`/player?code=${screen.registrationCode}`}
+            href={`/player?screen=${screen.registrationCode}`}
             target="_blank"
             className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors"
           >

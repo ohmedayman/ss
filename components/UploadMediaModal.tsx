@@ -9,6 +9,7 @@ import {
   Globe,
   Type,
   Music,
+  Radio,
   CheckCircle2,
   AlertCircle,
   Clock,
@@ -46,13 +47,14 @@ export default function UploadMediaModal({
   onClose,
   onSuccess,
 }: UploadMediaModalProps) {
-  const [tab, setTab] = useState<'file' | 'youtube' | 'web_url' | 'audio' | 'ticker_text'>('file');
+  const [tab, setTab] = useState<'file' | 'youtube' | 'web_url' | 'audio' | 'ticker_text' | 'live_stream'>('file');
   const [file, setFile] = useState<File | null>(null);
   const [name, setName] = useState('');
   const [webUrl, setWebUrl] = useState('');
   const [youtubeUrl, setYoutubeUrl] = useState('');
   const [audioFile, setAudioFile] = useState<File | null>(null);
   const [tickerText, setTickerText] = useState('');
+  const [thumbUrl, setThumbUrl] = useState('');
   const [folder, setFolder] = useState('عام');
   const [duration, setDuration] = useState('10');
   const [loading, setLoading] = useState(false);
@@ -203,6 +205,33 @@ export default function UploadMediaModal({
 
         onSuccess(data.media);
         onClose();
+      } else if (tab === 'live_stream') {
+        if (!webUrl.trim()) {
+          setError('يرجى كتابة رابط البث المباشر');
+          setLoading(false);
+          return;
+        }
+
+        const res = await fetch('/api/media', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: name.trim() || 'بث مباشر',
+            fileType: 'live_stream',
+            fileUrl: webUrl.trim(),
+            customUrl: webUrl.trim(),
+            thumbnailUrl: thumbUrl.trim() || undefined,
+            folder,
+            durationSeconds: parseInt(duration, 10) || 60,
+            tags: ['بث مباشر', folder],
+          }),
+        });
+
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.error || 'فشل حفظ البث');
+
+        onSuccess(data.media);
+        onClose();
       } else if (tab === 'ticker_text') {
         if (!tickerText.trim()) {
           setError('يرجى كتابة نص الشريط الإعلاني');
@@ -240,6 +269,7 @@ export default function UploadMediaModal({
     { id: 'youtube' as const, label: 'يوتيوب', icon: YoutubeIcon },
     { id: 'audio' as const, label: 'صوتيات', icon: Music },
     { id: 'web_url' as const, label: 'صفحة ويب', icon: Globe },
+    { id: 'live_stream' as const, label: 'بث مباشر', icon: Radio },
     { id: 'ticker_text' as const, label: 'شريط متحرك', icon: Type },
   ];
 
@@ -431,6 +461,40 @@ export default function UploadMediaModal({
                 className="input text-left font-mono placeholder:text-slate-400"
                 required
               />
+            </div>
+          )}
+
+          {/* Live Stream */}
+          {tab === 'live_stream' && (
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  رابط البث المباشر
+                </label>
+                <input
+                  type="url"
+                  value={webUrl}
+                  onChange={(e) => setWebUrl(e.target.value)}
+                  placeholder="https://www.facebook.com/plugins/video.php?href=..."
+                  className="input text-left font-mono placeholder:text-slate-400"
+                  required
+                />
+                <p className="text-[10px] text-slate-400 mt-1">
+                  يدعم: Facebook Live, YouTube Live, Twitch, Vimeo, أو أي رابط iframe embed
+                </p>
+              </div>
+              <div>
+                <label className="block text-xs font-semibold text-slate-600 mb-1.5">
+                  رابط الصورة المصغرة (اختياري)
+                </label>
+                <input
+                  type="url"
+                  value={thumbUrl}
+                  onChange={(e) => setThumbUrl(e.target.value)}
+                  placeholder="https://example.com/thumbnail.jpg"
+                  className="input text-left font-mono placeholder:text-slate-400"
+                />
+              </div>
             </div>
           )}
 

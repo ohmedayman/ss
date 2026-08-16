@@ -307,7 +307,7 @@ export default function PlayerPage() {
     try {
       // Check query params for specific code or token
       const urlParams = new URLSearchParams(window.location.search);
-      const codeParam = urlParams.get('code') || localStorage.getItem('sf_player_code') || '';
+      const codeParam = urlParams.get('code') || urlParams.get('screen') || localStorage.getItem('sf_player_code') || '';
       const tokenParam = urlParams.get('token') || localStorage.getItem('sf_player_token') || '';
 
       let query = '';
@@ -317,7 +317,8 @@ export default function PlayerPage() {
       const res = await fetch(`/api/player/init?${query}`);
       if (res.ok) {
         const data = await res.json();
-        setRegistrationCode(data.registrationCode || data.screen?.registrationCode || '');
+        const code = data.registrationCode || data.screen?.registrationCode || '';
+        setRegistrationCode(code);
         setIsPaired(data.isPaired);
         setScreen(data.screen);
 
@@ -328,8 +329,20 @@ export default function PlayerPage() {
           localStorage.setItem('sf_player_token', data.screen.pairingToken);
         }
 
+        // Update URL to include screen code so refresh works
+        if (code && !window.location.search.includes('screen=')) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.set('screen', code);
+          window.history.replaceState({}, '', newUrl.toString());
+        } else if (code && window.location.search.includes('code=')) {
+          const newUrl = new URL(window.location.href);
+          newUrl.searchParams.delete('code');
+          newUrl.searchParams.set('screen', code);
+          window.history.replaceState({}, '', newUrl.toString());
+        }
+
         // Generate QR Code for easy pairing
-        const pairingUrl = `${window.location.origin}/?pair=${data.registrationCode || data.screen?.registrationCode}`;
+        const pairingUrl = `${window.location.origin}/?pair=${code}`;
         QRCode.toDataURL(pairingUrl, { width: 220, margin: 1 }, (err, url) => {
           if (!err && url) setQrDataUrl(url);
         });
@@ -340,7 +353,6 @@ export default function PlayerPage() {
       }
     } catch (e) {
       console.error('Failed to init player:', e);
-      // Offline fallback: load cached content from localStorage
       const cached = localStorage.getItem('sf_player_cached_content');
       if (cached) {
         try {
@@ -829,6 +841,15 @@ export default function PlayerPage() {
                       allowFullScreen
                     />
                   )}
+                  {currentItem.media?.fileType === 'live_stream' && (
+                    <iframe
+                      src={currentItem.media.customUrl || currentItem.media.fileUrl}
+                      className="w-full h-full rounded-2xl shadow-2xl border-0"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                      allow="autoplay; encrypted-media"
+                      allowFullScreen
+                    />
+                  )}
                   {currentItem.media?.fileType === 'audio' && (
                     <>
                       <audio src={currentItem.media.fileUrl} autoPlay loop />
@@ -1045,6 +1066,18 @@ export default function PlayerPage() {
                   className="w-full h-full border-0"
                   sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                   title={currentItem.media.name || 'YouTube'}
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              )}
+
+              {currentItem.media?.fileType === 'live_stream' && (
+                <iframe
+                  key={currentItem.id}
+                  src={currentItem.media.customUrl || currentItem.media.fileUrl}
+                  className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  title={currentItem.media.name || 'Live Stream'}
                   allow="autoplay; encrypted-media"
                   allowFullScreen
                 />

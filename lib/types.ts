@@ -91,7 +91,7 @@ export interface ScreenCommand {
   executedAt?: string;
 }
 
-export type MediaType = 'image' | 'video' | 'audio' | 'web_url' | 'youtube_video' | 'ticker_text' | 'document';
+export type MediaType = 'image' | 'video' | 'audio' | 'web_url' | 'youtube_video' | 'live_stream' | 'ticker_text' | 'document';
 
 export interface MediaItem {
   id: string;
