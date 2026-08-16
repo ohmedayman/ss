@@ -405,6 +405,7 @@ export interface Database {
   getMedia(orgId: string): Promise<MediaItem[]>;
   getMediaById(id: string): Promise<MediaItem | undefined>;
   createMedia(item: Omit<MediaItem, 'id' | 'createdAt' | 'updatedAt'>): Promise<MediaItem>;
+  updateMedia(id: string, updates: Partial<MediaItem>): Promise<MediaItem | null>;
   deleteMedia(id: string, orgId: string): Promise<boolean>;
 
   getPlaylists(orgId: string): Promise<Playlist[]>;
@@ -423,6 +424,10 @@ export interface Database {
   createSchedule(sch: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>): Promise<Schedule>;
   updateSchedule(id: string, updates: Partial<Schedule>): Promise<Schedule | null>;
   deleteSchedule(id: string, orgId: string): Promise<boolean>;
+
+  getBranches(orgId: string): Promise<Branch[]>;
+  createBranch(branch: Omit<Branch, 'id'>): Promise<Branch>;
+  deleteBranch(id: string, orgId: string): Promise<boolean>;
 
   logActivity(log: Omit<ActivityLog, 'id' | 'createdAt'>): Promise<ActivityLog>;
   getActivityLogs(orgId: string, limit?: number): Promise<ActivityLog[]>;
@@ -525,6 +530,12 @@ class LocalDatabase implements Database {
     if (org) org.storageUsedBytes += item.fileSizeBytes;
     return newMedia;
   }
+  async updateMedia(id: string, updates: Partial<MediaItem>) {
+    const idx = this.data.media.findIndex(m => m.id === id);
+    if (idx === -1) return null;
+    this.data.media[idx] = { ...this.data.media[idx], ...updates, updatedAt: new Date().toISOString() };
+    return this.data.media[idx];
+  }
   async deleteMedia(id: string, orgId: string) {
     const item = this.data.media.find(m => m.id === id && m.organizationId === orgId);
     if (!item) return false;
@@ -598,6 +609,20 @@ class LocalDatabase implements Database {
     const prev = this.data.schedules.length;
     this.data.schedules = this.data.schedules.filter(s => !(s.id === id && s.organizationId === orgId));
     return this.data.schedules.length < prev;
+  }
+
+  async getBranches(orgId: string) {
+    return this.data.branches.filter(b => b.organizationId === orgId);
+  }
+  async createBranch(branch: Omit<Branch, 'id'>) {
+    const newBranch: Branch = { ...branch, id: 'br-' + Math.random().toString(36).substring(2, 8) };
+    this.data.branches.push(newBranch);
+    return newBranch;
+  }
+  async deleteBranch(id: string, orgId: string) {
+    const prev = this.data.branches.length;
+    this.data.branches = this.data.branches.filter(b => !(b.id === id && b.organizationId === orgId));
+    return this.data.branches.length < prev;
   }
 
   async logActivity(log: Omit<ActivityLog, 'id' | 'createdAt'>) {
@@ -823,6 +848,13 @@ class FirestoreDatabase implements Database {
     if (org) await this.setDoc(COLLECTIONS.organizations, org.id, { ...org, storageUsedBytes: (org.storageUsedBytes || 0) + item.fileSizeBytes });
     return newMedia;
   }
+  async updateMedia(id: string, updates: Partial<MediaItem>) {
+    const existing = await this.getById<MediaItem>(COLLECTIONS.media, id);
+    if (!existing) return null;
+    const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+    await this.setDoc(COLLECTIONS.media, id, updated);
+    return updated;
+  }
   async deleteMedia(id: string, orgId: string) {
     const item = await this.getById<MediaItem>(COLLECTIONS.media, id);
     if (!item || item.organizationId !== orgId) return false;
@@ -901,6 +933,19 @@ class FirestoreDatabase implements Database {
     const existing = await this.getById<Schedule>(COLLECTIONS.schedules, id);
     if (!existing || existing.organizationId !== orgId) return false;
     await (await getDb()).collection(COLLECTIONS.schedules).doc(id).delete();
+    return true;
+  }
+
+  async getBranches(orgId: string) {
+    return this.list<Branch>(COLLECTIONS.branches, 'organizationId', orgId);
+  }
+  async createBranch(branch: Omit<Branch, 'id'>) {
+    const newBranch: Branch = { ...branch, id: 'br-' + Math.random().toString(36).substring(2, 8) };
+    await this.setDoc(COLLECTIONS.branches, newBranch.id, newBranch);
+    return newBranch;
+  }
+  async deleteBranch(id: string, orgId: string) {
+    await (await getDb()).collection(COLLECTIONS.branches).doc(id).delete();
     return true;
   }
 

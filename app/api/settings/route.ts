@@ -7,6 +7,7 @@ export async function GET() {
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
   const screens = await db.getScreens(session.organization.id);
+  const branches = await db.getBranches(session.organization.id);
 
   return NextResponse.json({
     user: {
@@ -16,6 +17,7 @@ export async function GET() {
       avatarUrl: session.user.avatarUrl || '',
     },
     organization: {
+      id: session.organization.id,
       name: session.organization.name,
       slug: session.organization.slug,
       plan: session.organization.plan,
@@ -25,6 +27,7 @@ export async function GET() {
       screensCount: screens.length,
       logoUrl: session.organization.logoUrl || '',
     },
+    branches,
     notifications: {
       email: true,
       offlineAlerts: true,

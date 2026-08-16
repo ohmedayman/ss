@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
 import {
   Settings,
@@ -20,16 +20,24 @@ import {
   Copy,
   FileText,
   Download,
+  Loader2,
 } from 'lucide-react';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'branches' | 'billing' | 'api'>('profile');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
 
   // Profile Form
-  const [orgName, setOrgName] = useState('مجموعة الأفق للحلول الرقمية');
-  const [fullName, setFullName] = useState('أحمد بن عبد الله آل سعود');
-  const [email, setEmail] = useState('admin@screenflow.io');
-  const [phone, setPhone] = useState('+966 50 123 4567');
+  const [orgId, setOrgId] = useState('');
+  const [orgName, setOrgName] = useState('');
+  const [orgSlug, setOrgSlug] = useState('');
+  const [fullName, setFullName] = useState('');
+  const [email, setEmail] = useState('');
+  const [phone, setPhone] = useState('');
+  const [orgPlan, setOrgPlan] = useState('free');
+  const [orgStorageLimitMb, setOrgStorageLimitMb] = useState(5120);
+  const [orgMaxScreens, setOrgMaxScreens] = useState(5);
 
   // Security Form
   const [currentPassword, setCurrentPassword] = useState('');
@@ -37,10 +45,7 @@ export default function SettingsPage() {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   // Branches
-  const [branches, setBranches] = useState([
-    { id: '1', name: 'الفرع الرئيسي - الرياض (طريق الملك فهد)', city: 'الرياض', phone: '011-4567890', active: true },
-    { id: '2', name: 'فرع جدة (حي الروضة)', city: 'جدة', phone: '012-6543210', active: true },
-  ]);
+  const [branches, setBranches] = useState<any[]>([]);
   const [newBranchName, setNewBranchName] = useState('');
   const [newBranchCity, setNewBranchCity] = useState('');
 
@@ -48,10 +53,63 @@ export default function SettingsPage() {
   const [apiKeyCopied, setApiKeyCopied] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
 
-  const handleSaveProfile = (e: React.FormEvent) => {
+  // Fetch settings from API
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const [settingsRes, branchesRes] = await Promise.all([
+          fetch('/api/settings'),
+          fetch('/api/branches').catch(() => null),
+        ]);
+
+        if (settingsRes.ok) {
+          const data = await settingsRes.json();
+          setOrgName(data.organization?.name || '');
+          setOrgSlug(data.organization?.slug || '');
+          setOrgPlan(data.organization?.plan || 'free');
+          setOrgStorageLimitMb(data.organization?.storageLimitMb || 5120);
+          setOrgMaxScreens(data.organization?.maxScreens || 5);
+          setFullName(data.user?.fullName || '');
+          setEmail(data.user?.email || '');
+          setPhone(data.user?.phone || '');
+        }
+
+        if (branchesRes && branchesRes.ok) {
+          const bData = await branchesRes.json();
+          setBranches(bData.branches || []);
+        }
+      } catch (e) {
+        console.error('Failed to load settings:', e);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchSettings();
+  }, []);
+
+  const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSavedMsg('تم حفظ وتحديث بيانات الملف الشخصي بنجاح ✅');
-    setTimeout(() => setSavedMsg(''), 3000);
+    setSaving(true);
+    try {
+      const res = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          user: { fullName, phone },
+          organization: { name: orgName, slug: orgSlug },
+        }),
+      });
+      if (res.ok) {
+        setSavedMsg('تم حفظ وتحديث بيانات الملف الشخصي بنجاح');
+      } else {
+        setSavedMsg('حدث خطأ أثناء الحفظ');
+      }
+    } catch (e) {
+      setSavedMsg('حدث خطأ أثناء الحفظ');
+    } finally {
+      setSaving(false);
+      setTimeout(() => setSavedMsg(''), 3000);
+    }
   };
 
   const handleSaveSecurity = (e: React.FormEvent) => {
@@ -60,39 +118,62 @@ export default function SettingsPage() {
       alert('كلمة المرور وتأكيدها غير متطابقين');
       return;
     }
-    setSavedMsg('تم تغيير كلمة المرور وتحديث إعدادات الأمان بنجاح 🔒');
+    setSavedMsg('سيتم دعم تغيير كلمة المرور قريباً');
     setCurrentPassword('');
     setNewPassword('');
     setConfirmPassword('');
     setTimeout(() => setSavedMsg(''), 3000);
   };
 
-  const handleAddBranch = (e: React.FormEvent) => {
+  const handleAddBranch = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newBranchName.trim()) return;
-    const newBr = {
-      id: Date.now().toString(),
-      name: newBranchName.trim(),
-      city: newBranchCity.trim() || 'الرياض',
-      phone: '011-0000000',
-      active: true,
-    };
-    setBranches([...branches, newBr]);
-    setNewBranchName('');
-    setNewBranchCity('');
-    setSavedMsg('تمت إضافة الفرع بنجاح 🏢');
-    setTimeout(() => setSavedMsg(''), 3000);
+    try {
+      const res = await fetch('/api/branches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newBranchName.trim(), city: newBranchCity.trim() }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setBranches([...branches, data.branch]);
+        setNewBranchName('');
+        setNewBranchCity('');
+        setSavedMsg('تمت إضافة الفرع بنجاح');
+        setTimeout(() => setSavedMsg(''), 3000);
+      }
+    } catch (e) {
+      setSavedMsg('حدث خطأ أثناء إضافة الفرع');
+      setTimeout(() => setSavedMsg(''), 3000);
+    }
   };
 
-  const handleDeleteBranch = (id: string) => {
-    setBranches(branches.filter((b) => b.id !== id));
+  const handleDeleteBranch = async (id: string) => {
+    try {
+      await fetch(`/api/branches/${id}`, { method: 'DELETE' });
+      setBranches(branches.filter((b) => b.id !== id));
+    } catch (e) {
+      setBranches(branches.filter((b) => b.id !== id));
+    }
   };
 
   const copyApiKey = () => {
-    navigator.clipboard.writeText('sf_live_98a7f4e82b1c6d99824');
+    navigator.clipboard.writeText(`sf_live_${orgId || 'demo'}`);
     setApiKeyCopied(true);
     setTimeout(() => setApiKeyCopied(false), 2000);
   };
+
+  if (loading) {
+    return (
+      <div className="space-y-6 max-w-5xl mx-auto pb-12">
+        <Header title="إعدادات الحساب والمؤسسة" subtitle="تخصيص بيانات المؤسسة، الفروع، الأمان، وإدارة الباقات السحابية" />
+        <div className="flex items-center justify-center py-20">
+          <Loader2 className="w-6 h-6 text-indigo-600 animate-spin" />
+          <span className="mr-3 text-sm text-slate-500">جاري تحميل الإعدادات...</span>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-5xl mx-auto pb-12">
@@ -177,14 +258,12 @@ export default function SettingsPage() {
           <div className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-600" />
-              بيانات المؤسسة (Organization Info)
+              بيانات المؤسسة
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  اسم المنشأة / الشركة
-                </label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">اسم المنشأة / الشركة</label>
                 <input
                   type="text"
                   value={orgName}
@@ -194,13 +273,11 @@ export default function SettingsPage() {
               </div>
 
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  معرف المؤسسة (Slug)
-                </label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">معرف المؤسسة (Slug)</label>
                 <input
                   type="text"
-                  value="al-ofuq"
-                  disabled
+                  value={orgSlug}
+                  onChange={(e) => setOrgSlug(e.target.value)}
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono"
                 />
               </div>
@@ -229,8 +306,8 @@ export default function SettingsPage() {
                 <input
                   type="email"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                  disabled
+                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono"
                 />
               </div>
 
@@ -240,6 +317,7 @@ export default function SettingsPage() {
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
+                  placeholder="+966 5x xxx xxxx"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
@@ -249,10 +327,11 @@ export default function SettingsPage() {
           <div className="flex justify-end">
             <button
               type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
+              disabled={saving}
+              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50"
             >
-              <Save className="w-4 h-4" />
-              <span>حفظ التعديلات</span>
+              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+              <span>{saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
             </button>
           </div>
         </form>
@@ -321,7 +400,6 @@ export default function SettingsPage() {
       {/* 3. Branches Tab */}
       {activeTab === 'branches' && (
         <div className="space-y-6">
-          {/* Add Branch Form */}
           <form onSubmit={handleAddBranch} className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Plus className="w-4 h-4 text-indigo-600" />
@@ -358,7 +436,6 @@ export default function SettingsPage() {
             </button>
           </form>
 
-          {/* Branches List */}
           <div className="glass-panel rounded-2xl p-6">
             <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
               <MapPin className="w-4 h-4 text-indigo-600" />
@@ -366,15 +443,18 @@ export default function SettingsPage() {
             </h4>
 
             <div className="space-y-3">
-              {branches.map((br) => (
+              {branches.length === 0 && (
+                <p className="text-xs text-slate-400 text-center py-6">لا توجد فروع مسجلة بعد</p>
+              )}
+              {branches.map((br: any) => (
                 <div key={br.id} className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
                   <div>
                     <h5 className="font-bold text-xs text-slate-900">{br.name}</h5>
-                    <p className="text-[11px] text-slate-400 mt-0.5">المدينة: {br.city} • هاتف: {br.phone}</p>
+                    <p className="text-[11px] text-slate-400 mt-0.5">المدينة: {br.city || 'غير محدد'} • هاتف: {br.phone || 'غير محدد'}</p>
                   </div>
                   <div className="flex items-center gap-2">
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200">
-                      نشط
+                      {br.isActive !== false ? 'نشط' : 'غير نشط'}
                     </span>
                     <button
                       onClick={() => handleDeleteBranch(br.id)}
@@ -397,40 +477,17 @@ export default function SettingsPage() {
           <div className="glass-panel rounded-2xl p-6 bg-gradient-to-r from-indigo-50 via-white to-slate-50 border border-indigo-100">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
               <div>
-                <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">
-                  الباقة الحالية
-                </span>
-                <h3 className="text-xl font-extrabold text-slate-900 mt-1">باقة الشركات المتقدمة (Pro Enterprise)</h3>
+                <span className="text-[10px] uppercase font-bold text-indigo-600 tracking-wider">الباقة الحالية</span>
+                <h3 className="text-xl font-extrabold text-slate-900 mt-1">
+                  {orgPlan === 'free' ? 'باقة المجانية' : orgPlan === 'starter' ? 'باقة المبتدئين' : orgPlan === 'pro' ? 'باقة المحترفين' : 'باقة المؤسسات'}
+                </h3>
                 <p className="text-xs text-slate-500 mt-1">
-                  تتيح لك إدارة حتى 25 شاشة مع مساحة تخزينية 10 GB ودعم فوري على مدار الساعة
+                  حتى {orgMaxScreens} شاشة • مساحة {orgStorageLimitMb / 1024} GB
                 </p>
               </div>
               <span className="px-3.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 border border-emerald-200 text-xs font-bold">
                 نشطة ومفعلة
               </span>
-            </div>
-          </div>
-
-          <div className="glass-panel rounded-2xl p-6">
-            <h4 className="font-bold text-slate-800 text-sm mb-4 flex items-center gap-2">
-              <FileText className="w-4 h-4 text-indigo-600" />
-              سجل الفواتير الضريبية
-            </h4>
-
-            <div className="space-y-2 text-xs">
-              <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-                <div>
-                  <span className="font-bold text-slate-800">فاتورة اشتراك سنوي - رقم #SF-9821</span>
-                  <span className="text-slate-400 block text-[10px]">15 يناير 2026</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="font-bold text-slate-700 font-mono">1,200.00 ر.س</span>
-                  <button className="flex items-center gap-1 text-indigo-600 hover:underline font-semibold cursor-pointer">
-                    <Download className="w-3.5 h-3.5" />
-                    <span>تحميل PDF</span>
-                  </button>
-                </div>
-              </div>
             </div>
           </div>
         </div>
@@ -448,10 +505,10 @@ export default function SettingsPage() {
           </p>
 
           <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center justify-between font-mono text-xs">
-            <span className="text-indigo-300">sf_live_98a7f4e82b1c6d99824...</span>
+            <span className="text-indigo-300 truncate">sf_live_{orgId || 'demo'}...</span>
             <button
               onClick={copyApiKey}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold"
+              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold shrink-0"
             >
               <Copy className="w-3.5 h-3.5" />
               <span>{apiKeyCopied ? 'تم النسخ!' : 'نسخ المفتاح'}</span>
