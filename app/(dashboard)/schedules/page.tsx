@@ -95,6 +95,21 @@ export default function SchedulesPage() {
     setIsModalOpen(true);
   };
 
+  const editSchedule = (sch: any) => {
+    setEditingId(sch.id);
+    setName(sch.name || '');
+    setTargetType(sch.targetType || 'playlist');
+    setTargetId(sch.targetId || '');
+    setSelectedScreenIds(sch.screenIds || []);
+    setStartDate(sch.startDate || new Date().toISOString().split('T')[0]);
+    setEndDate(sch.endDate || '2026-12-31');
+    setStartTime(sch.startTime || '08:00');
+    setEndTime(sch.endTime || '12:00');
+    setDaysOfWeek(sch.daysOfWeek || [0, 1, 2, 3, 4]);
+    setIsActive(sch.isActive !== false);
+    setIsModalOpen(true);
+  };
+
   const toggleDay = (dayId: number) => {
     if (daysOfWeek.includes(dayId)) {
       setDaysOfWeek(daysOfWeek.filter((d) => d !== dayId));
@@ -206,7 +221,7 @@ export default function SchedulesPage() {
                     <div>
                       <h3 className="font-bold text-slate-900 text-sm">{sch.name}</h3>
                       <span className="text-[11px] text-slate-400">
-                        الهدف: قائمة العروض الصباحية
+                        الهدف: {sch.targetType === 'playlist' ? 'قائمة تشغيل' : 'قالب'} — {sch.name}
                       </span>
                     </div>
                   </div>
@@ -281,13 +296,22 @@ export default function SchedulesPage() {
                   </span>
                 </div>
 
-                <button
-                  onClick={() => deleteSchedule(sch.id, sch.name)}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                  title="حذف الجدول"
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  <button
+                    onClick={() => editSchedule(sch)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
+                    title="تعديل الجدول"
+                  >
+                    <Edit className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => deleteSchedule(sch.id, sch.name)}
+                    className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                    title="حذف الجدول"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             </div>
           );
@@ -304,7 +328,7 @@ export default function SchedulesPage() {
                   <CalendarClock className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">إنشاء جدول زمني جديد</h3>
+                  <h3 className="font-bold text-slate-900 text-base">{editingId ? 'تعديل الجدول الزمني' : 'إنشاء جدول زمني جديد'}</h3>
                   <p className="text-xs text-slate-500">حدد ساعات وأيام تشغيل المحتوى</p>
                 </div>
               </div>
@@ -325,7 +349,7 @@ export default function SchedulesPage() {
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="مثال: عروض الغداء الخاصة"
+                  placeholder="مثال: عروض الصباح، العروض اليومية"
                   className="input"
                   required
                 />

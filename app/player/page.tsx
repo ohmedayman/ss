@@ -565,36 +565,28 @@ export default function PlayerPage() {
   // 6. Capture Virtual Screenshot from Client Player
   const captureAndUploadScreenshot = async () => {
     try {
-      // Create canvas snapshot
-      const canvas = document.createElement('canvas');
-      canvas.width = 640;
-      canvas.height = 360;
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      const html2canvas = (await import('html2canvas')).default;
+      const container = playerContainerRef.current;
+      if (!container) return;
 
-        // Draw basic preview elements
-        ctx.fillStyle = '#6366f1';
-        ctx.font = 'bold 20px Cairo, sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(`ScreenFlow Live Player: ${screen?.name || 'Active Screen'}`, 320, 160);
+      const canvas = await html2canvas(container, {
+        useCORS: true,
+        allowTaint: true,
+        scale: 0.5,
+        backgroundColor: '#000',
+        logging: false,
+      });
 
-        ctx.fillStyle = '#22c55e';
-        ctx.font = '16px Cairo, sans-serif';
-        ctx.fillText(`● Online - ${new Date().toLocaleTimeString('ar-SA')}`, 320, 200);
-
-        const base64 = canvas.toDataURL('image/jpeg', 0.8);
-        await fetch('/api/player/screenshot', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            screenId: screen?.id,
-            code: registrationCode,
-            screenshotBase64: base64,
-          }),
-        });
-      }
+      const base64 = canvas.toDataURL('image/jpeg', 0.7);
+      await fetch('/api/player/screenshot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          screenId: screen?.id,
+          code: registrationCode,
+          screenshotBase64: base64,
+        }),
+      });
     } catch (e) {
       console.error('Screenshot capture failed:', e);
     }

@@ -76,71 +76,8 @@
 }
 
 /* ============================================================
-   Light Modern SaaS Design System
+   Light Modern Design System
    ============================================================ */
-
-/* Card surface */
-.card {
-  background: #ffffff;
-  border: 1px solid #e7e9f2;
-  border-radius: 1rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 8px 24px -12px rgba(15, 23, 42, 0.08);
-}
-
-.card-hover {
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-}
-.card-hover:hover {
-  border-color: #d0d5ee;
-  box-shadow: 0 2px 4px rgba(15, 23, 42, 0.05), 0 14px 34px -14px rgba(79, 70, 229, 0.18);
-  transform: translateY(-2px);
-}
-
-/* Primary button */
-.btn-primary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.1rem;
-  border-radius: 0.75rem;
-  background: linear-gradient(135deg, #4f46e5, #6366f1);
-  color: #ffffff;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  box-shadow: 0 6px 16px -6px rgba(79, 70, 229, 0.5);
-  transition: all 0.2s ease;
-}
-.btn-primary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 10px 22px -8px rgba(79, 70, 229, 0.55);
-}
-.btn-primary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-  transform: none;
-}
-
-/* Secondary button */
-.btn-secondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.625rem 1.1rem;
-  border-radius: 0.75rem;
-  background: #ffffff;
-  color: #334155;
-  font-size: 0.78rem;
-  font-weight: 600;
-  border: 1px solid #e2e6f0;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-.btn-secondary:hover {
-  border-color: #c7cbe0;
-  background: #f8f9fc;
-}
 
 /* Inputs */
 .input {
@@ -157,18 +94,6 @@
   outline: none;
   border-color: #818cf8;
   box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
-}
-
-/* Soft icon chip */
-.chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.3rem 0.7rem;
-  border-radius: 9999px;
-  font-size: 0.72rem;
-  font-weight: 600;
-  border: 1px solid transparent;
 }
 
 /* Glass panel (light) kept for compatibility */

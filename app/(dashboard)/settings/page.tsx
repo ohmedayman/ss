@@ -112,17 +112,39 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSecurity = (e: React.FormEvent) => {
+  const handleSaveSecurity = async (e: React.FormEvent) => {
     e.preventDefault();
     if (newPassword && newPassword !== confirmPassword) {
       alert('كلمة المرور وتأكيدها غير متطابقين');
       return;
     }
-    setSavedMsg('تم حفظ إعدادات الأمان بنجاح');
-    setCurrentPassword('');
-    setNewPassword('');
-    setConfirmPassword('');
-    setTimeout(() => setSavedMsg(''), 3000);
+    if (!newPassword) {
+      setSavedMsg('لم يتم إدخال كلمة مرور جديدة');
+      setTimeout(() => setSavedMsg(''), 3000);
+      return;
+    }
+    setSaving(true);
+    try {
+      const res = await fetch('/api/auth/change-password', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ newPassword }),
+      });
+      if (res.ok) {
+        setSavedMsg('تم تغيير كلمة المرور بنجاح');
+      } else {
+        const d = await res.json();
+        setSavedMsg(d.error || 'فشل تغيير كلمة المرور');
+      }
+    } catch (e) {
+      setSavedMsg('خطأ في الاتصال بالخادم');
+    } finally {
+      setSaving(false);
+      setCurrentPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+      setTimeout(() => setSavedMsg(''), 3000);
+    }
   };
 
   const handleAddBranch = async (e: React.FormEvent) => {
