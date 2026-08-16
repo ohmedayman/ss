@@ -824,6 +824,7 @@ export default function PlayerPage() {
                     <iframe
                       src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
                       className="w-full h-full rounded-2xl shadow-2xl border-0"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                       allow="autoplay; encrypted-media"
                       allowFullScreen
                     />
@@ -1042,6 +1043,7 @@ export default function PlayerPage() {
                   key={currentItem.id}
                   src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
                   className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
                   title={currentItem.media.name || 'YouTube'}
                   allow="autoplay; encrypted-media"
                   allowFullScreen
@@ -1072,6 +1074,7 @@ export default function PlayerPage() {
                 <iframe
                   src={currentItem.media.fileUrl}
                   className="w-full h-full border-0"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
                   title="Web Player"
                 />
               )}

@@ -4,6 +4,7 @@ import { getSession } from '@/lib/auth';
 import { uploadToFirebaseStorage, isStorageConfigured } from '@/lib/storage';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { isUrlSafe } from '@/lib/content-safety';
 
 export async function GET() {
   const session = await getSession();
@@ -95,6 +96,17 @@ export async function POST(req: Request) {
 
     if (!name || !fileType) {
       return NextResponse.json({ error: 'مطلوب اسم ونوع الوسائط' }, { status: 400 });
+    }
+
+    // Validate URLs for security
+    if (fileUrl && !isUrlSafe(fileUrl)) {
+      return NextResponse.json({ error: 'رابط الملف غير آمن' }, { status: 400 });
+    }
+    if (customUrl && !isUrlSafe(customUrl)) {
+      return NextResponse.json({ error: 'الرابط المخصص غير آمن' }, { status: 400 });
+    }
+    if (thumbUrl && !isUrlSafe(thumbUrl)) {
+      return NextResponse.json({ error: 'رابط الصورة المصغرة غير آمن' }, { status: 400 });
     }
 
     const mediaItem = await db.createMedia({

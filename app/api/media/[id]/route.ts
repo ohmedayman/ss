@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { getSession } from '@/lib/auth';
 import { deleteFromFirebaseStorage, isStorageConfigured } from '@/lib/storage';
+import { isUrlSafe } from '@/lib/content-safety';
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -21,7 +22,12 @@ export async function PATCH(req: Request, { params }: { params: Promise<{ id: st
   if (folder !== undefined) updates.folder = folder;
   if (tags !== undefined) updates.tags = tags;
   if (customTickerText !== undefined) updates.customTickerText = customTickerText;
-  if (customUrl !== undefined) updates.customUrl = customUrl;
+  if (customUrl !== undefined) {
+    if (!isUrlSafe(customUrl)) {
+      return NextResponse.json({ error: 'الرابط المخصص غير آمن' }, { status: 400 });
+    }
+    updates.customUrl = customUrl;
+  }
 
   const updated = await db.updateMedia(id, updates);
 
