@@ -78,9 +78,15 @@ export default function QueuePage() {
     defaultValues: { name: '', codePrefix: '' },
   });
 
-  const { data, isLoading: loading, mutate } = useSWR<{ services: any[]; tickets: any[] }>('/api/queue', {
-    refreshInterval: 5000,
-  });
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
+
+  const { data, isLoading: loading, mutate } = useSWR<{ services: any[]; tickets: any[] }>(
+    '/api/queue',
+    fetcher,
+    {
+      refreshInterval: 3000,
+    }
+  );
 
   const services = data?.services || [];
   const tickets = data?.tickets || [];

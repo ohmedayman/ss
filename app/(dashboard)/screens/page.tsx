@@ -36,10 +36,15 @@ export default function ScreensPage() {
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
+  const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
-  const { data, isLoading: loading, mutate } = useSWR<{ screens: any[] }>('/api/screens', {
-    refreshInterval: 15000,
-  });
+  const { data, isLoading: loading, mutate } = useSWR<{ screens: any[] }>(
+    '/api/screens',
+    fetcher,
+    {
+      refreshInterval: 4000,
+    }
+  );
 
   const screens = data?.screens || [];
 
