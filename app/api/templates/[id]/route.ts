@@ -33,7 +33,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       layout: body.layout !== undefined ? body.layout : template.layout,
       zones: body.zones !== undefined ? body.zones : template.zones,
       backgroundColor: body.backgroundColor !== undefined ? body.backgroundColor : template.backgroundColor,
+      sidebarColor: body.sidebarColor !== undefined ? body.sidebarColor : template.sidebarColor,
+      cardColor: body.cardColor !== undefined ? body.cardColor : template.cardColor,
+      accentColor: body.accentColor !== undefined ? body.accentColor : template.accentColor,
+      textColor: body.textColor !== undefined ? body.textColor : template.textColor,
+      tickerBgColor: body.tickerBgColor !== undefined ? body.tickerBgColor : template.tickerBgColor,
+      tickerTextColor: body.tickerTextColor !== undefined ? body.tickerTextColor : template.tickerTextColor,
       headerTitle: body.headerTitle !== undefined ? body.headerTitle : template.headerTitle,
+      logoUrl: body.logoUrl !== undefined ? body.logoUrl : template.logoUrl,
       thumbnailUrl: body.thumbnailUrl !== undefined ? body.thumbnailUrl : template.thumbnailUrl,
     });
 
@@ -42,6 +49,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     screens.forEach(scr => {
       if (scr.activeContentType === 'template' && scr.activeContentId === id) {
         realtime.notifyScreen(scr.id, 'template_updated', { templateId: id });
+        if (scr.registrationCode) {
+          realtime.notifyScreen(scr.registrationCode, 'template_updated', { templateId: id });
+        }
       }
     });
 
@@ -51,7 +61,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
       userName: session.user.fullName,
       action: 'تعديل قالب شاشة',
       actionType: 'screen',
-      details: `تم تعديل مناطق وإعدادات القالب "${template.name}"`,
+      details: `تم تعديل مناطق وإعدادات وألوان القالب "${template.name}"`,
     });
 
     return NextResponse.json({ success: true, template: updated });

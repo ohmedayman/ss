@@ -23,6 +23,7 @@ import {
   Image as ImageIcon,
   Send,
   Upload,
+  Edit,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import LogoUploader from '@/components/LogoUploader';
@@ -98,7 +99,8 @@ export default function TemplatesPage() {
   const [screens, setScreens] = useState<any[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<any | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingTemplateId, setEditingTemplateId] = useState<string | null>(null);
   const [assignModalTpl, setAssignModalTpl] = useState<any | null>(null);
   const [assignSuccessMsg, setAssignSuccessMsg] = useState('');
 
@@ -158,6 +160,42 @@ export default function TemplatesPage() {
     loadData();
   }, []);
 
+  const openCreateModal = () => {
+    setEditingTemplateId(null);
+    setName('');
+    setHeaderTitle('مجمع الأفق الطبي الاستشاري');
+    setLogoUrl('https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=200&q=80');
+    setLayout('split_3_sidebar');
+    setSelectedPlaylistId('pl-general-ads');
+    setTickerText('🎉 أهلاً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً');
+    setBackgroundColor('#020617');
+    setSidebarColor('#0f172a');
+    setCardColor('#1e1b4b');
+    setAccentColor('#f59e0b');
+    setTickerBgColor('#1e1b4b');
+    setTickerTextColor('#fde68a');
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (tpl: any) => {
+    setEditingTemplateId(tpl.id);
+    setName(tpl.name || '');
+    setHeaderTitle(tpl.headerTitle || '');
+    setLogoUrl(tpl.logoUrl || '');
+    setLayout(tpl.layout || 'split_3_sidebar');
+    const plZone = tpl.zones?.find((z: any) => z.type === 'playlist' || z.type === 'media');
+    setSelectedPlaylistId(plZone?.contentId || 'pl-general-ads');
+    const tickZone = tpl.zones?.find((z: any) => z.type === 'ticker');
+    setTickerText(tickZone?.text || '🎉 أهلاً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً');
+    setBackgroundColor(tpl.backgroundColor || '#020617');
+    setSidebarColor(tpl.sidebarColor || '#0f172a');
+    setCardColor(tpl.cardColor || '#1e1b4b');
+    setAccentColor(tpl.accentColor || '#f59e0b');
+    setTickerBgColor(tpl.tickerBgColor || '#1e1b4b');
+    setTickerTextColor(tpl.tickerTextColor || '#fde68a');
+    setIsModalOpen(true);
+  };
+
   const applyColorPreset = (preset: ColorPreset) => {
     setBackgroundColor(preset.backgroundColor);
     setSidebarColor(preset.sidebarColor);
@@ -167,7 +205,7 @@ export default function TemplatesPage() {
     setTickerTextColor(preset.tickerTextColor);
   };
 
-  const handleCreateTemplate = async (e: React.FormEvent) => {
+  const handleSaveTemplate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim()) return;
 
@@ -198,22 +236,27 @@ export default function TemplatesPage() {
         },
       ];
 
-      const res = await fetch('/api/templates', {
-        method: 'POST',
+      const payload = {
+        name: name.trim(),
+        headerTitle: headerTitle.trim() || undefined,
+        logoUrl: logoUrl.trim() || undefined,
+        layout,
+        backgroundColor,
+        sidebarColor,
+        cardColor,
+        accentColor,
+        tickerBgColor,
+        tickerTextColor,
+        zones,
+      };
+
+      const url = editingTemplateId ? `/api/templates/${editingTemplateId}` : '/api/templates';
+      const method = editingTemplateId ? 'PUT' : 'POST';
+
+      const res = await fetch(url, {
+        method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: name.trim(),
-          headerTitle: headerTitle.trim() || undefined,
-          logoUrl: logoUrl.trim() || undefined,
-          layout,
-          backgroundColor,
-          sidebarColor,
-          cardColor,
-          accentColor,
-          tickerBgColor,
-          tickerTextColor,
-          zones,
-        }),
+        body: JSON.stringify(payload),
       });
 
       if (res.ok) {
@@ -222,9 +265,8 @@ export default function TemplatesPage() {
           confetti({ particleCount: 50, spread: 60, origin: { y: 0.6 } });
         } catch (err) {}
         await loadData();
-        setSelectedTemplate(d.template);
-        setIsCreateModalOpen(false);
-        setName('');
+        setSelectedTemplate(d.template || { ...payload, id: editingTemplateId });
+        setIsModalOpen(false);
       }
     } catch (e) {
       console.error(e);
@@ -285,7 +327,7 @@ export default function TemplatesPage() {
         </div>
 
         <button
-          onClick={() => setIsCreateModalOpen(true)}
+          onClick={openCreateModal}
           className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
         >
           <Plus className="w-4 h-4" />
@@ -322,6 +364,16 @@ export default function TemplatesPage() {
                       {isSelected && (
                         <span className="w-2 h-2 rounded-full bg-indigo-600 pulse-green" />
                       )}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditModal(tpl);
+                        }}
+                        className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
+                        title="تعديل القالب والألوان والشعار"
+                      >
+                        <Edit className="w-3.5 h-3.5" />
+                      </button>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -387,13 +439,22 @@ export default function TemplatesPage() {
             </h3>
             <div className="flex items-center gap-2">
               {selectedTemplate && (
-                <button
-                  onClick={() => setAssignModalTpl(selectedTemplate)}
-                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-sm"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>بث للشاشة الآن</span>
-                </button>
+                <>
+                  <button
+                    onClick={() => openEditModal(selectedTemplate)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer transition-all"
+                  >
+                    <Edit className="w-3.5 h-3.5 text-indigo-600" />
+                    <span>تعديل هذا القالب</span>
+                  </button>
+                  <button
+                    onClick={() => setAssignModalTpl(selectedTemplate)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-sm"
+                  >
+                    <Send className="w-3.5 h-3.5" />
+                    <span>بث للشاشة الآن</span>
+                  </button>
+                </>
               )}
               <span className="text-xs text-slate-400 font-mono">1920x1080 Full HD</span>
             </div>
@@ -579,9 +640,9 @@ export default function TemplatesPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* CREATE & CUSTOMIZE TEMPLATE MODAL (لوجو + ألوان + فيديو)                */}
+      {/* CREATE & EDIT TEMPLATE MODAL (لوجو + ألوان + فيديو)                       */}
       {/* ========================================================================= */}
-      {isCreateModalOpen && (
+      {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
           <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-2xl overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150 max-h-[90vh] flex flex-col">
             {/* Modal Header */}
@@ -592,7 +653,7 @@ export default function TemplatesPage() {
                 </div>
                 <div>
                   <h3 className="font-bold text-slate-900 text-base">
-                    إنشاء وتخصيص قالب شاشة متكامل
+                    {editingTemplateId ? 'تعديل قالب الشاشة والألوان' : 'إنشاء وتخصيص قالب شاشة جديد'}
                   </h3>
                   <p className="text-xs text-slate-400">
                     حدد ألوان الهوية والشعار والفيديو وشاشة الانتظار
@@ -600,7 +661,7 @@ export default function TemplatesPage() {
                 </div>
               </div>
               <button
-                onClick={() => setIsCreateModalOpen(false)}
+                onClick={() => setIsModalOpen(false)}
                 className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
               >
                 <X className="w-5 h-5" />
@@ -608,7 +669,7 @@ export default function TemplatesPage() {
             </div>
 
             {/* Modal Form Body */}
-            <form onSubmit={handleCreateTemplate} className="flex-1 overflow-y-auto p-6 space-y-6">
+            <form onSubmit={handleSaveTemplate} className="flex-1 overflow-y-auto p-6 space-y-6">
               {/* 1. Basic Info: Name, Header Title, Logo */}
               <div className="space-y-4">
                 <h4 className="font-bold text-slate-800 text-xs flex items-center gap-2 border-b pb-2">
@@ -823,7 +884,7 @@ export default function TemplatesPage() {
               <div className="pt-4 border-t border-slate-100 flex items-center justify-end gap-2">
                 <button
                   type="button"
-                  onClick={() => setIsCreateModalOpen(false)}
+                  onClick={() => setIsModalOpen(false)}
                   className="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold cursor-pointer"
                 >
                   إلغاء
@@ -833,7 +894,7 @@ export default function TemplatesPage() {
                   disabled={saving || !name.trim()}
                   className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer"
                 >
-                  {saving ? 'جاري الحفظ...' : 'حفظ وتطبيق القالب 🚀'}
+                  {saving ? 'جاري الحفظ...' : editingTemplateId ? 'حفظ التعديلات على القالب 🚀' : 'حفظ وإنشاء القالب 🚀'}
                 </button>
               </div>
             </form>
