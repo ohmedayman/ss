@@ -80,7 +80,26 @@ export async function POST(req: Request) {
       // Broadcast queue update to all screens in real-time
       const screens = await db.getScreens(session.organization.id);
       screens.forEach((s) => {
-        realtime.notifyScreen(s.id, 'queue_called', { ticket });
+        realtime.notifyScreen(s.id, 'queue_called', {
+          ticket,
+          ticketNumber: ticket.ticketNumber,
+          counterName: ticket.counterNumber || 'الاستقبال',
+          serviceName: ticket.serviceName,
+        });
+        if (s.registrationCode) {
+          realtime.notifyScreen(s.registrationCode, 'queue_called', {
+            ticket,
+            ticketNumber: ticket.ticketNumber,
+            counterName: ticket.counterNumber || 'الاستقبال',
+            serviceName: ticket.serviceName,
+          });
+        }
+      });
+      realtime.notifyDashboard(session.organization.id, 'queue_called', {
+        ticket,
+        ticketNumber: ticket.ticketNumber,
+        counterName: ticket.counterNumber || 'الاستقبال',
+        serviceName: ticket.serviceName,
       });
 
       await db.logActivity({

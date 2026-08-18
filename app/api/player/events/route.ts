@@ -40,6 +40,7 @@ export async function GET(req: Request) {
       if (orgId) {
         realtime.on(`org:${orgId}`, handleOrgEvent);
       }
+      realtime.on(`screen:all`, handleScreenEvent);
 
       // Ping every 25 seconds to keep connection alive
       const interval = setInterval(() => {
@@ -55,6 +56,7 @@ export async function GET(req: Request) {
         if (screenId) realtime.off(`screen:${screenId}`, handleScreenEvent);
         if (code) realtime.off(`screen:${code.toUpperCase()}`, handleScreenEvent);
         if (orgId) realtime.off(`org:${orgId}`, handleOrgEvent);
+        realtime.off(`screen:all`, handleScreenEvent);
         try {
           controller.close();
         } catch (e) {}

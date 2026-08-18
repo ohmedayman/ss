@@ -1,3 +1,5 @@
+import fs from 'fs';
+import path from 'path';
 import { getDb, isFirebaseConfigured } from './firebase/admin';
 import type { CollectionReference, Query } from 'firebase-admin/firestore';
 import {
@@ -857,14 +859,59 @@ function genId(prefix: string): string {
   return prefix + '-' + Math.random().toString(36).substring(2, 9);
 }
 
+declare global {
+  var __screenflow_db_data: DatabaseSchema | undefined;
+}
+
+const DB_FILE_PATH = path.join(process.cwd(), 'data', 'db.json');
+
+function loadPersistedData(): DatabaseSchema {
+  if (global.__screenflow_db_data) {
+    return global.__screenflow_db_data;
+  }
+  try {
+    if (fs.existsSync(DB_FILE_PATH)) {
+      const raw = fs.readFileSync(DB_FILE_PATH, 'utf-8');
+      const parsed = JSON.parse(raw);
+      if (parsed && parsed.organizations && parsed.organizations.length > 0) {
+        global.__screenflow_db_data = parsed;
+        return parsed;
+      }
+    }
+  } catch (e) {
+    console.warn('Could not read data/db.json:', e);
+  }
+  const initial = getInitialData();
+  global.__screenflow_db_data = initial;
+  savePersistedData(initial);
+  return initial;
+}
+
+function savePersistedData(data: DatabaseSchema) {
+  global.__screenflow_db_data = data;
+  try {
+    const dir = path.dirname(DB_FILE_PATH);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(DB_FILE_PATH, JSON.stringify(data, null, 2), 'utf-8');
+  } catch (e) {
+    // Might fail on read-only serverless environments, which is fine since global.__screenflow_db_data holds memory
+  }
+}
+
 // ============================================================
-// Local (in-memory) fallback implementation
+// Local (in-memory + disk persistence) fallback implementation
 // ============================================================
 class LocalDatabase implements Database {
   private data: DatabaseSchema;
 
   constructor() {
-    this.data = getInitialData();
+    this.data = loadPersistedData();
+  }
+
+  private save() {
+    savePersistedData(this.data);
   }
 
   async seedIfEmpty() {}
@@ -894,23 +941,27 @@ class LocalDatabase implements Database {
       updatedAt: new Date().toISOString(),
     };
     this.data.screens.unshift(newScreen);
+    this.save();
     return newScreen;
   }
   async updateScreen(id: string, updates: Partial<Screen>) {
     const idx = this.data.screens.findIndex(s => s.id === id);
     if (idx === -1) return null;
     this.data.screens[idx] = { ...this.data.screens[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.screens[idx];
   }
   async deleteScreen(id: string, orgId: string) {
     const prev = this.data.screens.length;
     this.data.screens = this.data.screens.filter(s => !(s.id === id && s.organizationId === orgId));
+    this.save();
     return this.data.screens.length < prev;
   }
 
   async addCommand(cmd: Omit<ScreenCommand, 'id' | 'createdAt'>) {
     const newCmd: ScreenCommand = { ...cmd, id: genId('cmd'), createdAt: new Date().toISOString() };
     this.data.screenCommands.push(newCmd);
+    this.save();
     return newCmd;
   }
   async getPendingCommands(screenId: string) {
@@ -918,7 +969,7 @@ class LocalDatabase implements Database {
   }
   async markCommandExecuted(commandId: string) {
     const cmd = this.data.screenCommands.find(c => c.id === commandId);
-    if (cmd) { cmd.status = 'executed'; cmd.executedAt = new Date().toISOString(); }
+    if (cmd) { cmd.status = 'executed'; cmd.executedAt = new Date().toISOString(); this.save(); }
   }
 
   async getMedia(orgId: string) {
@@ -932,12 +983,14 @@ class LocalDatabase implements Database {
     this.data.media.unshift(newMedia);
     const org = this.data.organizations.find(o => o.id === item.organizationId);
     if (org) org.storageUsedBytes += item.fileSizeBytes;
+    this.save();
     return newMedia;
   }
   async updateMedia(id: string, updates: Partial<MediaItem>) {
     const idx = this.data.media.findIndex(m => m.id === id);
     if (idx === -1) return null;
     this.data.media[idx] = { ...this.data.media[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.media[idx];
   }
   async deleteMedia(id: string, orgId: string) {
@@ -946,6 +999,7 @@ class LocalDatabase implements Database {
     this.data.media = this.data.media.filter(m => m.id !== id);
     const org = this.data.organizations.find(o => o.id === orgId);
     if (org) org.storageUsedBytes = Math.max(0, org.storageUsedBytes - item.fileSizeBytes);
+    this.save();
     return true;
   }
 
@@ -958,17 +1012,20 @@ class LocalDatabase implements Database {
   async createPlaylist(pl: Omit<Playlist, 'id' | 'createdAt' | 'updatedAt'>) {
     const newPl: Playlist = { ...pl, id: genId('pl'), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     this.data.playlists.unshift(newPl);
+    this.save();
     return newPl;
   }
   async updatePlaylist(id: string, updates: Partial<Playlist>) {
     const idx = this.data.playlists.findIndex(p => p.id === id);
     if (idx === -1) return null;
     this.data.playlists[idx] = { ...this.data.playlists[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.playlists[idx];
   }
   async deletePlaylist(id: string, orgId: string) {
     const prev = this.data.playlists.length;
     this.data.playlists = this.data.playlists.filter(p => !(p.id === id && p.organizationId === orgId));
+    this.save();
     return this.data.playlists.length < prev;
   }
 
@@ -981,17 +1038,20 @@ class LocalDatabase implements Database {
   async createTemplate(tpl: Omit<ScreenTemplate, 'id' | 'createdAt' | 'updatedAt'>) {
     const newTpl: ScreenTemplate = { ...tpl, id: genId('tpl'), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     this.data.templates.unshift(newTpl);
+    this.save();
     return newTpl;
   }
   async updateTemplate(id: string, updates: Partial<ScreenTemplate>) {
     const idx = this.data.templates.findIndex(t => t.id === id);
     if (idx === -1) return null;
     this.data.templates[idx] = { ...this.data.templates[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.templates[idx];
   }
   async deleteTemplate(id: string, orgId: string) {
     const prev = this.data.templates.length;
     this.data.templates = this.data.templates.filter(t => !(t.id === id && t.organizationId === orgId));
+    this.save();
     return this.data.templates.length < prev;
   }
 
@@ -1001,17 +1061,20 @@ class LocalDatabase implements Database {
   async createSchedule(sch: Omit<Schedule, 'id' | 'createdAt' | 'updatedAt'>) {
     const newSch: Schedule = { ...sch, id: genId('sch'), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString() };
     this.data.schedules.unshift(newSch);
+    this.save();
     return newSch;
   }
   async updateSchedule(id: string, updates: Partial<Schedule>) {
     const idx = this.data.schedules.findIndex(s => s.id === id);
     if (idx === -1) return null;
     this.data.schedules[idx] = { ...this.data.schedules[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.schedules[idx];
   }
   async deleteSchedule(id: string, orgId: string) {
     const prev = this.data.schedules.length;
     this.data.schedules = this.data.schedules.filter(s => !(s.id === id && s.organizationId === orgId));
+    this.save();
     return this.data.schedules.length < prev;
   }
 
@@ -1021,11 +1084,13 @@ class LocalDatabase implements Database {
   async createBranch(branch: Omit<Branch, 'id'>) {
     const newBranch: Branch = { ...branch, id: 'br-' + Math.random().toString(36).substring(2, 8) };
     this.data.branches.push(newBranch);
+    this.save();
     return newBranch;
   }
   async deleteBranch(id: string, orgId: string) {
     const prev = this.data.branches.length;
     this.data.branches = this.data.branches.filter(b => !(b.id === id && b.organizationId === orgId));
+    this.save();
     return this.data.branches.length < prev;
   }
 
@@ -1033,6 +1098,7 @@ class LocalDatabase implements Database {
     const newLog: ActivityLog = { ...log, id: genId('log'), createdAt: new Date().toISOString() };
     this.data.activityLogs.unshift(newLog);
     if (this.data.activityLogs.length > 200) this.data.activityLogs.pop();
+    this.save();
     return newLog;
   }
   async getActivityLogs(orgId: string, limit = 50) {
@@ -1046,6 +1112,7 @@ class LocalDatabase implements Database {
     const idx = this.data.organizations.findIndex(o => o.id === id);
     if (idx === -1) return null;
     this.data.organizations[idx] = { ...this.data.organizations[idx], ...updates, updatedAt: new Date().toISOString() };
+    this.save();
     return this.data.organizations[idx];
   }
   async getUser(id: string) {
@@ -1058,14 +1125,17 @@ class LocalDatabase implements Database {
     const idx = this.data.users.findIndex(u => u.id === id);
     if (idx === -1) return null;
     this.data.users[idx] = { ...this.data.users[idx], ...updates };
+    this.save();
     return this.data.users[idx];
   }
   async createUser(user: User) {
     this.data.users.push(user);
+    this.save();
     return user;
   }
   async createOrganization(org: Organization) {
     this.data.organizations.push(org);
+    this.save();
     return org;
   }
   async setDocument(collection: string, id: string, data: object) {
@@ -1076,6 +1146,7 @@ class LocalDatabase implements Database {
     const idx = arr.findIndex((d: any) => d.id === id);
     if (idx >= 0) arr[idx] = { ...arr[idx], ...data, id };
     else arr.push({ ...data, id });
+    this.save();
   }
 
   async getQueueServices(orgId: string) {
@@ -1086,14 +1157,16 @@ class LocalDatabase implements Database {
   }
   async createQueueService(service: QueueService) {
     this.data.queueServices.push(service);
+    this.save();
     return service;
   }
   async updateQueueService(id: string, updates: Partial<QueueService>) {
     const svc = this.data.queueServices.find(q => q.id === id);
-    if (svc) Object.assign(svc, updates);
+    if (svc) { Object.assign(svc, updates); this.save(); }
   }
   async deleteQueueService(id: string, orgId: string) {
     this.data.queueServices = this.data.queueServices.filter(q => !(q.id === id && q.organizationId === orgId));
+    this.save();
     return true;
   }
   async getQueueTickets(orgId: string) {
@@ -1101,6 +1174,7 @@ class LocalDatabase implements Database {
   }
   async createQueueTicket(ticket: QueueTicket) {
     this.data.queueTickets.push(ticket);
+    this.save();
   }
   async callNextTicket(serviceId: string, counterNumber: string) {
     const service = this.data.queueServices.find(s => s.id === serviceId);
@@ -1113,6 +1187,7 @@ class LocalDatabase implements Database {
       ticketNumber, status: 'called', counterNumber, calledAt: new Date().toISOString(), createdAt: new Date().toISOString(),
     };
     this.data.queueTickets.unshift(newTicket);
+    this.save();
     return newTicket;
   }
 }

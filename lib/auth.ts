@@ -25,7 +25,11 @@ async function loadDefaultSession(): Promise<SessionData> {
 }
 
 export async function getSession(): Promise<SessionData | null> {
-  try { await db.seedIfEmpty(); } catch (e) { console.warn('seedIfEmpty failed:', e); }
+  try {
+    await db.seedIfEmpty();
+  } catch (e) {
+    console.warn('seedIfEmpty failed:', e);
+  }
 
   const cookieStore = await cookies();
   const session = cookieStore.get(SESSION_COOKIE_NAME)?.value;
@@ -45,13 +49,23 @@ export async function getSession(): Promise<SessionData | null> {
     }
   }
 
-  // Local dev fallback (no Firebase configured)
-  if (!isFirebaseConfigured()) {
-    return loadDefaultSession();
+  // Local / Self-hosted persistence fallback
+  if (session) {
+    try {
+      const user = await db.getUser(session);
+      if (user) {
+        const org = await db.getOrganization(user.organizationId);
+        if (org) return { user, organization: org };
+      }
+    } catch (e) {}
   }
 
-  // Production with Firebase: no valid session
-  return null;
+  // Fallback to default admin session
+  try {
+    return await loadDefaultSession();
+  } catch (e) {
+    return null;
+  }
 }
 
 // Create an HTTP-only session cookie from a Firebase ID token (client-side sign-in)

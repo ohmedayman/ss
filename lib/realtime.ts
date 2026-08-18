@@ -24,6 +24,4 @@ declare global {
 }
 
 export const realtime = global.__screenflow_realtime || new RealtimeHub();
-if (process.env.NODE_ENV !== 'production') {
-  global.__screenflow_realtime = realtime;
-}
+global.__screenflow_realtime = realtime;

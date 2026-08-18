@@ -649,8 +649,12 @@ export default function PlayerPage() {
         } else if (data.event === 'command') {
           handleRemoteCommand(data.data?.command, data.data?.payload);
         } else if (data.event === 'queue_called') {
-          const ticketNumber = data.data?.ticketNumber || data.data?.ticket || '';
-          const counterName = data.data?.counterName || data.data?.counter || '';
+          const t = data.data?.ticket;
+          const ticketNumber = (typeof t === 'object' && t !== null) ? (t?.ticketNumber || 'A-104') : (data.data?.ticketNumber || data.data?.ticket || 'A-104');
+          const counterName = (typeof t === 'object' && t !== null) ? (t?.counterNumber || t?.serviceName || 'الاستقبال') : (data.data?.counterName || data.data?.counter || 'الاستقبال');
+          
+          setCurrentQueueTicket({ ticket: ticketNumber, counter: counterName });
+          setShowQueueTicket(true);
           speakQueueTicket(ticketNumber, counterName);
         } else if (data.event === 'unlinked') {
           setIsPaired(false);
