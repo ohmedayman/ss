@@ -18,8 +18,15 @@ export async function POST(req: Request) {
       name,
       layout = 'split_3_sidebar',
       zones = [],
-      backgroundColor = '#0f172a',
+      backgroundColor = '#0a0f1d',
+      sidebarColor = '#0f172a',
+      cardColor = '#1e1b4b',
+      accentColor = '#f59e0b',
+      textColor = '#ffffff',
+      tickerBgColor = '#1e1b4b',
+      tickerTextColor = '#e0e7ff',
       headerTitle,
+      logoUrl,
       thumbnailUrl,
     } = body;
 
@@ -33,7 +40,14 @@ export async function POST(req: Request) {
       layout,
       zones,
       backgroundColor,
+      sidebarColor,
+      cardColor,
+      accentColor,
+      textColor,
+      tickerBgColor,
+      tickerTextColor,
       headerTitle,
+      logoUrl,
       thumbnailUrl,
     });
 

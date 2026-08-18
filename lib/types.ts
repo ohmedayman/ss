@@ -183,7 +183,14 @@ export interface ScreenTemplate {
   layout: TemplateLayout;
   zones: TemplateZoneConfig[];
   backgroundColor?: string;
+  sidebarColor?: string;
+  cardColor?: string;
+  accentColor?: string;
+  textColor?: string;
+  tickerBgColor?: string;
+  tickerTextColor?: string;
   headerTitle?: string;
+  logoUrl?: string;
   thumbnailUrl?: string;
   createdAt: string;
   updatedAt: string;

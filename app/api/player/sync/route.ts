@@ -91,12 +91,51 @@ export async function GET(req: Request) {
       payload.queueTickets = await db.getQueueTickets(screen.organizationId);
 
       const playlistZone = template.zones.find(z => z.type === 'playlist');
+      const mediaZone = template.zones.find(z => z.type === 'media');
+
       if (playlistZone && playlistZone.contentId) {
         const pl = await db.getPlaylistById(playlistZone.contentId);
-        if (pl) {
+        if (pl && pl.items && pl.items.length > 0) {
           payload.playlist = {
             ...pl,
             items: pl.items.map(item => ({
+              ...item,
+              media: item.mediaId ? mediaMap[item.mediaId] : undefined,
+            })),
+          };
+        }
+      } else if (mediaZone && mediaZone.contentId && mediaMap[mediaZone.contentId]) {
+        const targetMedia = mediaMap[mediaZone.contentId];
+        payload.playlist = {
+          id: 'pl-temp-' + targetMedia.id,
+          organizationId: screen.organizationId,
+          name: targetMedia.name,
+          isLoop: true,
+          defaultTransition: 'fade',
+          totalDurationSeconds: targetMedia.durationSeconds || 15,
+          items: [{
+            id: 'pli-temp-1',
+            playlistId: 'pl-temp-' + targetMedia.id,
+            mediaId: targetMedia.id,
+            media: targetMedia,
+            orderIndex: 0,
+            durationSeconds: targetMedia.durationSeconds || 15,
+            transition: 'fade',
+            isMuted: false,
+          }],
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        };
+      }
+
+      // Fallback if playlist is still empty: grab the first available playlist in the org
+      if (!payload.playlist) {
+        const playlists = await db.getPlaylists(screen.organizationId);
+        if (playlists.length > 0) {
+          const fallbackPl = playlists[0];
+          payload.playlist = {
+            ...fallbackPl,
+            items: fallbackPl.items.map(item => ({
               ...item,
               media: item.mediaId ? mediaMap[item.mediaId] : undefined,
             })),

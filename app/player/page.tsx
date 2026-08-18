@@ -839,27 +839,50 @@ export default function PlayerPage() {
       {template ? (
         <div
           className="w-full h-full flex flex-col relative"
-          style={{ backgroundColor: template.backgroundColor || '#0f172a' }}
+          style={{ backgroundColor: template.backgroundColor || '#0a0f1d' }}
         >
-          {/* Template Header */}
-          {template.headerTitle && (
-            <div className="h-14 bg-slate-900/90 border-b border-slate-700/80 px-8 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Tv className="w-6 h-6 text-indigo-400" />
-                <h2 className="text-xl font-black text-white">{template.headerTitle}</h2>
+          {/* Template Header with Company Logo on the Right */}
+          {(template.headerTitle || template.logoUrl) && (
+            <div
+              className="h-16 border-b px-8 flex items-center justify-between"
+              style={{
+                backgroundColor: template.sidebarColor || '#0f172a',
+                borderColor: 'rgba(255, 255, 255, 0.1)',
+              }}
+            >
+              {/* Right Side (in RTL): Company Logo + Facility Title */}
+              <div className="flex items-center gap-4">
+                {template.logoUrl ? (
+                  <img
+                    src={template.logoUrl}
+                    alt="Logo"
+                    className="h-10 max-w-[140px] object-contain rounded-lg bg-white/10 p-1 backdrop-blur-md"
+                  />
+                ) : (
+                  <div className="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-cyan-500 flex items-center justify-center text-white shadow-lg">
+                    <Tv className="w-5 h-5" />
+                  </div>
+                )}
+                {template.headerTitle && (
+                  <h2 className="text-xl font-black text-white tracking-wide">
+                    {template.headerTitle}
+                  </h2>
+                )}
               </div>
+
+              {/* Left Side: Live Clock & Date */}
               <div className="flex items-center gap-6 font-mono text-sm text-slate-300">
-                <span className="font-bold text-white text-base">{currentTime}</span>
-                <span>{hijriDate}</span>
+                <span className="font-bold text-white text-lg">{currentTime}</span>
+                <span className="text-xs text-slate-400">{hijriDate}</span>
               </div>
             </div>
           )}
 
           {/* Template Zones Body */}
           <div className="flex-1 flex overflow-hidden">
-            {/* Main Area */}
+            {/* Main Video / Content Area */}
             <div className="flex-1 p-6 flex flex-col justify-center items-center relative overflow-hidden bg-black/40">
-              {currentItem ? (
+              {currentItem && currentItem.media ? (
                 <div key={`${currentItem.id}-${currentPlayIndex}`} className={`w-full h-full ${playlistTransition}`}>
                   {currentItem.media?.fileType === 'image' && (
                     <img
@@ -874,7 +897,7 @@ export default function PlayerPage() {
                         ref={videoRef}
                         src={currentItem.media.fileUrl}
                         autoPlay
-                        muted={currentItem.isMuted}
+                        muted={currentItem.isMuted !== undefined ? currentItem.isMuted : true}
                         loop
                         playsInline
                         className="w-full h-full object-cover rounded-2xl shadow-2xl"
@@ -893,192 +916,83 @@ export default function PlayerPage() {
                       allowFullScreen
                     />
                   )}
-                  {currentItem.media?.fileType === 'live_stream' && (
+                  {currentItem.media?.fileType === 'web_url' && (
                     <iframe
-                      src={currentItem.media.customUrl || currentItem.media.fileUrl}
+                      src={currentItem.media.fileUrl}
                       className="w-full h-full rounded-2xl shadow-2xl border-0"
-                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
                       allow="autoplay; encrypted-media"
                       allowFullScreen
                     />
                   )}
-                  {currentItem.media?.fileType === 'audio' && (
-                    <>
-                      <audio src={currentItem.media.fileUrl} autoPlay loop />
-                      <div className="w-full h-full bg-gradient-to-br from-purple-950 via-slate-900 to-purple-950 flex items-center justify-center rounded-2xl">
-                        <div className="text-center">
-                          <div className="w-20 h-20 mx-auto rounded-full bg-purple-600/20 flex items-center justify-center mb-3 animate-pulse">
-                            <svg className="w-8 h-8 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                              <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                            </svg>
-                          </div>
-                          <p className="text-lg font-bold text-white">{currentItem.media.name}</p>
-                        </div>
-                      </div>
-                    </>
-                  )}
                 </div>
               ) : (
-                <div className="text-center text-slate-500">
-                  <Tv className="w-16 h-16 mx-auto mb-2 opacity-30" />
-                  <p>جاري تحميل المحتوى...</p>
+                /* High-Quality Fallback Video so screen is never blank */
+                <div className="relative w-full h-full">
+                  <video
+                    ref={videoRef}
+                    src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                    autoPlay
+                    muted
+                    loop
+                    playsInline
+                    className="w-full h-full object-cover rounded-2xl shadow-2xl"
+                  />
+                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-white">
+                    فيديو العرض الترويجي
+                  </div>
                 </div>
               )}
             </div>
 
-            {/* Sidebar Widgets (Dynamic Zones) */}
+            {/* Sidebar Widgets (Dynamic Zones & Colors) */}
             {template.layout === 'split_3_sidebar' && (
-              <div className="w-96 bg-slate-900/95 border-r border-slate-800 p-6 flex flex-col justify-between space-y-6 overflow-y-auto">
-                {/* Dynamic Zone Rendering */}
-                {template.zones?.filter((z: any) => z.type !== 'ticker').map((zone: any, i: number) => {
-                  if (zone.type === 'weather') {
-                    return (
-                      <div key={i} className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
-                        <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
-                          <CloudSun className="w-4 h-4" />
-                          <span>الطقس المباشر</span>
-                        </div>
-                        {weatherData ? (
-                          <>
-                            <div className="text-5xl">{weatherData.icon}</div>
-                            <div className="text-4xl font-black text-white">{weatherData.temp}°C</div>
-                            <div className="text-sm text-slate-300">{weatherData.condition}</div>
-                            <div className="text-xs text-slate-500">{weatherData.city}</div>
-                          </>
-                        ) : (
-                          <div className="text-slate-500 text-sm animate-pulse">جاري تحميل الطقس...</div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (zone.type === 'countdown') {
-                    return (
-                      <div key={i} className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 text-center shadow-2xl">
-                        <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold text-sm mb-3">
-                          <Clock className="w-5 h-5 text-amber-400" />
-                          <span>{zone.options?.label || 'العد التنازلي'}</span>
-                        </div>
-                        {countdown ? (
-                          <div className="flex justify-center gap-2">
-                            {countdown.split(':').map((unit: string, idx: number) => (
-                              <div key={idx} className="flex flex-col items-center">
-                                <div className="text-4xl font-black font-mono text-amber-400 w-16 h-16 flex items-center justify-center bg-black/40 rounded-xl border border-amber-500/30 animate-digit-pulse">
-                                  {unit}
-                                </div>
-                                <span className="text-[10px] text-slate-400 mt-1">
-                                  {['أيام', 'ساعات', 'دقائق', 'ثواني'][idx]}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        ) : (
-                          <div className="text-slate-500 text-sm">لم يتم تحديد تاريخ مستهدف</div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (zone.type === 'qr_display') {
-                    return (
-                      <div key={i} className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
-                        <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
-                          <QrCode className="w-4 h-4" />
-                          <span>{zone.options?.label || 'امسح الكود'}</span>
-                        </div>
-                        <div className="bg-white p-3 rounded-2xl inline-block">
-                          <QrDisplay url={zone.options?.qrUrl || ''} />
-                        </div>
-                        {zone.options?.qrUrl && (
-                          <a
-                            href={zone.options.qrUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xs text-indigo-300 hover:text-indigo-200 flex items-center justify-center gap-1"
-                          >
-                            <ExternalLink className="w-3 h-3" />
-                            {zone.options.qrUrl}
-                          </a>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (zone.type === 'prayer_times') {
-                    return (
-                      <div key={i} className="bg-gradient-to-br from-emerald-900/90 via-slate-900 to-emerald-950 p-6 rounded-3xl border-2 border-emerald-500/40 text-center shadow-2xl">
-                        <div className="flex items-center justify-center gap-2 text-emerald-300 font-bold text-sm mb-3">
-                          <Clock className="w-5 h-5 text-emerald-400" />
-                          <span>أوقات الصلاة</span>
-                        </div>
-                        {nextPrayer ? (
-                          <div className="space-y-2">
-                            <div className="text-xs text-emerald-300/70">الصلاة القادمة</div>
-                            <div className="text-3xl font-black text-white">{nextPrayer.name}</div>
-                            <div className="text-lg font-mono text-emerald-300">{nextPrayer.time}</div>
-                            <div className="text-xs text-slate-400">
-                              متبقي {nextPrayer.countdown}
-                            </div>
-                            {prayerData?.prayers && (
-                              <div className="mt-3 space-y-1 border-t border-emerald-500/20 pt-3">
-                                {prayerData.prayers
-                                  .filter((p: any) => p.name !== 'الشروق')
-                                  .map((p: any, pi: number) => (
-                                    <div key={pi} className="flex justify-between text-xs">
-                                      <span className="text-slate-300">{p.name}</span>
-                                      <span className="font-mono text-emerald-300">{p.time}</span>
-                                    </div>
-                                  ))}
-                              </div>
-                            )}
-                          </div>
-                        ) : (
-                          <div className="text-emerald-300/50 text-sm animate-pulse">جاري تحميل الأوقات...</div>
-                        )}
-                      </div>
-                    );
-                  }
-
-                  if (zone.type === 'web_embed' && zone.url) {
-                    return (
-                      <iframe
-                        key={i}
-                        src={getEmbedUrl(zone.url)}
-                        className="w-full h-full rounded-2xl shadow-2xl border-0"
-                        sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
-                        allow="autoplay; encrypted-media"
-                        allowFullScreen
-                        title={zone.title}
-                      />
-                    );
-                  }
-
-                  return null;
-                })}
-
-                {/* Fallback static queue if no zones defined */}
-                {!template.zones?.some((z: any) => z.type === 'queue') && (
-                  <div className="bg-gradient-to-br from-indigo-900/90 via-slate-900 to-indigo-950 p-6 rounded-3xl border-2 border-indigo-500/40 text-center shadow-2xl">
-                    <div className="flex items-center justify-center gap-2 text-indigo-300 font-bold text-sm mb-2">
-                      <UsersRound className="w-5 h-5 text-amber-400" />
-                      <span>الرقم المستدعى حالياً</span>
-                    </div>
-                    <div className="text-6xl font-black font-mono text-amber-400 tracking-wider my-2">
-                      {currentQueueTicket?.ticket || 'A-104'}
-                    </div>
-                    <div className="text-sm text-slate-200 font-semibold mt-2">
-                       {currentQueueTicket?.counter || 'الاستقبال'}
-                    </div>
+              <div
+                className="w-96 border-r p-6 flex flex-col justify-between space-y-6 overflow-y-auto"
+                style={{
+                  backgroundColor: template.sidebarColor || '#0f172a',
+                  borderColor: 'rgba(255, 255, 255, 0.1)',
+                }}
+              >
+                {/* 1. Queue Display Widget */}
+                <div
+                  className="p-6 rounded-3xl text-center shadow-2xl border transition-all"
+                  style={{
+                    backgroundColor: template.cardColor || '#1e1b4b',
+                    borderColor: 'rgba(255, 255, 255, 0.15)',
+                  }}
+                >
+                  <div className="flex items-center justify-center gap-2 font-bold text-sm mb-2 text-indigo-200">
+                    <UsersRound className="w-5 h-5 text-amber-400" />
+                    <span>الرقم المستدعى حالياً</span>
                   </div>
-                )}
+                  <div
+                    className="text-6xl font-black font-mono tracking-wider my-2"
+                    style={{ color: template.accentColor || '#f59e0b' }}
+                  >
+                    {currentQueueTicket?.ticket || 'A-104'}
+                  </div>
+                  <div className="text-sm text-slate-200 font-semibold mt-2">
+                    {currentQueueTicket?.counter || 'الاستقبال'}
+                  </div>
+                </div>
 
-                {/* Live Clock */}
-                <div className="bg-slate-950/80 p-6 rounded-3xl border border-slate-800 text-center space-y-3">
-                  <div className="flex items-center justify-center gap-2 text-indigo-400 text-xs font-semibold">
+                {/* 2. Live Clock Widget */}
+                <div
+                  className="p-6 rounded-3xl text-center space-y-3 border shadow-xl"
+                  style={{
+                    backgroundColor: template.cardColor || '#1e1b4b',
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                  }}
+                >
+                  <div className="flex items-center justify-center gap-2 text-indigo-300 text-xs font-semibold">
                     <Clock className="w-4 h-4" />
                     <span>التوقيت المباشر</span>
                   </div>
-                  <div className="text-3xl font-black font-mono text-white tracking-widest">
+                  <div
+                    className="text-3xl font-black font-mono tracking-widest"
+                    style={{ color: template.textColor || '#ffffff' }}
+                  >
                     {currentTime}
                   </div>
                   <div className="text-xs text-slate-400">{hijriDate}</div>
@@ -1087,14 +1001,21 @@ export default function PlayerPage() {
             )}
           </div>
 
-          {/* Bottom Ticker Marquee */}
-          <div className="h-12 bg-indigo-950/95 border-t border-indigo-900/50 flex items-center px-6 overflow-hidden">
-            <div className="flex items-center gap-3 text-sm font-bold text-indigo-200 whitespace-nowrap animate-ticker">
+          {/* Bottom Ticker Marquee with Custom Colors */}
+          <div
+            className="h-12 border-t flex items-center px-6 overflow-hidden"
+            style={{
+              backgroundColor: template.tickerBgColor || '#1e1b4b',
+              borderColor: 'rgba(255, 255, 255, 0.1)',
+              color: template.tickerTextColor || '#e0e7ff',
+            }}
+          >
+            <div className="flex items-center gap-3 text-sm font-bold whitespace-nowrap animate-ticker">
               <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 shrink-0 pulse-green" />
-              <span className="text-amber-300">تنبيهات هامة:</span>
+              <span style={{ color: template.accentColor || '#f59e0b' }}>تنبيهات هامة:</span>
               <span>
                 {template.zones?.find((z: any) => z.type === 'ticker')?.text ||
-                  'مرحباً بكم في متجرنا • مواعيد العمل الرسمية من 8:00 صباحاً حتى 10:00 مساءً • للاستفسار يرجى مراجعة المبيعات'}
+                  '🎉 مرحباً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً في كافة الفروع'}
               </span>
             </div>
           </div>
