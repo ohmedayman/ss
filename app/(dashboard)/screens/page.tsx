@@ -1,9 +1,10 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Header from '@/components/Header';
 import PairScreenModal from '@/components/PairScreenModal';
 import Link from 'next/link';
+import useSWR from 'swr';
 import {
   Tv,
   RotateCw,
@@ -29,8 +30,6 @@ import {
 } from 'lucide-react';
 
 export default function ScreensPage() {
-  const [screens, setScreens] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [filterStatus, setFilterStatus] = useState<'all' | 'online' | 'offline' | 'unpaired'>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
@@ -38,25 +37,11 @@ export default function ScreensPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  const loadScreens = async () => {
-    try {
-      const res = await fetch('/api/screens');
-      if (res.ok) {
-        const data = await res.json();
-        setScreens(data.screens || []);
-      }
-    } catch (e) {
-      console.error('Failed to load screens:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data, isLoading: loading, mutate } = useSWR<{ screens: any[] }>('/api/screens', {
+    refreshInterval: 15000,
+  });
 
-  useEffect(() => {
-    loadScreens();
-    const interval = setInterval(loadScreens, 15000);
-    return () => clearInterval(interval);
-  }, []);
+  const screens = data?.screens || [];
 
   const sendCommand = async (screenId: string, command: string) => {
     setActionLoading(`${screenId}-${command}`);
@@ -67,7 +52,7 @@ export default function ScreensPage() {
         body: JSON.stringify({ command }),
       });
       if (res.ok) {
-        await loadScreens();
+        await mutate();
       }
     } catch (e) {
       console.error(e);
@@ -81,7 +66,7 @@ export default function ScreensPage() {
     try {
       const res = await fetch(`/api/screens/${screenId}`, { method: 'DELETE' });
       if (res.ok) {
-        await loadScreens();
+        await mutate();
       }
     } catch (e) {
       console.error(e);
@@ -626,7 +611,7 @@ export default function ScreensPage() {
       <PairScreenModal
         isOpen={isPairModalOpen}
         onClose={() => setIsPairModalOpen(false)}
-        onSuccess={() => loadScreens()}
+        onSuccess={() => mutate()}
       />
     </div>
   );

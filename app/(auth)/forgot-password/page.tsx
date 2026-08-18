@@ -3,22 +3,29 @@
 import React, { useState } from 'react';
 import Link from 'next/link';
 import { sendPasswordResetEmail } from 'firebase/auth';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   CheckCircle2,
   ArrowRight,
   AlertCircle,
   Loader2,
+  Mail,
 } from 'lucide-react';
 import { getClientAuth } from '@/lib/firebase/client';
+import { loginSchema } from '@/lib/validations';
 
 export default function ForgotPasswordPage() {
-  const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [sentEmail, setSentEmail] = useState('');
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const { register, handleSubmit, formState: { errors } } = useForm<{ email: string }>({
+    resolver: zodResolver(loginSchema.pick({ email: true })),
+  });
+
+  const handleSubmitEmail = async (data: { email: string }) => {
     setLoading(true);
     setError('');
     try {
@@ -31,9 +38,10 @@ export default function ForgotPasswordPage() {
       }
       if (firebaseReady) {
         const auth = getClientAuth();
-        await sendPasswordResetEmail(auth, email);
+        await sendPasswordResetEmail(auth, data.email);
       }
-      if (email) setSent(true);
+      setSentEmail(data.email);
+      setSent(true);
     } catch (err: any) {
       setError(err?.message || 'حدث خطأ أثناء إرسال رابط الاستعادة');
     } finally {
@@ -43,7 +51,6 @@ export default function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-white flex flex-col relative overflow-hidden font-['Cairo']">
-      {/* Header / Logo */}
       <header className="w-full px-8 py-5 flex items-center justify-between absolute top-0 left-0 right-0 z-20">
         <Link href="/" className="flex items-center gap-2.5">
           <img
@@ -54,7 +61,6 @@ export default function ForgotPasswordPage() {
         </Link>
       </header>
 
-      {/* Main Content */}
       <main className="flex-1 flex items-center justify-center px-4 pt-20 pb-40 relative z-10">
         <div className="w-full max-w-md">
           <div className="bg-white rounded-2xl shadow-[0_2px_40px_rgba(0,0,0,0.08)] border border-slate-100 p-8 md:p-10">
@@ -70,7 +76,7 @@ export default function ForgotPasswordPage() {
                   تم إرسال تعليمات إعادة تعيين كلمة المرور إلى
                 </p>
                 <p className="text-sm font-mono font-semibold text-slate-800 bg-slate-50 rounded-lg px-3 py-2">
-                  {email}
+                  {sentEmail}
                 </p>
                 <Link
                   href="/login"
@@ -81,7 +87,7 @@ export default function ForgotPasswordPage() {
                 </Link>
               </div>
             ) : (
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleSubmit(handleSubmitEmail)} className="space-y-5">
                 {error && (
                   <div className="p-3.5 rounded-xl bg-red-50 border border-red-100 text-sm text-red-600 flex items-center gap-2.5">
                     <AlertCircle className="w-4 h-4 shrink-0" />
@@ -91,14 +97,18 @@ export default function ForgotPasswordPage() {
 
                 <div>
                   <label className="block text-sm font-medium text-slate-600 mb-2">البريد الإلكتروني</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="أدخل بريدك الإلكتروني"
-                    className="w-full px-4 py-3 rounded-xl border border-slate-200 bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 focus:border-[#4F46E5] transition-all"
-                    required
-                  />
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                    <input
+                      type="email"
+                      {...register('email')}
+                      placeholder="أدخل بريدك الإلكتروني"
+                      className={`w-full px-4 py-3 pl-10 rounded-xl border bg-slate-50/50 text-sm text-slate-800 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-[#4F46E5]/30 focus:border-[#4F46E5] transition-all ${
+                        errors.email ? 'border-red-300' : 'border-slate-200'
+                      }`}
+                    />
+                  </div>
+                  {errors.email && <p className="text-xs text-red-500 mt-1">{errors.email.message}</p>}
                 </div>
 
                 <button
@@ -128,7 +138,6 @@ export default function ForgotPasswordPage() {
         </div>
       </main>
 
-      {/* Bottom Illustration */}
       <div className="absolute bottom-0 left-0 right-0 h-64 pointer-events-none overflow-hidden">
         <svg className="absolute bottom-0 left-0 right-0 w-full h-48 text-slate-50" viewBox="0 0 1440 320" fill="currentColor" preserveAspectRatio="none">
           <path d="M0,224L40,213.3C80,203,160,181,240,181.3C320,181,400,203,480,213.3C560,224,640,224,720,208C800,192,880,160,960,165.3C1040,171,1120,213,1200,218.7C1280,224,1360,192,1400,176L1440,160L1440,320L1400,320C1360,320,1280,320,1200,320C1120,320,1040,320,960,320C880,320,800,320,720,320C640,320,560,320,480,320C400,320,320,320,240,320C160,320,80,320,40,320L0,320Z" />

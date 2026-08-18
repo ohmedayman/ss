@@ -65,23 +65,23 @@ function getInitialData(): DatabaseSchema {
     {
       id: 'med-2',
       organizationId: orgId,
-      name: 'فيديو تقديم المنتجات الذكية',
+      name: 'فيديو تحضير القهوة واللاتيه آرت',
       fileType: 'video',
       fileUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
-      thumbnailUrl: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?auto=format&fit=crop&w=400&q=60',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=60',
       fileSizeBytes: 14800000,
       durationSeconds: 15,
       width: 1920,
       height: 1080,
-      folder: 'فيديو',
-      tags: ['منتجات', 'فيديو', 'جودة_عالية'],
+      folder: 'فيديو ترويجي',
+      tags: ['قهوة', 'كافيه', 'فيديو'],
       createdAt: new Date(Date.now() - 3600000 * 24 * 2).toISOString(),
       updatedAt: now,
     },
     {
       id: 'med-3',
       organizationId: orgId,
-      name: 'قائمة المشروبات والقهوة المختصة',
+      name: 'قائمة المشروبات والقهوة المختصة (4K)',
       fileType: 'image',
       fileUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=1920&q=80',
       thumbnailUrl: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=60',
@@ -119,6 +119,146 @@ function getInitialData(): DatabaseSchema {
       durationSeconds: 30,
       folder: 'روابط ويب',
       tags: ['طقس', 'موقع'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-6',
+      organizationId: orgId,
+      name: 'فيديو شوي البرجر والوجبات الشهية',
+      fileType: 'video',
+      fileUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 15400000,
+      durationSeconds: 15,
+      width: 1920,
+      height: 1080,
+      folder: 'مطاعم وكافيهات',
+      tags: ['برجر', 'وجبات', 'فيديو'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-7',
+      organizationId: orgId,
+      name: 'بوستر التخفيضات الكبرى 50% (Big Sale)',
+      fileType: 'image',
+      fileUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=1920&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 2980000,
+      durationSeconds: 10,
+      width: 1920,
+      height: 1080,
+      folder: 'متاجر وتجزئة',
+      tags: ['عروض', 'تخفيضات', 'متاجر'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-8',
+      organizationId: orgId,
+      name: 'فيديو عروض الأزياء والموضة العصرية',
+      fileType: 'video',
+      fileUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyBlazes.mp4',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1441986300917-64674bd600d8?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 16100000,
+      durationSeconds: 15,
+      width: 1920,
+      height: 1080,
+      folder: 'متاجر وتجزئة',
+      tags: ['أزياء', 'موضة', 'فيديو'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-9',
+      organizationId: orgId,
+      name: 'بوستر العناية بالأسنان والرعاية الطبية',
+      fileType: 'image',
+      fileUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=1920&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1588776814546-1ffcf47267a5?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 2750000,
+      durationSeconds: 12,
+      width: 1920,
+      height: 1080,
+      folder: 'عيادات وصحة',
+      tags: ['عيادات', 'أسنان', 'طب'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-10',
+      organizationId: orgId,
+      name: 'فيديو الرعاية الصحية لصالات الانتظار',
+      fileType: 'video',
+      fileUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/TearsOfSteel.mp4',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 18900000,
+      durationSeconds: 20,
+      width: 1920,
+      height: 1080,
+      folder: 'عيادات وصحة',
+      tags: ['عيادات', 'انتظار', 'توعية'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-11',
+      organizationId: orgId,
+      name: 'فيديو الأبراج والمشاريع العقارية الفاخرة',
+      fileType: 'video',
+      fileUrl: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/WhatCarCanYouGetForAGrand.mp4',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 16800000,
+      durationSeconds: 15,
+      width: 1920,
+      height: 1080,
+      folder: 'شركات وعقارات',
+      tags: ['عقارات', 'أبراج', 'استثمار'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-12',
+      organizationId: orgId,
+      name: 'بوستر مؤتمر الأعمال والابتكار 2026',
+      fileType: 'image',
+      fileUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=1920&q=80',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1540575467063-178a50c2df87?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 3150000,
+      durationSeconds: 10,
+      width: 1920,
+      height: 1080,
+      folder: 'شركات وعقارات',
+      tags: ['مؤتمر', 'أعمال', 'ابتكار'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-13',
+      organizationId: orgId,
+      name: 'شاشة البث الإخباري المباشر',
+      fileType: 'web_url',
+      fileUrl: 'https://www.alarabiya.net',
+      thumbnailUrl: 'https://images.unsplash.com/photo-1504711434969-e33886168f5c?auto=format&fit=crop&w=400&q=60',
+      fileSizeBytes: 2048,
+      durationSeconds: 45,
+      folder: 'روابط ويب',
+      tags: ['أخبار', 'عاجل', 'مباشر'],
+      createdAt: now,
+      updatedAt: now,
+    },
+    {
+      id: 'med-14',
+      organizationId: orgId,
+      name: 'شريط عروض المطاعم والوجبات السريعة',
+      fileType: 'ticker_text',
+      fileUrl: '',
+      customTickerText: '🍔 عرض الغداء المميز: اطلب وجبة برجر دبل واحصل على مقبلات ومشروب مجاناً • نكهاتنا لا تُقاوم • خدمة التوصيل السريع متاحة عبر التطبيق',
+      fileSizeBytes: 256,
+      durationSeconds: 15,
+      folder: 'نصوص إعلانية',
+      tags: ['شريط', 'مطاعم', 'عروض'],
       createdAt: now,
       updatedAt: now,
     }
@@ -703,7 +843,9 @@ export interface Database {
 
   getQueueServices(orgId: string): Promise<QueueService[]>;
   getQueueServiceById(id: string): Promise<QueueService | undefined>;
+  createQueueService(service: QueueService): Promise<QueueService>;
   updateQueueService(id: string, updates: Partial<QueueService>): Promise<void>;
+  deleteQueueService(id: string, orgId: string): Promise<boolean>;
   getQueueTickets(orgId: string): Promise<QueueTicket[]>;
   createQueueTicket(ticket: QueueTicket): Promise<void>;
   callNextTicket(serviceId: string, counterNumber: string): Promise<QueueTicket | null>;
@@ -942,9 +1084,17 @@ class LocalDatabase implements Database {
   async getQueueServiceById(id: string) {
     return this.data.queueServices.find(q => q.id === id);
   }
+  async createQueueService(service: QueueService) {
+    this.data.queueServices.push(service);
+    return service;
+  }
   async updateQueueService(id: string, updates: Partial<QueueService>) {
     const svc = this.data.queueServices.find(q => q.id === id);
     if (svc) Object.assign(svc, updates);
+  }
+  async deleteQueueService(id: string, orgId: string) {
+    this.data.queueServices = this.data.queueServices.filter(q => !(q.id === id && q.organizationId === orgId));
+    return true;
   }
   async getQueueTickets(orgId: string) {
     return this.data.queueTickets.filter(t => t.organizationId === orgId);
@@ -1287,8 +1437,17 @@ class FirestoreDatabase implements Database {
   async getQueueServiceById(id: string) {
     return this.getById<QueueService>(COLLECTIONS.queueServices, id);
   }
+  async createQueueService(service: QueueService) {
+    await this.setDoc(COLLECTIONS.queueServices, service.id, service);
+    return service;
+  }
   async updateQueueService(id: string, updates: Partial<QueueService>) {
     await this.setDoc(COLLECTIONS.queueServices, id, updates);
+  }
+  async deleteQueueService(id: string, orgId: string) {
+    const fs = await getDb();
+    await fs.collection(COLLECTIONS.queueServices).doc(id).delete();
+    return true;
   }
   async getQueueTickets(orgId: string) {
     return this.list<QueueTicket>(COLLECTIONS.queueTickets, 'organizationId', orgId);

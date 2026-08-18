@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Header from '@/components/Header';
 import UploadMediaModal from '@/components/UploadMediaModal';
+import { STOCK_MEDIA_CATALOG, StockMediaItem } from '@/lib/stock-media';
 import {
   Image as ImageIcon,
   Film,
@@ -20,24 +21,39 @@ import {
   Folder,
   FolderOpen,
   ArrowUpDown,
-  ArrowUp,
-  ArrowDown,
   FileText,
   Edit3,
   AlertTriangle,
   Music,
+  Download,
+  Sparkles,
+  Layers,
+  Send,
+  Monitor,
+  CheckCircle2,
+  ExternalLink,
+  ShoppingBag,
+  Utensils,
+  Stethoscope,
+  Building2,
+  Compass,
 } from 'lucide-react';
+import confetti from 'canvas-confetti';
 
 function YoutubeIcon({ className }: { className?: string }) {
   return (
     <svg className={className} viewBox="0 0 24 24" fill="currentColor">
-      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+      <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z" />
     </svg>
   );
 }
 
 export default function MediaPage() {
+  const [mainTab, setMainTab] = useState<'my_media' | 'stock_catalog'>('my_media');
+
+  // My Media State
   const [media, setMedia] = useState<any[]>([]);
+  const [screens, setScreens] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<string>('all');
@@ -52,16 +68,33 @@ export default function MediaPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null);
-  const [bulkDeleteConfirm, setBulkDeleteConfirm] = useState(false);
 
-  const defaultFolders = ['الكل', 'عام', 'صور', 'فيديو', 'صوتيات', 'يوتيوب', 'إعلانات', 'لوجوهات'];
+  // Stock Catalog State
+  const [stockCategory, setStockCategory] = useState<string>('all');
+  const [stockSearch, setStockSearch] = useState<string>('');
+  const [importingId, setImportingId] = useState<string | null>(null);
+  const [importSuccessMsg, setImportSuccessMsg] = useState<string>('');
+
+  // Quick Assign Modal
+  const [assignMediaItem, setAssignMediaItem] = useState<any | null>(null);
+  const [assignSuccessMsg, setAssignSuccessMsg] = useState<string>('');
+
+  const defaultFolders = ['الكل', 'عام', 'فيديو ترويجي', 'مطاعم وكافيهات', 'متاجر وتجزئة', 'عيادات وصحة', 'شركات وعقارات', 'روابط ويب', 'نصوص إعلانية'];
 
   const loadMedia = async () => {
     try {
-      const res = await fetch('/api/media');
-      if (res.ok) {
-        const data = await res.json();
+      const [mediaRes, screensRes] = await Promise.all([
+        fetch('/api/media'),
+        fetch('/api/screens'),
+      ]);
+
+      if (mediaRes.ok) {
+        const data = await mediaRes.json();
         setMedia(data.media || []);
+      }
+      if (screensRes.ok) {
+        const d = await screensRes.json();
+        setScreens(d.screens || []);
       }
     } catch (e) {
       console.error(e);
@@ -104,17 +137,48 @@ export default function MediaPage() {
     }
   };
 
-  const bulkDelete = async () => {
+  const importStockItem = async (stockItem: StockMediaItem) => {
+    setImportingId(stockItem.id);
     try {
-      const res = await fetch('/api/media', {
-        method: 'DELETE',
+      const res = await fetch('/api/media/stock', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ids: Array.from(selectedIds) }),
+        body: JSON.stringify({ stockId: stockItem.id }),
       });
+
       if (res.ok) {
+        try {
+          confetti({ particleCount: 60, spread: 70, origin: { y: 0.7 } });
+        } catch (e) {}
+        setImportSuccessMsg(`تم استيراد "${stockItem.name}" إلى مكتبتك بنجاح! 🎉`);
         await loadMedia();
-        setSelectedIds(new Set());
-        setBulkDeleteConfirm(false);
+        setTimeout(() => setImportSuccessMsg(''), 3000);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setImportingId(null);
+    }
+  };
+
+  const assignToScreen = async (screenId: string) => {
+    if (!assignMediaItem) return;
+    try {
+      const res = await fetch(`/api/screens/${screenId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          activeContentType: 'media',
+          activeContentId: assignMediaItem.id,
+        }),
+      });
+
+      if (res.ok) {
+        setAssignSuccessMsg(`تم إرسال "${assignMediaItem.name}" للشاشة وبدء العرض فوراً! 📺`);
+        setTimeout(() => {
+          setAssignMediaItem(null);
+          setAssignSuccessMsg('');
+        }, 1500);
       }
     } catch (e) {
       console.error(e);
@@ -169,13 +233,22 @@ export default function MediaPage() {
     return items;
   }, [media, searchQuery, filterType, selectedFolder, sortBy, sortOrder]);
 
-  const toggleSelectAll = () => {
-    if (selectedIds.size === filteredMedia.length) {
-      setSelectedIds(new Set());
-    } else {
-      setSelectedIds(new Set(filteredMedia.map((item) => item.id)));
+  const filteredStockMedia = useMemo(() => {
+    let items = [...STOCK_MEDIA_CATALOG];
+    if (stockCategory !== 'all') {
+      items = items.filter((item) => item.category === stockCategory);
     }
-  };
+    if (stockSearch.trim()) {
+      const q = stockSearch.trim().toLowerCase();
+      items = items.filter(
+        (item) =>
+          item.name.toLowerCase().includes(q) ||
+          item.description.toLowerCase().includes(q) ||
+          item.tags.some((t) => t.toLowerCase().includes(q))
+      );
+    }
+    return items;
+  }, [stockCategory, stockSearch]);
 
   const toggleSelect = (id: string) => {
     const next = new Set(selectedIds);
@@ -221,291 +294,222 @@ export default function MediaPage() {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
+      {/* Header */}
       <Header
         title="مكتبة الوسائط والمحتوى"
-        subtitle="إدارة ورفع الصور ومقاطع الفيديو وصفحات الويب وأشرطة الأخبار"
+        subtitle="إدارة ورفع وتصفح محتوى الشاشات الرقمية، الفيديوهات الترويجية، والقوائم الجاهزة"
         onOpenUploadModal={() => setIsUploadModalOpen(true)}
       />
 
-      <div className="flex gap-6">
-        {/* Folder Sidebar */}
-        <div className="hidden lg:block w-56 shrink-0">
-          <div className="glass-panel rounded-2xl p-3 space-y-1 sticky top-24">
-            <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-2">
-              المجلدات
-            </h4>
-            {folders.map((f) => (
-              <button
-                key={f.name}
-                onClick={() => setSelectedFolder(f.name)}
-                className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
-                  selectedFolder === f.name
-                    ? 'bg-indigo-600 text-white shadow-sm'
-                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
-                }`}
-              >
-                <span className="flex items-center gap-2">
-                  {selectedFolder === f.name ? (
-                    <FolderOpen className="w-4 h-4" />
-                  ) : (
-                    <Folder className="w-4 h-4" />
-                  )}
-                  {f.name}
-                </span>
-                <span
-                  className={`text-[10px] px-1.5 py-0.5 rounded-full ${
-                    selectedFolder === f.name
-                      ? 'bg-white/20 text-white'
-                      : 'bg-slate-100 text-slate-500'
-                  }`}
-                >
-                  {f.count}
-                </span>
-              </button>
-            ))}
-          </div>
+      {/* Global Success Notification */}
+      {importSuccessMsg && (
+        <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold flex items-center gap-2 shadow-sm animate-in fade-in duration-200">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{importSuccessMsg}</span>
+        </div>
+      )}
+
+      {/* Main Switcher: My Media vs Online Stock Catalog */}
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 glass-panel p-2 rounded-2xl">
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <button
+            onClick={() => setMainTab('my_media')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mainTab === 'my_media'
+                ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Folder className="w-4 h-4" />
+            <span>مكتبة وسائطي ({media.length})</span>
+          </button>
+
+          <button
+            onClick={() => setMainTab('stock_catalog')}
+            className={`flex-1 sm:flex-none flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl text-xs font-bold transition-all cursor-pointer ${
+              mainTab === 'stock_catalog'
+                ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-600/20'
+                : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles className="w-4 h-4 text-amber-300" />
+            <span>محتوى جاهز من الإنترنت (Stock Media)</span>
+            <span className="text-[10px] px-1.5 py-0.5 rounded bg-amber-400/20 text-amber-700 font-extrabold">
+              جديد
+            </span>
+          </button>
         </div>
 
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 space-y-5">
-          {/* Mobile Folder Tabs */}
-          <div className="lg:hidden overflow-x-auto flex gap-2 pb-1">
-            {folders.map((f) => (
-              <button
-                key={f.name}
-                onClick={() => setSelectedFolder(f.name)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shrink-0 cursor-pointer border ${
-                  selectedFolder === f.name
-                    ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                    : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
-                }`}
-              >
-                {f.name} ({f.count})
-              </button>
-            ))}
+        {mainTab === 'my_media' ? (
+          <button
+            onClick={() => setIsUploadModalOpen(true)}
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-sm transition-all cursor-pointer shrink-0 w-full sm:w-auto justify-center"
+          >
+            <Plus className="w-4 h-4" />
+            <span>رفع وسائط مخصصة</span>
+          </button>
+        ) : (
+          <div className="text-xs text-slate-500 hidden md:block">
+            ✨ تصفح واستورد أي تصميم أو فيديو بضغطة زر واحدة إلى شاشاتك
           </div>
+        )}
+      </div>
 
-          {/* Control Bar */}
-          <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
-            {/* Search */}
-            <div className="relative w-full md:w-72">
-              <Search className="w-4 h-4 text-slate-400 absolute top-3 right-3" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="بحث في ملفات الوسائط..."
-                className="input pl-3 pr-9"
-              />
-            </div>
-
-            <div className="flex items-center gap-3 flex-wrap">
-              {/* Type Filter Pills */}
-              <div className="flex items-center gap-1.5 overflow-x-auto">
+      {/* ========================================================================= */}
+      {/* TAB 1: MY UPLOADED MEDIA ASSETS                                           */}
+      {/* ========================================================================= */}
+      {mainTab === 'my_media' && (
+        <div className="flex gap-6">
+          {/* Folders Sidebar */}
+          <div className="hidden lg:block w-56 shrink-0">
+            <div className="glass-panel rounded-2xl p-3 space-y-1 sticky top-24">
+              <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider px-3 py-2">
+                التصنيفات والمجلدات
+              </h4>
+              {folders.map((f) => (
                 <button
-                  onClick={() => setFilterType('all')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                    filterType === 'all'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
+                  key={f.name}
+                  onClick={() => setSelectedFolder(f.name)}
+                  className={`w-full flex items-center justify-between px-3 py-2.5 rounded-xl text-xs font-medium transition-all cursor-pointer ${
+                    selectedFolder === f.name
+                      ? 'bg-indigo-600 text-white shadow-sm font-bold'
+                      : 'text-slate-600 hover:bg-slate-100 hover:text-slate-800'
                   }`}
                 >
-                  الكل
+                  <span className="flex items-center gap-2">
+                    {selectedFolder === f.name ? (
+                      <FolderOpen className="w-4 h-4" />
+                    ) : (
+                      <Folder className="w-4 h-4" />
+                    )}
+                    <span>{f.name}</span>
+                  </span>
+                  <span
+                    className={`text-[10px] px-1.5 py-0.5 rounded-full ${
+                      selectedFolder === f.name
+                        ? 'bg-indigo-700 text-indigo-100'
+                        : 'bg-slate-100 text-slate-500'
+                    }`}
+                  >
+                    {f.count}
+                  </span>
                 </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Main Media Content */}
+          <div className="flex-1 space-y-4">
+            {/* Control Bar: Search & Type Filter & View Mode */}
+            <div className="glass-panel rounded-2xl p-4 flex flex-col md:flex-row items-center justify-between gap-4">
+              <div className="relative w-full md:w-80">
+                <Search className="w-4 h-4 text-slate-400 absolute top-3 right-3" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="بحث في وسائطك المرفوعة..."
+                  className="w-full pl-3 pr-9 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 placeholder:text-slate-400"
+                />
+              </div>
+
+              {/* Filter Pills */}
+              <div className="flex items-center gap-1.5 overflow-x-auto w-full md:w-auto">
+                <button
+                  onClick={() => setFilterType('all')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                    filterType === 'all'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
+                  }`}
+                >
+                  الكل ({media.length})
+                </button>
+
                 <button
                   onClick={() => setFilterType('image')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     filterType === 'image'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   <ImageIcon className="w-3.5 h-3.5" />
-                  صور
+                  <span>الصور ({media.filter((m) => m.fileType === 'image').length})</span>
                 </button>
+
                 <button
                   onClick={() => setFilterType('video')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     filterType === 'video'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   <Film className="w-3.5 h-3.5" />
-                  فيديو
+                  <span>الفيديو ({media.filter((m) => m.fileType === 'video').length})</span>
                 </button>
+
                 <button
                   onClick={() => setFilterType('ticker_text')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     filterType === 'ticker_text'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   <Type className="w-3.5 h-3.5" />
-                  نصوص
+                  <span>أشرطة متحركة ({media.filter((m) => m.fileType === 'ticker_text').length})</span>
                 </button>
+
                 <button
                   onClick={() => setFilterType('web_url')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer ${
                     filterType === 'web_url'
-                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'bg-slate-100 text-slate-600 hover:text-slate-900 border border-slate-200'
                   }`}
                 >
                   <Globe className="w-3.5 h-3.5" />
-                  ويب
-                </button>
-                <button
-                  onClick={() => setFilterType('youtube_video')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                    filterType === 'youtube_video'
-                      ? 'bg-red-600 text-white border-red-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-red-600 border-slate-200'
-                  }`}
-                >
-                  <YoutubeIcon className="w-3.5 h-3.5" />
-                  يوتيوب
-                </button>
-                <button
-                  onClick={() => setFilterType('audio')}
-                  className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all flex items-center gap-1.5 cursor-pointer border ${
-                    filterType === 'audio'
-                      ? 'bg-purple-600 text-white border-purple-600 shadow-sm'
-                      : 'bg-white text-slate-500 hover:text-purple-600 border-slate-200'
-                  }`}
-                >
-                  <Music className="w-3.5 h-3.5" />
-                  صوتيات
+                  <span>صفحات ويب ({media.filter((m) => m.fileType === 'web_url').length})</span>
                 </button>
               </div>
 
-              {/* Sort */}
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-1.5 rounded-xl text-xs font-semibold border border-slate-200 bg-white text-slate-600 cursor-pointer"
-              >
-                <option value="date">التاريخ</option>
-                <option value="name">الاسم</option>
-                <option value="size">الحجم</option>
-                <option value="type">النوع</option>
-              </select>
-
-              <button
-                onClick={() => setSortOrder((o) => (o === 'asc' ? 'desc' : 'asc'))}
-                className="p-1.5 rounded-xl border border-slate-200 bg-white text-slate-500 hover:text-slate-800 cursor-pointer"
-              >
-                {sortOrder === 'asc' ? (
-                  <ArrowUp className="w-4 h-4" />
-                ) : (
-                  <ArrowDown className="w-4 h-4" />
-                )}
-              </button>
-
-              {/* View Toggle */}
-              <div className="flex border border-slate-200 rounded-xl overflow-hidden">
+              {/* View Switcher */}
+              <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl border border-slate-200">
                 <button
                   onClick={() => setViewMode('grid')}
-                  className={`p-1.5 cursor-pointer ${
-                    viewMode === 'grid'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white text-slate-500 hover:bg-slate-50'
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    viewMode === 'grid' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:text-slate-900'
                   }`}
+                  title="عرض الشبكة"
                 >
                   <LayoutGrid className="w-4 h-4" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
-                  className={`p-1.5 cursor-pointer ${
-                    viewMode === 'list'
-                      ? 'bg-indigo-600 text-white'
-                      : 'bg-white text-slate-500 hover:bg-slate-50'
+                  className={`p-1.5 rounded-lg transition-colors cursor-pointer ${
+                    viewMode === 'list' ? 'bg-indigo-600 text-white' : 'text-slate-600 hover:text-slate-900'
                   }`}
+                  title="عرض القائمة"
                 >
                   <List className="w-4 h-4" />
                 </button>
               </div>
             </div>
-          </div>
 
-          {/* Bulk Actions Bar */}
-          <div className="glass-panel rounded-2xl p-3 flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <button
-                onClick={toggleSelectAll}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold transition-all cursor-pointer border ${
-                  selectedIds.size === filteredMedia.length && filteredMedia.length > 0
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'bg-white text-slate-500 hover:text-slate-800 border-slate-200'
-                }`}
-              >
-                <Check
-                  className={`w-3.5 h-3.5 ${
-                    selectedIds.size === filteredMedia.length && filteredMedia.length > 0
-                      ? 'text-white'
-                      : 'text-slate-400'
-                  }`}
-                />
-                تحديد الكل
-              </button>
-              {selectedIds.size > 0 && (
-                <span className="text-xs text-indigo-600 font-semibold">
-                  {selectedIds.size} محدد
-                </span>
-              )}
-            </div>
-            {selectedIds.size > 0 && (
-              <button
-                onClick={() => setBulkDeleteConfirm(true)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-xl text-xs font-semibold text-rose-600 hover:bg-rose-50 transition-all cursor-pointer"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-                حذف المحدد ({selectedIds.size})
-              </button>
-            )}
-          </div>
-
-          {/* Loading */}
-          {loading && (
-            <div className="flex items-center justify-center py-20">
-              <div className="w-8 h-8 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin" />
-            </div>
-          )}
-
-          {/* Empty State */}
-          {!loading && filteredMedia.length === 0 && (
-            <div className="text-center py-20 glass-panel rounded-2xl">
-              <ImageIcon className="w-12 h-12 mx-auto text-slate-300 mb-3" />
-              <p className="text-sm text-slate-400 font-medium">لا توجد ملفات وسائط</p>
-            </div>
-          )}
-
-          {/* Grid View */}
-          {!loading && viewMode === 'grid' && filteredMedia.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {filteredMedia.map((item) => (
-                <div
-                  key={item.id}
-                  className="glass-panel glass-panel-hover rounded-2xl overflow-hidden flex flex-col border border-slate-200 group"
-                >
-                  {/* Checkbox */}
-                  <div className="relative">
-                    <button
-                      onClick={() => toggleSelect(item.id)}
-                      className={`absolute top-3 left-3 z-10 w-6 h-6 rounded-lg border-2 flex items-center justify-center transition-all cursor-pointer ${
-                        selectedIds.has(item.id)
-                          ? 'bg-indigo-600 border-indigo-600 text-white'
-                          : 'bg-white/80 border-slate-300 text-transparent group-hover:border-slate-400'
-                      }`}
-                    >
-                      {selectedIds.has(item.id) && <Check className="w-3.5 h-3.5" />}
-                    </button>
-
-                    {/* Thumbnail */}
+            {/* Media Grid */}
+            {viewMode === 'grid' ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
+                {filteredMedia.map((item) => (
+                  <div
+                    key={item.id}
+                    className="glass-panel rounded-2xl overflow-hidden flex flex-col border border-slate-200/80 hover:border-slate-300 hover:shadow-md transition-all group"
+                  >
+                    {/* Media Thumbnail */}
                     <div
                       onClick={() => setPreviewItem(item)}
-                      className="relative aspect-video bg-slate-950 flex items-center justify-center overflow-hidden cursor-pointer"
+                      className="relative aspect-video bg-slate-900 flex items-center justify-center overflow-hidden cursor-pointer"
                     >
                       {item.fileType === 'image' && (
                         <img
@@ -514,491 +518,497 @@ export default function MediaPage() {
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                         />
                       )}
+
                       {item.fileType === 'video' && (
-                        <div className="relative w-full h-full flex items-center justify-center bg-slate-950">
-                          <video
-                            src={item.fileUrl}
-                            className="w-full h-full object-cover opacity-80"
-                            muted
-                          />
+                        <div className="relative w-full h-full flex items-center justify-center bg-slate-900">
+                          <video src={item.fileUrl} className="w-full h-full object-cover opacity-80" muted />
                           <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-indigo-600/80 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
+                            <div className="w-10 h-10 rounded-full bg-indigo-600/90 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
                               <Film className="w-5 h-5" />
                             </div>
                           </div>
                         </div>
                       )}
+
                       {item.fileType === 'ticker_text' && (
                         <div className="p-4 w-full h-full bg-gradient-to-br from-indigo-950 to-slate-900 flex flex-col justify-center text-center">
-                          <Type className="w-6 h-6 mx-auto mb-2 text-indigo-400 opacity-60" />
-                          <p className="text-xs text-indigo-200 line-clamp-2 leading-relaxed">
+                          <Type className="w-6 h-6 mx-auto mb-2 text-indigo-400 opacity-80" />
+                          <p className="text-xs text-indigo-200 line-clamp-2 leading-relaxed font-semibold">
                             {item.customTickerText}
                           </p>
                         </div>
                       )}
+
                       {item.fileType === 'web_url' && (
                         <div className="p-4 w-full h-full bg-slate-900 flex flex-col items-center justify-center text-center">
-                          <Globe className="w-8 h-8 mb-2 text-cyan-400 opacity-60" />
+                          <Globe className="w-8 h-8 mb-2 text-cyan-400 opacity-80" />
                           <p className="text-xs text-slate-300 font-mono truncate max-w-[200px]">
                             {item.fileUrl}
                           </p>
                         </div>
                       )}
-                      {item.fileType === 'youtube_video' && (
-                        <div className="relative w-full h-full flex items-center justify-center bg-red-950">
-                          {item.thumbnailUrl ? (
-                            <img
-                              src={item.thumbnailUrl}
-                              alt={item.name}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                            />
-                          ) : (
-                            <YoutubeIcon className="w-10 h-10 text-red-500 opacity-60" />
-                          )}
-                          <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                            <div className="w-10 h-10 rounded-full bg-red-600/80 text-white flex items-center justify-center group-hover:scale-110 transition-transform">
-                              <Film className="w-5 h-5" />
-                            </div>
-                          </div>
-                        </div>
-                      )}
-                      {item.fileType === 'audio' && (
-                        <div className="p-4 w-full h-full bg-gradient-to-br from-purple-950 to-slate-900 flex flex-col items-center justify-center text-center">
-                          <Music className="w-8 h-8 mb-2 text-purple-400 opacity-60" />
-                          <p className="text-xs text-purple-200 font-semibold">{item.name}</p>
-                        </div>
-                      )}
-
-                      {/* Hover Overlay */}
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex items-end p-3">
-                        <div className="w-full">
-                          <p className="text-white text-xs font-semibold truncate">{item.name}</p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[10px] text-slate-300 capitalize">{item.fileType}</span>
-                            {item.durationSeconds > 0 && (
-                              <span className="text-[10px] text-slate-300">{item.durationSeconds} ث</span>
-                            )}
-                          </div>
-                        </div>
-                      </div>
 
                       {/* Duration Badge */}
-                      {item.durationSeconds > 0 && (
-                        <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] text-slate-300 flex items-center gap-1 font-mono">
-                          <Clock className="w-3 h-3 text-indigo-400" />
-                          <span>{item.durationSeconds} ثانية</span>
-                        </div>
-                      )}
+                      <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] text-white flex items-center gap-1 font-mono">
+                        <Clock className="w-3 h-3 text-indigo-400" />
+                        <span>{item.durationSeconds}s</span>
+                      </div>
 
                       {/* Folder Tag */}
-                      <div className="absolute top-3 right-3 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] text-slate-300">
-                        {item.folder || 'عام'}
+                      <div className="absolute top-2 right-2 px-2 py-0.5 rounded bg-black/70 backdrop-blur-md text-[10px] text-white font-medium">
+                        {item.folder}
                       </div>
                     </div>
-                  </div>
 
-                  {/* Media Info */}
-                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
-                    <div>
-                      <h4 className="font-bold text-slate-900 text-xs truncate" title={item.name}>
-                        {item.name}
-                      </h4>
-                      <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
-                        <span>{formatSize(item.fileSizeBytes)}</span>
-                        <span className="capitalize">{item.fileType}</span>
-                      </div>
-                    </div>
-                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
-                      <button
-                        onClick={() => setPreviewItem(item)}
-                        className="text-xs text-indigo-600 hover:text-indigo-500 flex items-center gap-1 cursor-pointer font-medium"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        <span>معاينة</span>
-                      </button>
-                      <div className="flex items-center gap-1">
-                        <button
-                          onClick={() => openEdit(item)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
-                          title="تعديل"
-                        >
-                          <Edit3 className="w-3.5 h-3.5" />
-                        </button>
-                        <button
-                          onClick={() => setDeleteConfirmId(item.id)}
-                          className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
-                          title="حذف"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-
-          {/* List View */}
-          {!loading && viewMode === 'list' && filteredMedia.length > 0 && (
-            <div className="glass-panel rounded-2xl overflow-hidden">
-              <table className="w-full">
-                <thead>
-                  <tr className="border-b border-slate-200">
-                    <th className="p-3 w-10">
-                      <button
-                        onClick={toggleSelectAll}
-                        className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer ${
-                          selectedIds.size === filteredMedia.length && filteredMedia.length > 0
-                            ? 'bg-indigo-600 border-indigo-600 text-white'
-                            : 'border-slate-300 text-transparent'
-                        }`}
-                      >
-                        {selectedIds.size === filteredMedia.length && filteredMedia.length > 0 && (
-                          <Check className="w-3 h-3" />
-                        )}
-                      </button>
-                    </th>
-                    <th className="p-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      الملف
-                    </th>
-                    <th className="p-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      النوع
-                    </th>
-                    <th className="p-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      الحجم
-                    </th>
-                    <th className="p-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      المدة
-                    </th>
-                    <th className="p-3 text-right text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      المجلد
-                    </th>
-                    <th className="p-3 text-left text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      الإجراءات
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredMedia.map((item) => (
-                    <tr
-                      key={item.id}
-                      className="border-b border-slate-100 last:border-b-0 hover:bg-slate-50/50 transition-colors"
-                    >
-                      <td className="p-3">
-                        <button
-                          onClick={() => toggleSelect(item.id)}
-                          className={`w-5 h-5 rounded-md border-2 flex items-center justify-center cursor-pointer ${
-                            selectedIds.has(item.id)
-                              ? 'bg-indigo-600 border-indigo-600 text-white'
-                              : 'border-slate-300 text-transparent hover:border-slate-400'
-                          }`}
-                        >
-                          {selectedIds.has(item.id) && <Check className="w-3 h-3" />}
-                        </button>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center gap-3">
-                          <div
-                            onClick={() => setPreviewItem(item)}
-                            className="w-10 h-10 rounded-lg overflow-hidden bg-slate-900 flex items-center justify-center cursor-pointer shrink-0"
-                          >
-                            {item.fileType === 'image' && (
-                              <img
-                                src={item.fileUrl || item.thumbnailUrl}
-                                alt=""
-                                className="w-full h-full object-cover"
-                              />
-                            )}
-                            {item.fileType === 'video' && <Film className="w-4 h-4 text-indigo-400" />}
-                            {item.fileType === 'ticker_text' && <Type className="w-4 h-4 text-indigo-400" />}
-                            {item.fileType === 'web_url' && <Globe className="w-4 h-4 text-cyan-400" />}
-                            {item.fileType === 'youtube_video' && <YoutubeIcon className="w-4 h-4 text-red-400" />}
-                            {item.fileType === 'audio' && <Music className="w-4 h-4 text-purple-400" />}
-                          </div>
-                          <div>
-                            <p className="text-xs font-bold text-slate-900 truncate max-w-[200px]" title={item.name}>
-                              {item.name}
-                            </p>
-                            <p className="text-[10px] text-slate-400">{formatSize(item.fileSizeBytes)}</p>
-                          </div>
+                    {/* Media Details */}
+                    <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                      <div>
+                        <h4 className="font-bold text-slate-900 text-xs truncate" title={item.name}>
+                          {item.name}
+                        </h4>
+                        <div className="mt-1 flex items-center justify-between text-[11px] text-slate-400">
+                          <span>{formatSize(item.fileSizeBytes)}</span>
+                          <span className="capitalize">{item.fileType}</span>
                         </div>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-xs text-slate-600 capitalize">{item.fileType}</span>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-xs text-slate-600">{formatSize(item.fileSizeBytes)}</span>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-xs text-slate-600">{item.durationSeconds || 0} ث</span>
-                      </td>
-                      <td className="p-3">
-                        <span className="text-xs text-slate-600">{item.folder || 'عام'}</span>
-                      </td>
-                      <td className="p-3">
-                        <div className="flex items-center justify-end gap-1">
+                      </div>
+
+                      {/* Quick Actions */}
+                      <div className="pt-2 border-t border-slate-100 flex items-center justify-between">
+                        <div className="flex items-center gap-2">
                           <button
                             onClick={() => setPreviewItem(item)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
-                            title="معاينة"
+                            className="text-xs text-indigo-600 hover:text-indigo-700 flex items-center gap-1 cursor-pointer font-bold"
                           >
                             <Eye className="w-3.5 h-3.5" />
+                            <span>معاينة</span>
                           </button>
+
+                          <button
+                            onClick={() => setAssignMediaItem(item)}
+                            className="text-xs text-emerald-600 hover:text-emerald-700 flex items-center gap-1 cursor-pointer font-bold"
+                            title="إرسال للشاشة مباشرة"
+                          >
+                            <Send className="w-3.5 h-3.5" />
+                            <span>بث لشاشة</span>
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
                           <button
                             onClick={() => openEdit(item)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
-                            title="تعديل"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                            title="تعديل الاسم والتصنيف"
                           >
                             <Edit3 className="w-3.5 h-3.5" />
                           </button>
+
                           <button
-                            onClick={() => setDeleteConfirmId(item.id)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-500 hover:bg-rose-50 transition-colors cursor-pointer"
+                            onClick={() => deleteMedia(item.id)}
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                             title="حذف"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                           </button>
                         </div>
-                      </td>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              /* List Mode */
+              <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200">
+                <table className="w-full text-right text-xs">
+                  <thead className="bg-slate-50 text-slate-500 border-b border-slate-200">
+                    <tr>
+                      <th className="p-3.5">الملف</th>
+                      <th className="p-3.5">النوع</th>
+                      <th className="p-3.5">المجلد</th>
+                      <th className="p-3.5">المدة</th>
+                      <th className="p-3.5">الحجم</th>
+                      <th className="p-3.5 text-center">الإجراءات</th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
+                  </thead>
+                  <tbody className="divide-y divide-slate-100">
+                    {filteredMedia.map((item) => (
+                      <tr key={item.id} className="hover:bg-slate-50/60 transition-colors">
+                        <td className="p-3.5 font-bold text-slate-900 flex items-center gap-2.5">
+                          <div className="w-8 h-8 rounded-lg bg-slate-900 flex items-center justify-center text-white shrink-0 overflow-hidden">
+                            {item.fileType === 'image' ? (
+                              <img src={item.fileUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (
+                              getFileIcon(item.fileType)
+                            )}
+                          </div>
+                          <span className="truncate max-w-[220px]">{item.name}</span>
+                        </td>
+                        <td className="p-3.5 text-slate-600 capitalize">{item.fileType}</td>
+                        <td className="p-3.5 text-slate-600">{item.folder}</td>
+                        <td className="p-3.5 font-mono text-slate-600">{item.durationSeconds}s</td>
+                        <td className="p-3.5 font-mono text-slate-500">{formatSize(item.fileSizeBytes)}</td>
+                        <td className="p-3.5 text-center">
+                          <div className="flex items-center justify-center gap-2">
+                            <button
+                              onClick={() => setPreviewItem(item)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-slate-100 cursor-pointer"
+                              title="معاينة"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => setAssignMediaItem(item)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-emerald-600 hover:bg-slate-100 cursor-pointer"
+                              title="بث لشاشة"
+                            >
+                              <Send className="w-4 h-4" />
+                            </button>
+                            <button
+                              onClick={() => deleteMedia(item.id)}
+                              className="p-1.5 rounded-lg text-slate-500 hover:text-rose-600 hover:bg-rose-50 cursor-pointer"
+                              title="حذف"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Preview Modal */}
-      {previewItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-          <div className="relative max-w-4xl w-full bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
-            {/* Header */}
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-3 min-w-0">
-                {getFileIcon(previewItem.fileType)}
-                <div className="min-w-0">
-                  <h3 className="font-bold text-slate-900 text-sm truncate">{previewItem.name}</h3>
-                  <div className="flex items-center gap-2 text-[11px] text-slate-400 flex-wrap">
-                    <span>النوع: {previewItem.fileType}</span>
-                    <span>•</span>
-                    <span>{formatSize(previewItem.fileSizeBytes)}</span>
-                    {previewItem.durationSeconds > 0 && (
-                      <>
-                        <span>•</span>
-                        <span>{previewItem.durationSeconds} ثانية</span>
-                      </>
+      {/* ========================================================================= */}
+      {/* TAB 2: READY-MADE ONLINE STOCK CONTENT CATALOG (استعراض واستيراد)        */}
+      {/* ========================================================================= */}
+      {mainTab === 'stock_catalog' && (
+        <div className="space-y-6">
+          {/* Category Filter Cards */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+            {[
+              { id: 'all', label: 'الكل (30+ عنصر)', icon: Compass },
+              { id: 'restaurants', label: 'مطاعم ومقاهي', icon: Utensils },
+              { id: 'retail', label: 'متاجر وتجزئة', icon: ShoppingBag },
+              { id: 'clinics', label: 'عيادات وصحة', icon: Stethoscope },
+              { id: 'corporate', label: 'شركات وعقارات', icon: Building2 },
+              { id: 'widgets', label: 'أدوات ويب وبث', icon: Globe },
+            ].map((cat) => {
+              const Icon = cat.icon;
+              const isSelected = stockCategory === cat.id;
+
+              return (
+                <button
+                  key={cat.id}
+                  onClick={() => setStockCategory(cat.id)}
+                  className={`p-3.5 rounded-2xl border text-right flex flex-col justify-between space-y-2 transition-all cursor-pointer ${
+                    isSelected
+                      ? 'bg-indigo-600 text-white border-indigo-600 shadow-md shadow-indigo-600/20'
+                      : 'glass-panel hover:border-slate-300 text-slate-700'
+                  }`}
+                >
+                  <Icon className={`w-5 h-5 ${isSelected ? 'text-white' : 'text-indigo-600'}`} />
+                  <span className="font-bold text-xs">{cat.label}</span>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Search bar for stock */}
+          <div className="glass-panel rounded-2xl p-4 flex items-center justify-between gap-4">
+            <div className="relative flex-1">
+              <Search className="w-4 h-4 text-slate-400 absolute top-3 right-3" />
+              <input
+                type="text"
+                value={stockSearch}
+                onChange={(e) => setStockSearch(e.target.value)}
+                placeholder="ابحث في التصاميم والفيديوهات الجاهزة (قهوة، برجر، أزياء، عيادات، عقارات)..."
+                className="w-full pl-3 pr-9 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+              />
+            </div>
+            <span className="text-xs text-slate-500 font-bold shrink-0">
+              {filteredStockMedia.length} عنصر جاهز
+            </span>
+          </div>
+
+          {/* Stock Media Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            {filteredStockMedia.map((item) => {
+              const isImporting = importingId === item.id;
+
+              return (
+                <div
+                  key={item.id}
+                  className="glass-panel rounded-2xl overflow-hidden flex flex-col border border-slate-200/90 hover:border-indigo-300 hover:shadow-lg transition-all group"
+                >
+                  {/* Thumbnail / Media Preview */}
+                  <div
+                    onClick={() => setPreviewItem(item)}
+                    className="relative aspect-video bg-slate-900 flex items-center justify-center overflow-hidden cursor-pointer"
+                  >
+                    {item.fileType === 'image' && (
+                      <img
+                        src={item.fileUrl}
+                        alt={item.name}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      />
                     )}
+
+                    {item.fileType === 'video' && (
+                      <div className="relative w-full h-full flex items-center justify-center bg-slate-900">
+                        <img
+                          src={item.thumbnailUrl}
+                          alt={item.name}
+                          className="w-full h-full object-cover opacity-80"
+                        />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                          <div className="w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center group-hover:scale-110 transition-transform shadow-lg">
+                            <Film className="w-5 h-5" />
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    {item.fileType === 'ticker_text' && (
+                      <div className="p-4 w-full h-full bg-gradient-to-br from-indigo-950 to-slate-900 flex flex-col justify-center text-center">
+                        <Type className="w-6 h-6 mx-auto mb-2 text-indigo-400" />
+                        <p className="text-xs text-indigo-200 line-clamp-2 leading-relaxed font-semibold">
+                          {item.customTickerText}
+                        </p>
+                      </div>
+                    )}
+
+                    {item.fileType === 'web_url' && (
+                      <div className="p-4 w-full h-full bg-slate-900 flex flex-col items-center justify-center text-center">
+                        <Globe className="w-8 h-8 mb-2 text-cyan-400" />
+                        <p className="text-xs text-slate-300 font-mono truncate max-w-[200px]">
+                          {item.fileUrl}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Category Label */}
+                    <div className="absolute top-2 right-2 px-2.5 py-0.5 rounded-full bg-black/75 backdrop-blur-md text-[10px] text-white font-bold">
+                      {item.categoryLabel}
+                    </div>
+
+                    {/* Duration */}
+                    <div className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-black/80 backdrop-blur-md text-[10px] text-white font-mono">
+                      {item.durationSeconds}s
+                    </div>
+                  </div>
+
+                  {/* Info & One-Click Import Button */}
+                  <div className="p-4 flex-1 flex flex-col justify-between space-y-3">
+                    <div>
+                      <h4 className="font-bold text-slate-900 text-xs truncate" title={item.name}>
+                        {item.name}
+                      </h4>
+                      <p className="text-[11px] text-slate-500 mt-1 line-clamp-2 leading-snug">
+                        {item.description}
+                      </p>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
+                      <button
+                        onClick={() => setPreviewItem(item)}
+                        className="px-2.5 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-colors cursor-pointer flex items-center gap-1"
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>معاينة</span>
+                      </button>
+
+                      <button
+                        onClick={() => importStockItem(item)}
+                        disabled={isImporting}
+                        className="flex-1 py-1.5 px-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-sm shadow-indigo-600/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer disabled:opacity-50"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                        <span>{isImporting ? 'جاري الاستيراد...' : 'استيراد لمكتبتي'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* QUICK ASSIGN TO SCREEN MODAL                                              */}
+      {/* ========================================================================= */}
+      {assignMediaItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 mb-4">
+              <div className="flex items-center gap-2">
+                <Monitor className="w-5 h-5 text-indigo-600" />
+                <h3 className="font-bold text-slate-900 text-sm">
+                  بث "{assignMediaItem.name}" على شاشة
+                </h3>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
-                <button
-                  onClick={() => openEdit(previewItem)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-indigo-500 hover:bg-indigo-50 transition-colors cursor-pointer"
-                >
-                  <Edit3 className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setPreviewItem(null)}
-                  className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
-                >
-                  <X className="w-5 h-5" />
-                </button>
-              </div>
+              <button
+                onClick={() => setAssignMediaItem(null)}
+                className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
 
-            {/* Content */}
-            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-slate-950">
+            {assignSuccessMsg ? (
+              <div className="p-4 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-2xl text-xs font-semibold text-center">
+                {assignSuccessMsg}
+              </div>
+            ) : (
+              <div className="space-y-2 max-h-64 overflow-y-auto">
+                {screens.map((scr) => (
+                  <button
+                    key={scr.id}
+                    onClick={() => assignToScreen(scr.id)}
+                    className="w-full p-3 rounded-xl bg-slate-50 hover:bg-indigo-50 border border-slate-200 hover:border-indigo-300 text-right flex items-center justify-between transition-all cursor-pointer group"
+                  >
+                    <div>
+                      <div className="font-bold text-xs text-slate-800 group-hover:text-indigo-900">{scr.name}</div>
+                      <div className="text-[10px] text-slate-400 font-mono">كود: {scr.registrationCode}</div>
+                    </div>
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${
+                      scr.status === 'online' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-200 text-slate-600'
+                    }`}>
+                      {scr.status === 'online' ? 'متصل الآن' : 'غير متصل'}
+                    </span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* LIGHTBOX / FULL MEDIA PREVIEW MODAL                                      */}
+      {/* ========================================================================= */}
+      {previewItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md p-4">
+          <div className="relative max-w-4xl w-full bg-slate-900 border border-slate-700 rounded-3xl overflow-hidden shadow-2xl text-white">
+            <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+              <div>
+                <h3 className="font-bold text-white text-sm">{previewItem.name}</h3>
+                <p className="text-[11px] text-slate-400">
+                  النوع: {previewItem.fileType} • المدة: {previewItem.durationSeconds} ثانية
+                </p>
+              </div>
+              <button
+                onClick={() => setPreviewItem(null)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="p-4 flex items-center justify-center max-h-[70vh] bg-black">
               {previewItem.fileType === 'image' && (
                 <img
                   src={previewItem.fileUrl}
                   alt={previewItem.name}
-                  className="max-h-[60vh] object-contain rounded-lg"
+                  className="max-h-[60vh] object-contain rounded-xl"
                 />
               )}
+
               {previewItem.fileType === 'video' && (
                 <video
                   src={previewItem.fileUrl}
                   controls
                   autoPlay
-                  className="max-h-[60vh] rounded-lg"
+                  className="max-h-[60vh] rounded-xl w-full"
                 />
               )}
+
               {previewItem.fileType === 'ticker_text' && (
-                <div className="p-8 text-center bg-indigo-950/40 rounded-xl w-full">
+                <div className="p-8 text-center bg-indigo-950/60 rounded-2xl w-full">
                   <span className="text-xs text-indigo-400 font-bold block mb-2">النص الإعلاني:</span>
-                  <p className="text-lg font-bold text-white">{previewItem.customTickerText}</p>
+                  <p className="text-xl font-bold text-white leading-relaxed">
+                    {previewItem.customTickerText}
+                  </p>
                 </div>
               )}
+
               {previewItem.fileType === 'web_url' && (
                 <div className="w-full h-96">
                   <iframe
                     src={previewItem.fileUrl}
-                    className="w-full h-full rounded-lg border-0"
+                    className="w-full h-full rounded-xl border-0"
                     title={previewItem.name}
                   />
                 </div>
               )}
-              {previewItem.fileType === 'youtube_video' && (
-                <div className="w-full aspect-video">
-                  <iframe
-                    src={previewItem.customUrl || `https://www.youtube.com/embed/${previewItem.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1`}
-                    className="w-full h-full rounded-lg border-0"
-                    title={previewItem.name}
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                </div>
-              )}
-              {previewItem.fileType === 'audio' && (
-                <div className="p-8 w-full bg-gradient-to-br from-purple-950 to-slate-900 rounded-xl text-center">
-                  <Music className="w-12 h-12 mx-auto mb-3 text-purple-400 opacity-60" />
-                  <p className="text-sm font-bold text-white mb-4">{previewItem.name}</p>
-                  <audio src={previewItem.fileUrl} controls autoPlay className="w-full max-w-md mx-auto" />
-                </div>
-              )}
-            </div>
-
-            {/* File Details */}
-            <div className="p-4 border-t border-slate-100 grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] text-slate-400 mb-1">الحجم</p>
-                <p className="text-xs font-bold text-slate-800">{formatSize(previewItem.fileSizeBytes)}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] text-slate-400 mb-1">النوع</p>
-                <p className="text-xs font-bold text-slate-800 capitalize">{previewItem.fileType}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] text-slate-400 mb-1">المجلد</p>
-                <p className="text-xs font-bold text-slate-800">{previewItem.folder || 'عام'}</p>
-              </div>
-              <div className="bg-slate-50 rounded-xl p-3">
-                <p className="text-[10px] text-slate-400 mb-1">المدة</p>
-                <p className="text-xs font-bold text-slate-800">{previewItem.durationSeconds || 0} ثانية</p>
-              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Edit Modal */}
+      {/* Edit Item Modal */}
       {editingItem && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-md bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl">
-            <div className="p-4 border-b border-slate-100 flex items-center justify-between">
-              <h3 className="font-bold text-slate-900 text-sm">تعديل الملف</h3>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+          <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-md overflow-hidden shadow-2xl p-6">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100 mb-4">
+              <h3 className="font-bold text-slate-900 text-sm">تعديل بيانات الملف</h3>
               <button
                 onClick={() => setEditingItem(null)}
-                className="p-2 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 cursor-pointer"
+                className="p-1 text-slate-400 hover:text-slate-700"
               >
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-4 space-y-4">
+
+            <div className="space-y-4">
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1.5">الاسم</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">اسم الملف</label>
                 <input
                   type="text"
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="input w-full"
+                  className="w-full px-3.5 py-2 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
+
               <div>
-                <label className="block text-[11px] font-bold text-slate-500 mb-1.5">المجلد</label>
+                <label className="block text-xs font-semibold text-slate-700 mb-1.5">المجلد / التصنيف</label>
                 <select
                   value={editFolder}
                   onChange={(e) => setEditFolder(e.target.value)}
-                  className="input w-full cursor-pointer"
+                  className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 >
-                  {defaultFolders
-                    .filter((f) => f !== 'الكل')
-                    .map((f) => (
-                      <option key={f} value={f}>
-                        {f}
-                      </option>
-                    ))}
+                  {defaultFolders.filter((f) => f !== 'الكل').map((f) => (
+                    <option key={f} value={f}>
+                      {f}
+                    </option>
+                  ))}
                 </select>
               </div>
-            </div>
-            <div className="p-4 border-t border-slate-100 flex items-center justify-end gap-2">
-              <button
-                onClick={() => setEditingItem(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={saveEdit}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-indigo-600 hover:bg-indigo-500 text-white transition-colors cursor-pointer"
-              >
-                حفظ
-              </button>
+
+              <div className="pt-2 flex justify-end gap-2">
+                <button
+                  onClick={() => setEditingItem(null)}
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium"
+                >
+                  إلغاء
+                </button>
+                <button
+                  onClick={saveEdit}
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20"
+                >
+                  حفظ التعديلات
+                </button>
+              </div>
             </div>
           </div>
         </div>
       )}
 
-      {/* Single Delete Confirmation */}
-      {deleteConfirmId && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-sm bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6 text-rose-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-sm mb-1">تأكيد الحذف</h3>
-            <p className="text-xs text-slate-500 mb-5">هل أنت متأكد من حذف هذا الملف؟ لا يمكن التراجع.</p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => setDeleteConfirmId(null)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={() => deleteMedia(deleteConfirmId)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors cursor-pointer"
-              >
-                حذف
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Bulk Delete Confirmation */}
-      {bulkDeleteConfirm && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/60 backdrop-blur-md p-4">
-          <div className="relative w-full max-w-sm bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-2xl p-6 text-center">
-            <div className="w-12 h-12 rounded-full bg-rose-100 flex items-center justify-center mx-auto mb-3">
-              <AlertTriangle className="w-6 h-6 text-rose-600" />
-            </div>
-            <h3 className="font-bold text-slate-900 text-sm mb-1">تأكيد حذف المحدد</h3>
-            <p className="text-xs text-slate-500 mb-5">
-              هل أنت متأكد من حذف {selectedIds.size} ملف؟ لا يمكن التراجع.
-            </p>
-            <div className="flex items-center justify-center gap-2">
-              <button
-                onClick={() => setBulkDeleteConfirm(false)}
-                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
-              >
-                إلغاء
-              </button>
-              <button
-                onClick={bulkDelete}
-                className="px-4 py-2 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white transition-colors cursor-pointer"
-              >
-                حذف الكل ({selectedIds.size})
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Upload Modal */}
+      {/* Upload Media Modal */}
       <UploadMediaModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}

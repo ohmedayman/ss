@@ -1,9 +1,22 @@
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import './globals.css';
+import ServiceWorkerRegister from '@/components/ServiceWorkerRegister';
 
 export const metadata: Metadata = {
   title: 'ScreenFlow | المنصة الاحترافية لإدارة الشاشات الرقمية',
   description: 'منصة سحابية متقدمة لإدارة شبكات الشاشات الرقمية والمحتوى عن بُعد مع دعم البث المباشر والعروض الترويجية',
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'ScreenFlow',
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: '#4F46E5',
+  width: 'device-width',
+  initialScale: 1,
 };
 
 export default function RootLayout({
@@ -22,6 +35,7 @@ export default function RootLayout({
         />
       </head>
       <body className="antialiased bg-[#f6f7fb] text-slate-800 min-h-screen selection:bg-indigo-500 selection:text-white">
+        <ServiceWorkerRegister />
         {children}
       </body>
     </html>

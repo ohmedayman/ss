@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useMemo } from 'react';
 import Header from '@/components/Header';
 import PairScreenModal from '@/components/PairScreenModal';
 import UploadMediaModal from '@/components/UploadMediaModal';
 import Link from 'next/link';
+import useSWR from 'swr';
 import {
   Monitor,
   Tv,
@@ -81,45 +82,21 @@ function getActionColor(type: string): { bg: string; text: string; dot: string }
 }
 
 export default function DashboardPage() {
-  const [stats, setStats] = useState<any>(null);
-  const [screens, setScreens] = useState<any[]>([]);
-  const [recentLogs, setRecentLogs] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isPairModalOpen, setIsPairModalOpen] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
 
-  const loadData = async () => {
-    try {
-      const [statsRes, screensRes] = await fetchAll();
-      if (statsRes.ok) {
-        const d = await statsRes.json();
-        setStats(d.stats);
-        setRecentLogs(d.recentLogs || []);
-      }
-      if (screensRes.ok) {
-        const d = await screensRes.json();
-        setScreens(d.screens || []);
-      }
-    } catch (e) {
-      console.error('Error loading dashboard data:', e);
-    } finally {
-      setLoading(false);
-    }
-  };
+  const { data: statsData, isLoading: statsLoading } = useSWR<{ stats: any; recentLogs: any[] }>('/api/stats', {
+    refreshInterval: 15000,
+  });
+  const { data: screensData, isLoading: screensLoading, mutate: mutateScreens } = useSWR<{ screens: any[] }>('/api/screens', {
+    refreshInterval: 15000,
+  });
 
-  const fetchAll = () => {
-    return Promise.all([
-      fetch('/api/stats'),
-      fetch('/api/screens'),
-    ]);
-  };
-
-  useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 15000);
-    return () => clearInterval(interval);
-  }, []);
+  const stats = statsData?.stats;
+  const recentLogs = statsData?.recentLogs || [];
+  const screens = screensData?.screens || [];
+  const loading = statsLoading || screensLoading;
 
   const sendScreenCommand = async (screenId: string, command: string) => {
     setActionLoadingId(`${screenId}-${command}`);
@@ -130,7 +107,7 @@ export default function DashboardPage() {
         body: JSON.stringify({ command }),
       });
       if (res.ok) {
-        await loadData();
+        await mutateScreens();
       }
     } catch (e) {
       console.error(e);
@@ -388,6 +365,101 @@ export default function DashboardPage() {
       </div>
 
       {/* ═══════════════════════════════════════════════════════════
+          SECTION 2.5: Featured Ready-made Stock Media Showcase
+          ═══════════════════════════════════════════════════════════ */}
+      <div className="glass-panel rounded-3xl p-6 bg-gradient-to-br from-indigo-950 via-slate-900 to-indigo-900 text-white relative overflow-hidden border border-indigo-500/30 shadow-2xl">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-6">
+          <div>
+            <div className="flex items-center gap-2 mb-1.5">
+              <div className="w-7 h-7 rounded-lg bg-amber-400/20 border border-amber-400/40 text-amber-300 flex items-center justify-center">
+                <Sparkles className="w-4 h-4" />
+              </div>
+              <span className="text-xs font-bold text-amber-300 tracking-wide uppercase">
+                مكتبة المحتوى الجاهز السحابية
+              </span>
+            </div>
+            <h3 className="text-lg font-extrabold text-white">
+              تصاميم وفيديوهات احترافية جاهزة للبث المباشر على شاشاتك
+            </h3>
+            <p className="text-xs text-indigo-200/80 mt-1 max-w-xl">
+              اختر أي تصميم أو فيديو عالي الدقة (مطاعم، كافيهات، عيادات، عروض مبيعات) واستورده لشاشتك بضغطة زر واحدة.
+            </p>
+          </div>
+
+          <Link
+            href="/media"
+            className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 backdrop-blur-md transition-all shrink-0 cursor-pointer"
+          >
+            <span>استعراض كافة التصاميم (30+)</span>
+            <ArrowUpRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* 4 Quick Showcase Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {[
+            {
+              id: 'stock-coffee-video',
+              name: 'فيديو القهوة واللاتيه آرت',
+              category: 'كافيهات ومقاهي',
+              img: 'https://images.unsplash.com/photo-1501339847302-ac426a4a7cbb?auto=format&fit=crop&w=400&q=70',
+              type: 'فيديو 1080p',
+            },
+            {
+              id: 'stock-burger-video',
+              name: 'فيديو شوي البرجر والوجبات',
+              category: 'مطاعم وسريعة',
+              img: 'https://images.unsplash.com/photo-1568901346375-23c9450c58cd?auto=format&fit=crop&w=400&q=70',
+              type: 'فيديو 1080p',
+            },
+            {
+              id: 'stock-sale-poster-img',
+              name: 'بوستر التخفيضات الكبرى 50%',
+              category: 'متاجر وتجزئة',
+              img: 'https://images.unsplash.com/photo-1607082348824-0a96f2a4b9da?auto=format&fit=crop&w=400&q=70',
+              type: 'بوستر 4K',
+            },
+            {
+              id: 'stock-clinic-video',
+              name: 'فيديو الرعاية والعيادات الطبية',
+              category: 'عيادات وصحة',
+              img: 'https://images.unsplash.com/photo-1519494026892-80bbd2d6fd0d?auto=format&fit=crop&w=400&q=70',
+              type: 'فيديو صالات الانتظار',
+            },
+          ].map((item) => (
+            <div
+              key={item.id}
+              className="bg-white/10 rounded-2xl overflow-hidden border border-white/15 flex flex-col justify-between group hover:border-amber-400/60 transition-all shadow-md"
+            >
+              <div className="relative aspect-video bg-black/40 overflow-hidden">
+                <img
+                  src={item.img}
+                  alt={item.name}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+                <span className="absolute top-2 right-2 px-2 py-0.5 rounded-full bg-black/70 backdrop-blur-md text-[9px] font-bold text-white">
+                  {item.category}
+                </span>
+                <span className="absolute bottom-2 left-2 px-2 py-0.5 rounded bg-indigo-600/90 text-[9px] font-bold text-white">
+                  {item.type}
+                </span>
+              </div>
+
+              <div className="p-3 flex-1 flex flex-col justify-between space-y-2">
+                <h4 className="font-bold text-xs text-white truncate">{item.name}</h4>
+                <Link
+                  href="/media"
+                  className="w-full py-1.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-bold text-center transition-colors block shadow-sm"
+                >
+                  استيراد وتخصيص الآن ⚡
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* ═══════════════════════════════════════════════════════════
           SECTION 3: Screen Status Cards — paired screens with detail
           ═══════════════════════════════════════════════════════════ */}
       <div className="space-y-4">
@@ -401,7 +473,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-2">
             <button
-              onClick={loadData}
+              onClick={() => mutateScreens()}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white hover:bg-slate-50 text-slate-600 text-xs font-medium border border-slate-200 transition-colors cursor-pointer"
             >
               <RotateCw className="w-3.5 h-3.5 text-slate-400" />
@@ -672,13 +744,13 @@ export default function DashboardPage() {
       <PairScreenModal
         isOpen={isPairModalOpen}
         onClose={() => setIsPairModalOpen(false)}
-        onSuccess={() => loadData()}
+        onSuccess={() => mutateScreens()}
       />
 
       <UploadMediaModal
         isOpen={isUploadModalOpen}
         onClose={() => setIsUploadModalOpen(false)}
-        onSuccess={() => loadData()}
+        onSuccess={() => mutateScreens()}
       />
     </div>
   );

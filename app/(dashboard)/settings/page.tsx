@@ -2,6 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Header from '@/components/Header';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import {
   Settings,
   Building,
@@ -22,38 +24,40 @@ import {
   Download,
   Loader2,
 } from 'lucide-react';
+import { profileSchema, changePasswordSchema, ProfileFormData, ChangePasswordFormData, branchSchema, BranchFormData } from '@/lib/validations';
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState<'profile' | 'security' | 'branches' | 'billing' | 'api'>('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
 
-  // Profile Form
+  // Profile
   const [orgId, setOrgId] = useState('');
   const [orgName, setOrgName] = useState('');
   const [orgSlug, setOrgSlug] = useState('');
-  const [fullName, setFullName] = useState('');
-  const [email, setEmail] = useState('');
-  const [phone, setPhone] = useState('');
   const [orgPlan, setOrgPlan] = useState('free');
   const [orgStorageLimitMb, setOrgStorageLimitMb] = useState(5120);
   const [orgMaxScreens, setOrgMaxScreens] = useState(5);
 
-  // Security Form
-  const [currentPassword, setCurrentPassword] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-
   // Branches
   const [branches, setBranches] = useState<any[]>([]);
-  const [newBranchName, setNewBranchName] = useState('');
-  const [newBranchCity, setNewBranchCity] = useState('');
-
-  // API Key
   const [apiKeyCopied, setApiKeyCopied] = useState(false);
   const [savedMsg, setSavedMsg] = useState('');
 
-  // Fetch settings from API
+  const profileForm = useForm<ProfileFormData>({
+    resolver: zodResolver(profileSchema),
+    defaultValues: { fullName: '', email: '', phone: '' },
+  });
+
+  const passwordForm = useForm<ChangePasswordFormData>({
+    resolver: zodResolver(changePasswordSchema),
+  });
+
+  const branchForm = useForm<BranchFormData>({
+    resolver: zodResolver(branchSchema),
+    defaultValues: { name: '', city: '' },
+  });
+
   useEffect(() => {
     const fetchSettings = async () => {
       try {
@@ -69,9 +73,12 @@ export default function SettingsPage() {
           setOrgPlan(data.organization?.plan || 'free');
           setOrgStorageLimitMb(data.organization?.storageLimitMb || 5120);
           setOrgMaxScreens(data.organization?.maxScreens || 5);
-          setFullName(data.user?.fullName || '');
-          setEmail(data.user?.email || '');
-          setPhone(data.user?.phone || '');
+          setOrgId(data.organization?.id || '');
+          profileForm.reset({
+            fullName: data.user?.fullName || '',
+            email: data.user?.email || '',
+            phone: data.user?.phone || '',
+          });
         }
 
         if (branchesRes && branchesRes.ok) {
@@ -87,23 +94,18 @@ export default function SettingsPage() {
     fetchSettings();
   }, []);
 
-  const handleSaveProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSaveProfile = async (data: ProfileFormData) => {
     setSaving(true);
     try {
       const res = await fetch('/api/settings', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          user: { fullName, phone },
+          user: { fullName: data.fullName, phone: data.phone },
           organization: { name: orgName, slug: orgSlug },
         }),
       });
-      if (res.ok) {
-        setSavedMsg('تم حفظ وتحديث بيانات الملف الشخصي بنجاح');
-      } else {
-        setSavedMsg('حدث خطأ أثناء الحفظ');
-      }
+      setSavedMsg(res.ok ? 'تم حفظ وتحديث بيانات الملف الشخصي بنجاح' : 'حدث خطأ أثناء الحفظ');
     } catch (e) {
       setSavedMsg('حدث خطأ أثناء الحفظ');
     } finally {
@@ -112,26 +114,17 @@ export default function SettingsPage() {
     }
   };
 
-  const handleSaveSecurity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (newPassword && newPassword !== confirmPassword) {
-      alert('كلمة المرور وتأكيدها غير متطابقين');
-      return;
-    }
-    if (!newPassword) {
-      setSavedMsg('لم يتم إدخال كلمة مرور جديدة');
-      setTimeout(() => setSavedMsg(''), 3000);
-      return;
-    }
+  const handleSaveSecurity = async (data: ChangePasswordFormData) => {
     setSaving(true);
     try {
       const res = await fetch('/api/auth/change-password', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newPassword }),
+        body: JSON.stringify({ newPassword: data.newPassword }),
       });
       if (res.ok) {
         setSavedMsg('تم تغيير كلمة المرور بنجاح');
+        passwordForm.reset();
       } else {
         const d = await res.json();
         setSavedMsg(d.error || 'فشل تغيير كلمة المرور');
@@ -140,27 +133,21 @@ export default function SettingsPage() {
       setSavedMsg('خطأ في الاتصال بالخادم');
     } finally {
       setSaving(false);
-      setCurrentPassword('');
-      setNewPassword('');
-      setConfirmPassword('');
       setTimeout(() => setSavedMsg(''), 3000);
     }
   };
 
-  const handleAddBranch = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newBranchName.trim()) return;
+  const handleAddBranch = async (data: BranchFormData) => {
     try {
       const res = await fetch('/api/branches', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: newBranchName.trim(), city: newBranchCity.trim() }),
+        body: JSON.stringify({ name: data.name, city: data.city }),
       });
       if (res.ok) {
-        const data = await res.json();
-        setBranches([...branches, data.branch]);
-        setNewBranchName('');
-        setNewBranchCity('');
+        const result = await res.json();
+        setBranches([...branches, result.branch]);
+        branchForm.reset();
         setSavedMsg('تمت إضافة الفرع بنجاح');
         setTimeout(() => setSavedMsg(''), 3000);
       }
@@ -213,95 +200,44 @@ export default function SettingsPage() {
 
       {/* Tabs Navigation */}
       <div className="flex border-b border-slate-200 gap-2 overflow-x-auto pb-1">
-        <button
-          onClick={() => setActiveTab('profile')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'profile'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
+        <button onClick={() => setActiveTab('profile')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'profile' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
           <User className="w-4 h-4" />
           <span>الملف الشخصي والمتجر</span>
         </button>
-
-        <button
-          onClick={() => setActiveTab('security')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'security'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
+        <button onClick={() => setActiveTab('security')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'security' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
           <Shield className="w-4 h-4" />
           <span>الأمان وكلمة المرور</span>
         </button>
-
-        <button
-          onClick={() => setActiveTab('branches')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'branches'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
+        <button onClick={() => setActiveTab('branches')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'branches' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
           <MapPin className="w-4 h-4" />
           <span>إدارة الفروع ({branches.length})</span>
         </button>
-
-        <button
-          onClick={() => setActiveTab('billing')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'billing'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
+        <button onClick={() => setActiveTab('billing')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'billing' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
           <CreditCard className="w-4 h-4" />
           <span>الباقة والاشتراك</span>
         </button>
-
-        <button
-          onClick={() => setActiveTab('api')}
-          className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
-            activeTab === 'api'
-              ? 'bg-indigo-600 text-white shadow-sm'
-              : 'text-slate-600 hover:bg-slate-100'
-          }`}
-        >
+        <button onClick={() => setActiveTab('api')} className={`flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs font-semibold transition-all cursor-pointer ${activeTab === 'api' ? 'bg-indigo-600 text-white shadow-sm' : 'text-slate-600 hover:bg-slate-100'}`}>
           <Key className="w-4 h-4" />
           <span>مفاتيح API للمطورين</span>
         </button>
       </div>
 
-      {/* 1. Profile & Organization Tab */}
+      {/* 1. Profile Tab */}
       {activeTab === 'profile' && (
-        <form onSubmit={handleSaveProfile} className="space-y-6">
+        <form onSubmit={profileForm.handleSubmit(handleSaveProfile)} className="space-y-6">
           <div className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Building className="w-4 h-4 text-indigo-600" />
               بيانات المتجر
             </h4>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">اسم المنشأة / الشركة</label>
-                <input
-                  type="text"
-                  value={orgName}
-                  onChange={(e) => setOrgName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                />
+                <input type="text" value={orgName} onChange={(e) => setOrgName(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500" />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">معرف المتجر (Slug)</label>
-                <input
-                  type="text"
-                  value={orgSlug}
-                  onChange={(e) => setOrgSlug(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono"
-                />
+                <input type="text" value={orgSlug} onChange={(e) => setOrgSlug(e.target.value)} className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono" />
               </div>
             </div>
           </div>
@@ -311,47 +247,25 @@ export default function SettingsPage() {
               <User className="w-4 h-4 text-indigo-600" />
               الملف الشخصي للمسؤول
             </h4>
-
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">الاسم الكامل</label>
-                <input
-                  type="text"
-                  value={fullName}
-                  onChange={(e) => setFullName(e.target.value)}
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                />
+                <input type="text" {...profileForm.register('fullName')} className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-xs text-slate-800 focus:outline-none focus:border-indigo-500 ${profileForm.formState.errors.fullName ? 'border-red-300' : 'border-slate-200'}`} />
+                {profileForm.formState.errors.fullName && <p className="text-xs text-red-500 mt-1">{profileForm.formState.errors.fullName.message}</p>}
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">البريد الإلكتروني</label>
-                <input
-                  type="email"
-                  value={email}
-                  disabled
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono"
-                />
+                <input type="email" {...profileForm.register('email')} disabled className="w-full px-3.5 py-2.5 rounded-xl bg-slate-100 border border-slate-200 text-xs text-slate-500 font-mono" />
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">رقم الجوال</label>
-                <input
-                  type="text"
-                  value={phone}
-                  onChange={(e) => setPhone(e.target.value)}
-                  placeholder="+966 5x xxx xxxx"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                />
+                <input type="text" {...profileForm.register('phone')} placeholder="+966 5x xxx xxxx" className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500" />
               </div>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              disabled={saving}
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50"
-            >
+            <button type="submit" disabled={saving} className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
               <span>{saving ? 'جاري الحفظ...' : 'حفظ التعديلات'}</span>
             </button>
@@ -361,57 +275,28 @@ export default function SettingsPage() {
 
       {/* 2. Security Tab */}
       {activeTab === 'security' && (
-        <form onSubmit={handleSaveSecurity} className="space-y-6">
+        <form onSubmit={passwordForm.handleSubmit(handleSaveSecurity)} className="space-y-6">
           <div className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Shield className="w-4 h-4 text-indigo-600" />
               تغيير كلمة المرور
             </h4>
-
             <div className="space-y-3 max-w-md">
               <div>
-                <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور الحالية</label>
-                <input
-                  type="password"
-                  value={currentPassword}
-                  onChange={(e) => setCurrentPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                  required
-                />
-              </div>
-
-              <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">كلمة المرور الجديدة</label>
-                <input
-                  type="password"
-                  value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="password" {...passwordForm.register('newPassword')} placeholder="••••••••" className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-xs text-slate-800 focus:outline-none focus:border-indigo-500 ${passwordForm.formState.errors.newPassword ? 'border-red-300' : 'border-slate-200'}`} />
+                {passwordForm.formState.errors.newPassword && <p className="text-xs text-red-500 mt-1">{passwordForm.formState.errors.newPassword.message}</p>}
               </div>
-
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1">تأكيد كلمة المرور الجديدة</label>
-                <input
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder="••••••••"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="password" {...passwordForm.register('confirmPassword')} placeholder="••••••••" className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-xs text-slate-800 focus:outline-none focus:border-indigo-500 ${passwordForm.formState.errors.confirmPassword ? 'border-red-300' : 'border-slate-200'}`} />
+                {passwordForm.formState.errors.confirmPassword && <p className="text-xs text-red-500 mt-1">{passwordForm.formState.errors.confirmPassword.message}</p>}
               </div>
             </div>
           </div>
 
           <div className="flex justify-end">
-            <button
-              type="submit"
-              className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer"
-            >
+            <button type="submit" className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs shadow-md shadow-indigo-600/20 transition-all cursor-pointer">
               <Save className="w-4 h-4" />
               <span>تحديث كلمة المرور</span>
             </button>
@@ -422,38 +307,21 @@ export default function SettingsPage() {
       {/* 3. Branches Tab */}
       {activeTab === 'branches' && (
         <div className="space-y-6">
-          <form onSubmit={handleAddBranch} className="glass-panel rounded-2xl p-6 space-y-4">
+          <form onSubmit={branchForm.handleSubmit(handleAddBranch)} className="glass-panel rounded-2xl p-6 space-y-4">
             <h4 className="font-bold text-slate-800 text-sm flex items-center gap-2">
               <Plus className="w-4 h-4 text-indigo-600" />
               إضافة فرع جديد
             </h4>
-
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               <div className="sm:col-span-2">
-                <input
-                  type="text"
-                  value={newBranchName}
-                  onChange={(e) => setNewBranchName(e.target.value)}
-                  placeholder="اسم الفرع (مثال: فرع الدمام - الكورنيش)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                  required
-                />
+                <input type="text" {...branchForm.register('name')} placeholder="اسم الفرع (مثال: فرع الدمام - الكورنيش)" className={`w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border text-xs text-slate-800 focus:outline-none focus:border-indigo-500 ${branchForm.formState.errors.name ? 'border-red-300' : 'border-slate-200'}`} />
+                {branchForm.formState.errors.name && <p className="text-xs text-red-500 mt-1">{branchForm.formState.errors.name.message}</p>}
               </div>
               <div>
-                <input
-                  type="text"
-                  value={newBranchCity}
-                  onChange={(e) => setNewBranchCity(e.target.value)}
-                  placeholder="المدينة (مثال: الدمام)"
-                  className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
-                />
+                <input type="text" {...branchForm.register('city')} placeholder="المدينة (مثال: الدمام)" className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500" />
               </div>
             </div>
-
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer"
-            >
+            <button type="submit" className="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold cursor-pointer">
               إضافة الفرع
             </button>
           </form>
@@ -463,7 +331,6 @@ export default function SettingsPage() {
               <MapPin className="w-4 h-4 text-indigo-600" />
               قائمة فروع المتجر
             </h4>
-
             <div className="space-y-3">
               {branches.length === 0 && (
                 <p className="text-xs text-slate-400 text-center py-6">لا توجد فروع مسجلة بعد</p>
@@ -478,11 +345,7 @@ export default function SettingsPage() {
                     <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-600 font-semibold border border-emerald-200">
                       {br.isActive !== false ? 'نشط' : 'غير نشط'}
                     </span>
-                    <button
-                      onClick={() => handleDeleteBranch(br.id)}
-                      className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer"
-                      title="حذف الفرع"
-                    >
+                    <button onClick={() => handleDeleteBranch(br.id)} className="p-1 text-slate-400 hover:text-rose-600 cursor-pointer" title="حذف الفرع">
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
@@ -525,13 +388,9 @@ export default function SettingsPage() {
           <p className="text-xs text-slate-500">
             يمكنك استخدام هذا المفتاح للربط البرمجي وإرسال المحتوى للشاشات مباشرة من برامجك وأنظمة الـ ERP الخاصة بك.
           </p>
-
           <div className="p-4 rounded-xl bg-slate-900 text-white flex items-center justify-between font-mono text-xs">
             <span className="text-indigo-300 truncate">sf_live_{orgId || 'org'}...</span>
-            <button
-              onClick={copyApiKey}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold shrink-0"
-            >
+            <button onClick={copyApiKey} className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white font-sans text-xs cursor-pointer font-semibold shrink-0">
               <Copy className="w-3.5 h-3.5" />
               <span>{apiKeyCopied ? 'تم النسخ!' : 'نسخ المفتاح'}</span>
             </button>
