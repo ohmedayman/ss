@@ -909,6 +909,121 @@ export default function PlayerPage() {
   const currentItem = playlistItems[currentPlayIndex] || playlistItems[0];
   const template = contentPayload?.template;
 
+  // Helper to resolve media URL, type, and embed format accurately
+  const getItemMediaDetails = (item: any) => {
+    if (!item) {
+      return {
+        url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+        type: 'video',
+        isYoutube: false,
+        isVideo: true,
+        isImage: false,
+        isWeb: false,
+        youtubeEmbedUrl: '',
+      };
+    }
+
+    const rawUrl =
+      item.media?.url ||
+      item.media?.fileUrl ||
+      item.customUrl ||
+      item.media?.customUrl ||
+      '';
+    const rawType = item.media?.type || item.media?.fileType || '';
+
+    const isYoutube =
+      rawUrl.includes('youtube.com') ||
+      rawUrl.includes('youtu.be') ||
+      rawType === 'youtube_video';
+    const isVideo =
+      !isYoutube &&
+      (rawType === 'video' ||
+        rawUrl.endsWith('.mp4') ||
+        rawUrl.endsWith('.webm') ||
+        rawUrl.endsWith('.mov') ||
+        rawUrl.includes('video') ||
+        rawUrl.includes('gtv-videos-bucket') ||
+        (rawUrl.includes('firebasestorage') && rawUrl.includes('video')));
+    const isImage =
+      !isYoutube &&
+      !isVideo &&
+      (rawType === 'image' ||
+        rawUrl.endsWith('.jpg') ||
+        rawUrl.endsWith('.png') ||
+        rawUrl.endsWith('.jpeg') ||
+        rawUrl.endsWith('.webp') ||
+        rawUrl.endsWith('.svg') ||
+        rawUrl.includes('photo') ||
+        rawUrl.includes('images.unsplash') ||
+        rawUrl.includes('uploads') ||
+        rawUrl.startsWith('data:image'));
+    const isWeb = !isYoutube && !isVideo && !isImage && Boolean(rawUrl);
+
+    let youtubeEmbedUrl = '';
+    if (isYoutube) {
+      const match = rawUrl.match(/(?:v=|youtu\.be\/|embed\/)([a-zA-Z0-9_-]{11})/);
+      const vidId = match ? match[1] : '';
+      youtubeEmbedUrl = vidId
+        ? `https://www.youtube.com/embed/${vidId}?autoplay=1&mute=1&loop=1&playlist=${vidId}&controls=0&modestbranding=1`
+        : rawUrl;
+    }
+
+    return {
+      url: rawUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4',
+      type: rawType || (isVideo ? 'video' : isImage ? 'image' : 'video'),
+      isYoutube,
+      isVideo: isVideo || (!isYoutube && !isImage && !isWeb),
+      isImage,
+      isWeb,
+      youtubeEmbedUrl,
+    };
+  };
+
+  // Helper to get real live queue ticket for sidebar widget
+  const getDisplayQueueInfo = () => {
+    if (currentQueueTicket?.ticket) {
+      return {
+        ticket: currentQueueTicket.ticket,
+        counter: currentQueueTicket.counter || 'شباك الخدمة',
+      };
+    }
+
+    const tickets = contentPayload?.queueTickets || [];
+    if (tickets.length > 0) {
+      const lastCalled = tickets[tickets.length - 1];
+      if (lastCalled) {
+        return {
+          ticket: lastCalled.ticketNumber,
+          counter: lastCalled.counterNumber || lastCalled.serviceName || 'شباك 1',
+        };
+      }
+    }
+
+    const services = contentPayload?.queueServices || [];
+    if (services.length > 0) {
+      const activeSvc = services.find((s: any) => (s.lastCalledNumber || 0) > 0);
+      if (activeSvc) {
+        return {
+          ticket: `${activeSvc.codePrefix}-${activeSvc.lastCalledNumber}`,
+          counter: activeSvc.name,
+        };
+      }
+      return {
+        ticket: `${services[0].codePrefix}-1`,
+        counter: services[0].name,
+      };
+    }
+
+    return {
+      ticket: 'S-1',
+      counter: 'قسم المبيعات',
+    };
+  };
+
+  // Template Zones Body
+  const activeMedia = getItemMediaDetails(currentItem);
+  const queueInfo = getDisplayQueueInfo();
+
   return (
     <div
       ref={playerContainerRef}
@@ -961,64 +1076,42 @@ export default function PlayerPage() {
           <div className="flex-1 flex overflow-hidden">
             {/* Main Video / Content Area */}
             <div className="flex-1 p-6 flex flex-col justify-center items-center relative overflow-hidden bg-black/40">
-              {currentItem && currentItem.media ? (
-                <div key={`${currentItem.id}-${currentPlayIndex}`} className={`w-full h-full ${playlistTransition}`}>
-                  {currentItem.media?.fileType === 'image' && (
-                    <img
-                      src={currentItem.media.fileUrl}
-                      alt=""
-                      className="w-full h-full object-cover rounded-2xl shadow-2xl"
-                    />
-                  )}
-                  {currentItem.media?.fileType === 'video' && (
-                    <div className="relative w-full h-full">
-                      <video
-                        ref={videoRef}
-                        src={currentItem.media.fileUrl}
-                        autoPlay
-                        muted={currentItem.isMuted !== undefined ? currentItem.isMuted : true}
-                        loop
-                        playsInline
-                        className="w-full h-full object-cover rounded-2xl shadow-2xl"
-                      />
-                      <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
-                        <Repeat className="w-4 h-4 text-white/70" />
-                      </div>
-                    </div>
-                  )}
-                  {currentItem.media?.fileType === 'youtube_video' && (
-                    <iframe
-                      src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
-                      className="w-full h-full rounded-2xl shadow-2xl border-0"
-                      sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                  )}
-                  {currentItem.media?.fileType === 'web_url' && (
-                    <iframe
-                      src={currentItem.media.fileUrl}
-                      className="w-full h-full rounded-2xl shadow-2xl border-0"
-                      sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
-                      allow="autoplay; encrypted-media"
-                      allowFullScreen
-                    />
-                  )}
-                </div>
+              {activeMedia.isYoutube ? (
+                <iframe
+                  src={activeMedia.youtubeEmbedUrl}
+                  className="w-full h-full rounded-2xl shadow-2xl border-0"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
+              ) : activeMedia.isImage ? (
+                <img
+                  src={activeMedia.url}
+                  alt="Display Content"
+                  className="w-full h-full object-cover rounded-2xl shadow-2xl"
+                />
+              ) : activeMedia.isWeb ? (
+                <iframe
+                  src={activeMedia.url}
+                  className="w-full h-full rounded-2xl shadow-2xl border-0"
+                  sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+                  allow="autoplay; encrypted-media"
+                  allowFullScreen
+                />
               ) : (
-                /* High-Quality Fallback Video so screen is never blank */
                 <div className="relative w-full h-full">
                   <video
                     ref={videoRef}
-                    src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
+                    src={activeMedia.url}
                     autoPlay
-                    muted
+                    muted={currentItem?.isMuted !== undefined ? currentItem.isMuted : true}
                     loop
                     playsInline
                     className="w-full h-full object-cover rounded-2xl shadow-2xl"
                   />
-                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-white">
-                    فيديو العرض الترويجي
+                  <div className="absolute top-4 right-4 px-3 py-1 rounded-full bg-black/60 backdrop-blur-md text-xs font-bold text-white flex items-center gap-1.5">
+                    <Film className="w-3.5 h-3.5 text-indigo-400" />
+                    <span>منطقة المحتوى الرئيسية</span>
                   </div>
                 </div>
               )}
@@ -1049,10 +1142,10 @@ export default function PlayerPage() {
                     className="text-6xl font-black font-mono tracking-wider my-2"
                     style={{ color: template.accentColor || '#f59e0b' }}
                   >
-                    {currentQueueTicket?.ticket || 'A-104'}
+                    {queueInfo.ticket}
                   </div>
                   <div className="text-sm text-slate-200 font-semibold mt-2">
-                    {currentQueueTicket?.counter || 'الاستقبال'}
+                    {queueInfo.counter}
                   </div>
                 </div>
 
@@ -1180,108 +1273,48 @@ export default function PlayerPage() {
       ) : (
         /* 2. Direct Playlist Mode (Full Screen) */
         <div className="w-full h-full relative flex items-center justify-center bg-black">
-          {currentItem ? (
-            <div key={`${currentItem.id}-${currentPlayIndex}`} className={`w-full h-full ${playlistTransition}`}>
-              {currentItem.media?.fileType === 'image' && (
-                <img
-                  src={currentItem.media.fileUrl}
-                  alt=""
-                  className="w-full h-full object-cover"
-                />
-              )}
-
-              {currentItem.media?.fileType === 'video' && (
-                <div className="relative w-full h-full">
-                  <video
-                    key={currentItem.id}
-                    ref={videoRef}
-                    src={currentItem.media.fileUrl}
-                    autoPlay
-                    muted={currentItem.isMuted}
-                    loop
-                    playsInline
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
-                    <Repeat className="w-4 h-4 text-white/70" />
-                  </div>
-                </div>
-              )}
-
-              {currentItem.media?.fileType === 'youtube_video' && (
-                <iframe
-                  key={currentItem.id}
-                  src={currentItem.media.customUrl || `https://www.youtube.com/embed/${currentItem.media.fileUrl?.match(/(?:v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)?.[1] || ''}?autoplay=1&mute=1&loop=1`}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                  title={currentItem.media.name || 'YouTube'}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              )}
-
-              {currentItem.media?.fileType === 'live_stream' && (
-                <iframe
-                  key={currentItem.id}
-                  src={currentItem.media.customUrl || currentItem.media.fileUrl}
-                  className="w-full h-full border-0"
-                  sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
-                  title={currentItem.media.name || 'Live Stream'}
-                  allow="autoplay; encrypted-media"
-                  allowFullScreen
-                />
-              )}
-
-              {currentItem.media?.fileType === 'audio' && (
-                <div className="w-full h-full bg-gradient-to-br from-purple-950 via-slate-900 to-purple-950 flex items-center justify-center p-12">
-                  <audio
-                    key={currentItem.id}
-                    src={currentItem.media.fileUrl}
-                    autoPlay
-                    loop
-                  />
-                  <div className="text-center">
-                    <div className="w-24 h-24 mx-auto rounded-full bg-purple-600/20 flex items-center justify-center mb-4 animate-pulse">
-                      <svg className="w-10 h-10 text-purple-400" fill="currentColor" viewBox="0 0 24 24">
-                        <path d="M12 3v10.55c-.59-.34-1.27-.55-2-.55-2.21 0-4 1.79-4 4s1.79 4 4 4 4-1.79 4-4V7h4V3h-6z"/>
-                      </svg>
-                    </div>
-                    <p className="text-xl font-bold text-white">{currentItem.media.name}</p>
-                    <p className="text-sm text-purple-300 mt-1">صوتيات</p>
-                  </div>
-                </div>
-              )}
-
-              {currentItem.media?.fileType === 'web_url' && (() => {
-                const url = currentItem.media.fileUrl || currentItem.media.customUrl || '';
-                const isFacebook = /facebook\.com|fb\.watch|fb\.com/i.test(url);
-                const embedUrl = isFacebook
-                  ? `https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(url)}&show_text=false&width=1920&autoplay=1`
-                  : url;
-                return (
-                  <iframe
-                    src={embedUrl}
-                    className="w-full h-full border-0"
-                    sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
-                    title={currentItem.media.name || 'Web Player'}
-                    allow="autoplay; encrypted-media"
-                    allowFullScreen
-                  />
-                );
-              })()}
-
-              {currentItem.media?.fileType === 'ticker_text' && (
-                <div className="w-full h-full bg-gradient-to-tr from-indigo-950 via-slate-900 to-[#0b0f19] flex items-center justify-center p-12 text-center">
-                  <p className="text-3xl md:text-5xl font-black text-white max-w-4xl leading-relaxed">
-                    {currentItem.media.customTickerText}
-                  </p>
-                </div>
-              )}
-            </div>
+          {activeMedia.isYoutube ? (
+            <iframe
+              key={currentItem?.id}
+              src={activeMedia.youtubeEmbedUrl}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-popups"
+              title={currentItem?.media?.name || 'YouTube'}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
+          ) : activeMedia.isImage ? (
+            <img
+              key={currentItem?.id}
+              src={activeMedia.url}
+              alt=""
+              className="w-full h-full object-cover"
+            />
+          ) : activeMedia.isWeb ? (
+            <iframe
+              key={currentItem?.id}
+              src={activeMedia.url}
+              className="w-full h-full border-0"
+              sandbox="allow-scripts allow-same-origin allow-presentation allow-forms allow-popups"
+              title={currentItem?.media?.name || 'Web Player'}
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+            />
           ) : (
-            <div className="text-center text-slate-500">
-              <Tv className="w-16 h-16 mx-auto mb-2 opacity-30 text-indigo-400" />
-              <p className="text-sm font-semibold">بث المحتوى المباشر</p>
+            <div className="relative w-full h-full">
+              <video
+                key={currentItem?.id || activeMedia.url}
+                ref={videoRef}
+                src={activeMedia.url}
+                autoPlay
+                muted={currentItem?.isMuted !== undefined ? currentItem.isMuted : true}
+                loop
+                playsInline
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute bottom-4 right-4 bg-black/50 rounded-full p-2">
+                <Repeat className="w-4 h-4 text-white/70" />
+              </div>
             </div>
           )}
         </div>
