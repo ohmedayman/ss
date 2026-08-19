@@ -121,8 +121,8 @@ export default function QueuePage() {
     }
   };
 
-  // Speak Arabic Queue Announcement
-  const speakQueueTicket = (ticketNumber: string, counterName: string) => {
+  // Speak Arabic Queue Announcement (ElevenLabs Studio Voice + Fallback)
+  const speakQueueTicket = async (ticketNumber: string, counterName: string) => {
     try {
       playChime();
       const rawNum = ticketNumber.replace(/^[A-Za-z\u0600-\u06FF]-?/, '');
@@ -133,28 +133,50 @@ export default function QueuePage() {
       }
       const announcementText = `عميل رقم ${spokenNum}، ${spokenCounter}`;
 
-      setTimeout(() => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
-          const utterance = new SpeechSynthesisUtterance(announcementText);
-          utterance.lang = 'ar-SA';
-          utterance.rate = 0.88;
-          utterance.pitch = 1.0;
-          utterance.volume = 1.0;
+      let playedElevenLabs = false;
+      try {
+        const res = await fetch('/api/queue/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: announcementText }),
+        });
 
-          const voices = window.speechSynthesis.getVoices();
-          const arabicVoice = voices.find(
-            (v) =>
-              v.lang.startsWith('ar') ||
-              v.name.toLowerCase().includes('arabic') ||
-              v.name.toLowerCase().includes('maged') ||
-              v.name.toLowerCase().includes('laila') ||
-              v.name.toLowerCase().includes('tarik')
-          );
-          if (arabicVoice) utterance.voice = arabicVoice;
-          window.speechSynthesis.speak(utterance);
+        if (res.ok && res.headers.get('content-type')?.includes('audio')) {
+          const blob = await res.blob();
+          const audioUrl = URL.createObjectURL(blob);
+          const audio = new Audio(audioUrl);
+          audio.volume = 1.0;
+          setTimeout(() => {
+            audio.play().catch(() => {});
+          }, 650);
+          playedElevenLabs = true;
         }
-      }, 700);
+      } catch (e) {}
+
+      if (!playedElevenLabs) {
+        setTimeout(() => {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+            const utterance = new SpeechSynthesisUtterance(announcementText);
+            utterance.lang = 'ar-SA';
+            utterance.rate = 0.88;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
+
+            const voices = window.speechSynthesis.getVoices();
+            const arabicVoice = voices.find(
+              (v) =>
+                v.lang.startsWith('ar') ||
+                v.name.toLowerCase().includes('arabic') ||
+                v.name.toLowerCase().includes('maged') ||
+                v.name.toLowerCase().includes('laila') ||
+                v.name.toLowerCase().includes('tarik')
+            );
+            if (arabicVoice) utterance.voice = arabicVoice;
+            window.speechSynthesis.speak(utterance);
+          }
+        }, 700);
+      }
     } catch (e) {
       console.error(e);
     }
