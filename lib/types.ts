@@ -169,7 +169,7 @@ export type TemplateLayout = 'full' | 'split_2_horizontal' | 'split_2_vertical' 
 export interface TemplateZoneConfig {
   id: string;
   title: string;
-  type: 'media' | 'playlist' | 'clock' | 'weather' | 'ticker' | 'queue_display' | 'web_embed' | 'countdown' | 'qr_display' | 'social_feed' | 'prayer_times';
+  type: 'media' | 'playlist' | 'url' | 'clock' | 'weather' | 'ticker' | 'queue_display' | 'web_embed' | 'countdown' | 'qr_display' | 'social_feed' | 'prayer_times';
   contentId?: string;
   url?: string;
   text?: string;

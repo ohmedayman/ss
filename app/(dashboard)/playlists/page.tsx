@@ -476,13 +476,11 @@ export default function PlaylistsPage() {
                           </span>
 
                           <div className="w-12 h-9 rounded-lg bg-slate-900 overflow-hidden shrink-0 border border-slate-200 flex items-center justify-center">
-                            {item.media?.fileType === 'image' && (
-                              <img src={item.media.fileUrl} alt="" className="w-full h-full object-cover" />
-                            )}
-                            {item.media?.fileType === 'video' && (
+                            {(item.media?.type === 'image' || item.media?.fileType === 'image') ? (
+                              <img src={item.media.thumbnailUrl || item.media.url || item.media.fileUrl} alt="" className="w-full h-full object-cover" />
+                            ) : (item.media?.type === 'video' || item.media?.fileType === 'video') ? (
                               <Film className="w-4 h-4 text-indigo-400" />
-                            )}
-                            {item.media?.fileType === 'ticker_text' && (
+                            ) : (
                               <Type className="w-4 h-4 text-emerald-400" />
                             )}
                           </div>
@@ -491,7 +489,9 @@ export default function PlaylistsPage() {
                             <p className="text-xs font-semibold text-slate-800 truncate max-w-[200px]">
                               {item.media?.name || 'عنصر مخصص'}
                             </p>
-                            <span className="text-[10px] text-slate-400 uppercase">{item.media?.fileType}</span>
+                            <span className="text-[10px] text-slate-400 uppercase">
+                              {item.media?.type === 'video' ? 'فيديو' : item.media?.type === 'image' ? 'صورة' : 'وسائط'}
+                            </span>
                           </div>
                         </div>
 
@@ -521,7 +521,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'up')}
                               disabled={idx === 0}
-                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600"
+                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600 cursor-pointer"
                               title="تحريك لأعلى"
                             >
                               <ArrowUp className="w-3.5 h-3.5" />
@@ -530,7 +530,7 @@ export default function PlaylistsPage() {
                               type="button"
                               onClick={() => moveItem(idx, 'down')}
                               disabled={idx === items.length - 1}
-                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600"
+                              className="p-1 rounded bg-white hover:bg-slate-100 border border-slate-200 disabled:opacity-30 text-slate-600 cursor-pointer"
                               title="تحريك لأسفل"
                             >
                               <ArrowDown className="w-3.5 h-3.5" />
@@ -541,7 +541,7 @@ export default function PlaylistsPage() {
                           <button
                             type="button"
                             onClick={() => removeItem(idx)}
-                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            className="p-1.5 rounded-lg text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
@@ -557,14 +557,14 @@ export default function PlaylistsPage() {
                 <button
                   type="button"
                   onClick={() => setIsEditorOpen(false)}
-                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium"
+                  className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-medium cursor-pointer"
                 >
                   إلغاء
                 </button>
                 <button
                   type="submit"
                   disabled={saving || !playlistName.trim()}
-                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20"
+                  className="px-5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 disabled:opacity-50 text-white text-xs font-semibold shadow-md shadow-indigo-600/20 cursor-pointer"
                 >
                   {saving ? 'جاري الحفظ...' : 'حفظ قائمة التشغيل'}
                 </button>
@@ -582,7 +582,7 @@ export default function PlaylistsPage() {
               <h3 className="font-bold text-slate-900 text-sm">اختر عنصراً من مكتبة الوسائط</h3>
               <button
                 onClick={() => setIsMediaPickerOpen(false)}
-                className="p-1 text-slate-400 hover:text-slate-700"
+                className="p-1 text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -593,21 +593,19 @@ export default function PlaylistsPage() {
                 <div
                   key={med.id}
                   onClick={() => addItemFromMedia(med)}
-                  className="p-2 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-500 cursor-pointer group transition-all"
+                  className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 hover:border-indigo-500 cursor-pointer group transition-all"
                 >
                   <div className="aspect-video bg-slate-900 rounded-lg overflow-hidden mb-2 relative flex items-center justify-center">
-                    {med.fileType === 'image' && (
-                      <img src={med.fileUrl} alt="" className="w-full h-full object-cover" />
-                    )}
-                    {med.fileType === 'video' && (
+                    {(med.type === 'image' || med.fileType === 'image') ? (
+                      <img src={med.thumbnailUrl || med.url || med.fileUrl} alt="" className="w-full h-full object-cover" />
+                    ) : (med.type === 'video' || med.fileType === 'video') ? (
                       <Film className="w-6 h-6 text-indigo-400" />
-                    )}
-                    {med.fileType === 'ticker_text' && (
+                    ) : (
                       <Type className="w-6 h-6 text-emerald-400" />
                     )}
                   </div>
                   <p className="text-xs font-semibold text-slate-800 truncate">{med.name}</p>
-                  <span className="text-[10px] text-slate-400">{med.durationSeconds} ثانية</span>
+                  <span className="text-[10px] text-slate-400">{med.durationSeconds || 10} ثانية</span>
                 </div>
               ))}
             </div>

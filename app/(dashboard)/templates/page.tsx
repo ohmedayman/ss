@@ -24,6 +24,10 @@ import {
   Send,
   Upload,
   Edit,
+  FolderOpen,
+  ListVideo,
+  Globe,
+  Play,
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import LogoUploader from '@/components/LogoUploader';
@@ -109,7 +113,13 @@ export default function TemplatesPage() {
   const [headerTitle, setHeaderTitle] = useState('مجمع الأفق الطبي الاستشاري');
   const [logoUrl, setLogoUrl] = useState('https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=200&q=80');
   const [layout, setLayout] = useState<string>('split_3_sidebar');
+  
+  // Main Content Selector: 'media' | 'playlist' | 'url'
+  const [mainContentType, setMainContentType] = useState<'media' | 'playlist' | 'url'>('media');
+  const [selectedMediaId, setSelectedMediaId] = useState('');
   const [selectedPlaylistId, setSelectedPlaylistId] = useState('pl-general-ads');
+  const [customMediaUrl, setCustomMediaUrl] = useState('');
+  
   const [tickerText, setTickerText] = useState('🎉 أهلاً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً');
   
   // Colors Customizer State
@@ -143,7 +153,11 @@ export default function TemplatesPage() {
       }
       if (medRes.ok) {
         const med = await medRes.json();
-        setMediaList(med.media || []);
+        const mList = med.media || [];
+        setMediaList(mList);
+        if (mList.length > 0 && !selectedMediaId) {
+          setSelectedMediaId(mList[0].id);
+        }
       }
       if (scrRes.ok) {
         const scr = await scrRes.json();
@@ -166,7 +180,10 @@ export default function TemplatesPage() {
     setHeaderTitle('مجمع الأفق الطبي الاستشاري');
     setLogoUrl('https://images.unsplash.com/photo-1599305445671-ac291c95aaa9?auto=format&fit=crop&w=200&q=80');
     setLayout('split_3_sidebar');
-    setSelectedPlaylistId('pl-general-ads');
+    setMainContentType(mediaList.length > 0 ? 'media' : 'playlist');
+    setSelectedMediaId(mediaList[0]?.id || '');
+    setSelectedPlaylistId(playlists[0]?.id || 'pl-general-ads');
+    setCustomMediaUrl('');
     setTickerText('🎉 أهلاً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً');
     setBackgroundColor('#020617');
     setSidebarColor('#0f172a');
@@ -183,8 +200,23 @@ export default function TemplatesPage() {
     setHeaderTitle(tpl.headerTitle || '');
     setLogoUrl(tpl.logoUrl || '');
     setLayout(tpl.layout || 'split_3_sidebar');
-    const plZone = tpl.zones?.find((z: any) => z.type === 'playlist' || z.type === 'media');
-    setSelectedPlaylistId(plZone?.contentId || 'pl-general-ads');
+
+    const mainZone = tpl.zones?.find(
+      (z: any) => z.id === 'zone-main' || z.type === 'playlist' || z.type === 'media' || z.type === 'url'
+    );
+    const cid = mainZone?.contentId || '';
+
+    if (cid.startsWith('med-')) {
+      setMainContentType('media');
+      setSelectedMediaId(cid);
+    } else if (cid.startsWith('http://') || cid.startsWith('https://')) {
+      setMainContentType('url');
+      setCustomMediaUrl(cid);
+    } else {
+      setMainContentType('playlist');
+      setSelectedPlaylistId(cid || playlists[0]?.id || 'pl-general-ads');
+    }
+
     const tickZone = tpl.zones?.find((z: any) => z.type === 'ticker');
     setTickerText(tickZone?.text || '🎉 أهلاً بكم في شاشات العرض الذكية • عروض حصرية ومستمرة يومياً');
     setBackgroundColor(tpl.backgroundColor || '#020617');
@@ -211,12 +243,27 @@ export default function TemplatesPage() {
 
     setSaving(true);
     try {
+      // Resolve contentId based on mainContentType
+      let mainContentId = '';
+      let zoneType = 'playlist';
+
+      if (mainContentType === 'media') {
+        mainContentId = selectedMediaId || mediaList[0]?.id || '';
+        zoneType = 'media';
+      } else if (mainContentType === 'url') {
+        mainContentId = customMediaUrl.trim();
+        zoneType = 'url';
+      } else {
+        mainContentId = selectedPlaylistId || playlists[0]?.id || 'pl-general-ads';
+        zoneType = 'playlist';
+      }
+
       const zones = [
         {
           id: 'zone-main',
           title: 'المنطقة الرئيسية',
-          type: 'playlist',
-          contentId: selectedPlaylistId,
+          type: zoneType,
+          contentId: mainContentId,
         },
         {
           id: 'zone-sidebar-queue',
@@ -312,6 +359,28 @@ export default function TemplatesPage() {
     }
   };
 
+  // Helper to get preview URL for selected template
+  const getTemplateMainPreviewUrl = () => {
+    if (!selectedTemplate) return null;
+    const mainZone = selectedTemplate.zones?.find(
+      (z: any) => z.id === 'zone-main' || z.type === 'playlist' || z.type === 'media' || z.type === 'url'
+    );
+    if (!mainZone) return null;
+
+    const cid = mainZone.contentId;
+    if (cid?.startsWith('http://') || cid?.startsWith('https://')) return cid;
+
+    if (cid?.startsWith('med-')) {
+      const foundMedia = mediaList.find((m) => m.id === cid);
+      return foundMedia?.url || foundMedia?.thumbnailUrl;
+    }
+
+    const foundPl = playlists.find((p) => p.id === cid);
+    const firstItemMediaId = foundPl?.items?.[0]?.mediaId;
+    const firstMedia = mediaList.find((m) => m.id === firstItemMediaId);
+    return firstMedia?.url || firstMedia?.thumbnailUrl || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4';
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       {/* Header */}
@@ -370,7 +439,7 @@ export default function TemplatesPage() {
                           openEditModal(tpl);
                         }}
                         className="p-1.5 rounded-lg text-slate-500 hover:text-indigo-600 hover:bg-indigo-50 transition-colors"
-                        title="تعديل القالب والألوان والشعار"
+                        title="تعديل القالب والألوان والشعار والمحتوى"
                       >
                         <Edit className="w-3.5 h-3.5" />
                       </button>
@@ -502,19 +571,27 @@ export default function TemplatesPage() {
 
                 {/* 2. Split Zones Body */}
                 <div className="flex-1 flex overflow-hidden">
-                  {/* Main Video Area */}
+                  {/* Main Video/Media Area */}
                   <div className="flex-1 p-3 flex flex-col justify-center items-center relative overflow-hidden bg-black/50">
-                    <video
-                      src="https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"
-                      autoPlay
-                      muted
-                      loop
-                      playsInline
-                      className="w-full h-full object-cover rounded-xl shadow-lg"
-                    />
+                    {getTemplateMainPreviewUrl()?.endsWith('.mp4') || getTemplateMainPreviewUrl()?.includes('video') ? (
+                      <video
+                        src={getTemplateMainPreviewUrl() || 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4'}
+                        autoPlay
+                        muted
+                        loop
+                        playsInline
+                        className="w-full h-full object-cover rounded-xl shadow-lg"
+                      />
+                    ) : (
+                      <img
+                        src={getTemplateMainPreviewUrl() || 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1280&q=80'}
+                        alt="Media Preview"
+                        className="w-full h-full object-cover rounded-xl shadow-lg"
+                      />
+                    )}
                     <div className="absolute top-4 right-4 px-2.5 py-1 rounded-full bg-black/70 backdrop-blur-md text-[10px] font-bold text-white flex items-center gap-1.5">
                       <Film className="w-3 h-3 text-indigo-400" />
-                      <span>منطقة الفيديو الترويجي</span>
+                      <span>منطقة المحتوى الرئيسية المخصصة</span>
                     </div>
                   </div>
 
@@ -640,7 +717,7 @@ export default function TemplatesPage() {
       )}
 
       {/* ========================================================================= */}
-      {/* CREATE & EDIT TEMPLATE MODAL (لوجو + ألوان + فيديو)                       */}
+      {/* CREATE & EDIT TEMPLATE MODAL (لوجو + ألوان + فيديو/وسائط)                 */}
       {/* ========================================================================= */}
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-md p-4 overflow-y-auto">
@@ -715,29 +792,146 @@ export default function TemplatesPage() {
                 </div>
               </div>
 
-              {/* 2. Main Content Video / Playlist Selection */}
+              {/* 2. Main Content Selection (Media / Playlist / Direct URL) */}
               <div className="space-y-4">
                 <h4 className="font-bold text-slate-800 text-xs flex items-center gap-2 border-b pb-2">
                   <Film className="w-4 h-4 text-indigo-600" />
-                  <span>2. محتوى المنطقة الرئيسية (فيديو أو قائمة تشغيل)</span>
+                  <span>2. محتوى المنطقة الرئيسية (فيديو أو وسائط أو قائمة تشغيل)</span>
                 </h4>
 
-                <div>
-                  <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                    اختر الفيديو أو قائمة التشغيل
-                  </label>
-                  <select
-                    value={selectedPlaylistId}
-                    onChange={(e) => setSelectedPlaylistId(e.target.value)}
-                    className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                {/* Content Type Tabs */}
+                <div className="flex bg-slate-100 p-1 rounded-xl gap-1">
+                  <button
+                    type="button"
+                    onClick={() => setMainContentType('media')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      mainContentType === 'media'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
                   >
-                    {playlists.map((pl) => (
-                      <option key={pl.id} value={pl.id}>
-                        {pl.name} ({pl.items?.length || 0} عناصر • {pl.totalDurationSeconds || 30}s)
-                      </option>
-                    ))}
-                  </select>
+                    <FolderOpen className="w-3.5 h-3.5" />
+                    <span>📁 من مكتبة الوسائط ({mediaList.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMainContentType('playlist')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      mainContentType === 'playlist'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <ListVideo className="w-3.5 h-3.5" />
+                    <span>📋 قائمة تشغيل ({playlists.length})</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setMainContentType('url')}
+                    className={`flex-1 py-2 rounded-lg text-xs font-bold flex items-center justify-center gap-1.5 transition-all cursor-pointer ${
+                      mainContentType === 'url'
+                        ? 'bg-white text-indigo-600 shadow-sm'
+                        : 'text-slate-600 hover:text-slate-900'
+                    }`}
+                  >
+                    <Globe className="w-3.5 h-3.5" />
+                    <span>🔗 رابط مباشر / YouTube</span>
+                  </button>
                 </div>
+
+                {/* Tab 1: Uploaded Media Items Grid */}
+                {mainContentType === 'media' && (
+                  <div className="space-y-2">
+                    <label className="block text-[11px] font-semibold text-slate-600">
+                      اختر الفيديو أو الصورة من مكتبة وسائطك:
+                    </label>
+                    {mediaList.length === 0 ? (
+                      <div className="p-6 text-center rounded-2xl bg-slate-50 border border-dashed border-slate-200 text-xs text-slate-500">
+                        لا توجد وسائط مرفوعة حالياً. يمكنك رفع وسائط جديدة من قسم مكتبة الوسائط.
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2.5 max-h-52 overflow-y-auto p-1">
+                        {mediaList.map((m) => {
+                          const isSelected = selectedMediaId === m.id;
+                          return (
+                            <div
+                              key={m.id}
+                              onClick={() => setSelectedMediaId(m.id)}
+                              className={`p-2 rounded-xl border transition-all cursor-pointer flex flex-col gap-1.5 ${
+                                isSelected
+                                  ? 'border-indigo-600 bg-indigo-50/60 shadow-sm'
+                                  : 'border-slate-200 hover:border-slate-300 bg-slate-50/50'
+                              }`}
+                            >
+                              <div className="aspect-video w-full rounded-lg overflow-hidden bg-slate-900 relative">
+                                {m.type === 'video' ? (
+                                  <div className="w-full h-full flex items-center justify-center bg-slate-900">
+                                    <Film className="w-5 h-5 text-indigo-400" />
+                                  </div>
+                                ) : (
+                                  <img
+                                    src={m.thumbnailUrl || m.url}
+                                    alt={m.name}
+                                    className="w-full h-full object-cover"
+                                  />
+                                )}
+                                {isSelected && (
+                                  <div className="absolute top-1 right-1 w-4 h-4 rounded-full bg-indigo-600 flex items-center justify-center text-white text-[10px]">
+                                    <Check className="w-3 h-3" />
+                                  </div>
+                                )}
+                              </div>
+                              <span className="text-[11px] font-bold text-slate-800 truncate line-clamp-1">
+                                {m.name}
+                              </span>
+                              <span className="text-[10px] text-slate-400">
+                                {m.type === 'video' ? 'فيديو' : 'صورة'} • {m.durationSeconds || 10}s
+                              </span>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Tab 2: Playlists Select */}
+                {mainContentType === 'playlist' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      اختر قائمة التشغيل
+                    </label>
+                    <select
+                      value={selectedPlaylistId}
+                      onChange={(e) => setSelectedPlaylistId(e.target.value)}
+                      className="w-full p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
+                    >
+                      {playlists.map((pl) => (
+                        <option key={pl.id} value={pl.id}>
+                          {pl.name} ({pl.items?.length || 0} عناصر • {pl.totalDurationSeconds || 30}s)
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                )}
+
+                {/* Tab 3: Custom URL Input */}
+                {mainContentType === 'url' && (
+                  <div>
+                    <label className="block text-xs font-semibold text-slate-700 mb-1.5">
+                      رابط الفيديو المباشر أو صفحة الويب أو يوتيوب
+                    </label>
+                    <input
+                      type="url"
+                      value={customMediaUrl}
+                      onChange={(e) => setCustomMediaUrl(e.target.value)}
+                      placeholder="https://www.youtube.com/watch?v=... أو https://site.com/video.mp4"
+                      className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 font-mono"
+                    />
+                  </div>
+                )}
               </div>
 
               {/* 3. Full Colors Customizer & Presets */}

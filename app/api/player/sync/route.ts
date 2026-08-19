@@ -90,56 +90,116 @@ export async function GET(req: Request) {
       payload.queueServices = await db.getQueueServices(screen.organizationId);
       payload.queueTickets = await db.getQueueTickets(screen.organizationId);
 
-      const playlistZone = template.zones.find(z => z.type === 'playlist');
-      const mediaZone = template.zones.find(z => z.type === 'media');
+      const mainZone = template.zones.find(
+        (z) => z.id === 'zone-main' || z.type === 'playlist' || z.type === 'media' || z.type === 'url'
+      );
 
-      if (playlistZone && playlistZone.contentId) {
-        const pl = await db.getPlaylistById(playlistZone.contentId);
-        if (pl && pl.items && pl.items.length > 0) {
+      if (mainZone && mainZone.contentId) {
+        const cid = mainZone.contentId;
+
+        // 1. Direct Media Item ID (e.g. med-xxx)
+        if (cid.startsWith('med-') && mediaMap[cid]) {
+          const targetMedia = mediaMap[cid];
           payload.playlist = {
-            ...pl,
-            items: pl.items.map(item => ({
-              ...item,
-              media: item.mediaId ? mediaMap[item.mediaId] : undefined,
-            })),
+            id: 'pl-temp-' + targetMedia.id,
+            organizationId: screen.organizationId,
+            name: targetMedia.name,
+            isLoop: true,
+            defaultTransition: 'fade',
+            totalDurationSeconds: targetMedia.durationSeconds || 15,
+            items: [
+              {
+                id: 'pli-temp-1',
+                playlistId: 'pl-temp-' + targetMedia.id,
+                mediaId: targetMedia.id,
+                media: targetMedia,
+                orderIndex: 0,
+                durationSeconds: targetMedia.durationSeconds || 15,
+                transition: 'fade',
+                isMuted: false,
+              },
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           };
         }
-      } else if (mediaZone && mediaZone.contentId && mediaMap[mediaZone.contentId]) {
-        const targetMedia = mediaMap[mediaZone.contentId];
-        payload.playlist = {
-          id: 'pl-temp-' + targetMedia.id,
-          organizationId: screen.organizationId,
-          name: targetMedia.name,
-          isLoop: true,
-          defaultTransition: 'fade',
-          totalDurationSeconds: targetMedia.durationSeconds || 15,
-          items: [{
-            id: 'pli-temp-1',
-            playlistId: 'pl-temp-' + targetMedia.id,
-            mediaId: targetMedia.id,
-            media: targetMedia,
-            orderIndex: 0,
-            durationSeconds: targetMedia.durationSeconds || 15,
-            transition: 'fade',
-            isMuted: false,
-          }],
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        };
+        // 2. Direct Web / Video / YouTube URL
+        else if (cid.startsWith('http://') || cid.startsWith('https://')) {
+          payload.playlist = {
+            id: 'pl-custom-url',
+            organizationId: screen.organizationId,
+            name: 'رابط فيديو مخصص',
+            isLoop: true,
+            defaultTransition: 'fade',
+            totalDurationSeconds: 60,
+            items: [
+              {
+                id: 'pli-temp-url',
+                playlistId: 'pl-custom-url',
+                customUrl: cid,
+                orderIndex: 0,
+                durationSeconds: 60,
+                transition: 'fade',
+                isMuted: false,
+              },
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        // 3. Standard Playlist ID (e.g. pl-xxx)
+        else {
+          const pl = await db.getPlaylistById(cid);
+          if (pl && pl.items && pl.items.length > 0) {
+            payload.playlist = {
+              ...pl,
+              items: pl.items.map((item) => ({
+                ...item,
+                media: item.mediaId ? mediaMap[item.mediaId] : undefined,
+              })),
+            };
+          }
+        }
       }
 
-      // Fallback if playlist is still empty: grab the first available playlist in the org
+      // Fallback if playlist is still empty: grab the first available media item or playlist in the org
       if (!payload.playlist) {
-        const playlists = await db.getPlaylists(screen.organizationId);
-        if (playlists.length > 0) {
-          const fallbackPl = playlists[0];
+        if (allMedia.length > 0) {
+          const firstMedia = allMedia[0];
           payload.playlist = {
-            ...fallbackPl,
-            items: fallbackPl.items.map(item => ({
-              ...item,
-              media: item.mediaId ? mediaMap[item.mediaId] : undefined,
-            })),
+            id: 'pl-fallback-media',
+            organizationId: screen.organizationId,
+            name: firstMedia.name,
+            isLoop: true,
+            defaultTransition: 'fade',
+            totalDurationSeconds: firstMedia.durationSeconds || 15,
+            items: [
+              {
+                id: 'pli-fallback-1',
+                playlistId: 'pl-fallback-media',
+                mediaId: firstMedia.id,
+                media: firstMedia,
+                orderIndex: 0,
+                durationSeconds: firstMedia.durationSeconds || 15,
+                transition: 'fade',
+                isMuted: false,
+              },
+            ],
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
           };
+        } else {
+          const playlists = await db.getPlaylists(screen.organizationId);
+          if (playlists.length > 0) {
+            const fallbackPl = playlists[0];
+            payload.playlist = {
+              ...fallbackPl,
+              items: fallbackPl.items.map((item) => ({
+                ...item,
+                media: item.mediaId ? mediaMap[item.mediaId] : undefined,
+              })),
+            };
+          }
         }
       }
     }
@@ -151,11 +211,9 @@ export async function GET(req: Request) {
   } else if (effectiveContentType === 'url') {
     payload.webUrl = effectiveContentId || 'https://www.alarabiya.net';
   } else if (effectiveContentType === 'canvas') {
-    // Canvas mode: layers are stored on the screen object itself
     payload.canvasLayers = screen.canvasLayers || [];
     payload.canvasBackground = screen.canvasBackground || '#0f172a';
   } else if (effectiveContentType === 'live_stream') {
-    // Live stream mode: URL is stored on the screen object
     payload.liveStreamUrl = screen.liveStreamUrl || '';
   }
 
