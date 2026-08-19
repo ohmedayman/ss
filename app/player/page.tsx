@@ -136,8 +136,8 @@ export default function PlayerPage() {
     }
   };
 
-  // 1c. Professional Arabic TTS Queue Announcement ("عميل رقم 1، شباك المبيعات")
-  const speakQueueTicket = (ticketNumber: string, counterName: string) => {
+  // 1c. Professional Arabic TTS Queue Announcement ("عميل رقم 1، شباك المبيعات" - ElevenLabs AI Voice + Fallback)
+  const speakQueueTicket = async (ticketNumber: string, counterName: string) => {
     try {
       playChime();
 
@@ -155,48 +155,81 @@ export default function PlayerPage() {
       // Exact phrasing requested: "عميل رقم 1، شباك المبيعات"
       const announcementText = `عميل رقم ${spokenNum}، ${spokenCounter}`;
 
-      setTimeout(() => {
-        if ('speechSynthesis' in window) {
-          window.speechSynthesis.cancel();
+      setCurrentQueueTicket({ ticket: ticketNumber, counter: spokenCounter });
+      setShowQueueTicket(true);
+      setTimeout(() => setShowQueueTicket(false), 12000);
 
-          const createUtterance = () => {
-            const utterance = new SpeechSynthesisUtterance(announcementText);
-            utterance.lang = 'ar-SA';
-            utterance.rate = 0.88;
-            utterance.pitch = 1.0;
-            utterance.volume = 1.0;
+      // 1. Attempt ElevenLabs Studio AI Voice first
+      let playedElevenLabs = false;
+      try {
+        const res = await fetch('/api/queue/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ text: announcementText }),
+        });
 
-            const voices = window.speechSynthesis.getVoices();
-            const arabicVoice = voices.find(
-              (v) =>
-                v.lang.startsWith('ar') ||
-                v.name.toLowerCase().includes('arabic') ||
-                v.name.toLowerCase().includes('maged') ||
-                v.name.toLowerCase().includes('laila') ||
-                v.name.toLowerCase().includes('tarik')
-            );
-            if (arabicVoice) utterance.voice = arabicVoice;
-
-            return utterance;
-          };
-
-          const firstUtterance = createUtterance();
-
-          // Repeat announcement once for maximum clarity in waiting halls
-          firstUtterance.onend = () => {
-            setTimeout(() => {
-              const secondUtterance = createUtterance();
-              window.speechSynthesis.speak(secondUtterance);
-            }, 600);
-          };
-
-          window.speechSynthesis.speak(firstUtterance);
+        if (res.ok && res.headers.get('content-type')?.includes('audio')) {
+          const blob = await res.blob();
+          const audioUrl = URL.createObjectURL(blob);
+          const audio = new Audio(audioUrl);
+          audio.volume = 1.0;
+          setTimeout(() => {
+            audio.play().catch(() => {});
+            audio.onended = () => {
+              setTimeout(() => {
+                const repeatAudio = new Audio(audioUrl);
+                repeatAudio.volume = 1.0;
+                repeatAudio.play().catch(() => {});
+              }, 600);
+            };
+          }, 650);
+          playedElevenLabs = true;
         }
+      } catch (e) {
+        console.warn('ElevenLabs TTS not ready, falling back to Web Speech API:', e);
+      }
 
-        setCurrentQueueTicket({ ticket: ticketNumber, counter: spokenCounter });
-        setShowQueueTicket(true);
-        setTimeout(() => setShowQueueTicket(false), 12000);
-      }, 700);
+      // 2. Fallback to Native Browser Speech Synthesis if ElevenLabs is not set or failed
+      if (!playedElevenLabs) {
+        setTimeout(() => {
+          if ('speechSynthesis' in window) {
+            window.speechSynthesis.cancel();
+
+            const createUtterance = () => {
+              const utterance = new SpeechSynthesisUtterance(announcementText);
+              utterance.lang = 'ar-SA';
+              utterance.rate = 0.88;
+              utterance.pitch = 1.0;
+              utterance.volume = 1.0;
+
+              const voices = window.speechSynthesis.getVoices();
+              const arabicVoice = voices.find(
+                (v) =>
+                  v.lang.startsWith('ar') ||
+                  v.name.toLowerCase().includes('arabic') ||
+                  v.name.toLowerCase().includes('maged') ||
+                  v.name.toLowerCase().includes('laila') ||
+                  v.name.toLowerCase().includes('tarik')
+              );
+              if (arabicVoice) utterance.voice = arabicVoice;
+
+              return utterance;
+            };
+
+            const firstUtterance = createUtterance();
+
+            // Repeat announcement once for maximum clarity in waiting halls
+            firstUtterance.onend = () => {
+              setTimeout(() => {
+                const secondUtterance = createUtterance();
+                window.speechSynthesis.speak(secondUtterance);
+              }, 600);
+            };
+
+            window.speechSynthesis.speak(firstUtterance);
+          }
+        }, 700);
+      }
     } catch (e) {
       console.error('TTS failed:', e);
     }
