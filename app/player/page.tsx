@@ -102,59 +102,101 @@ export default function PlayerPage() {
     return () => clearInterval(interval);
   }, []);
 
-  // 1b. Play chime sound using Web Audio API
+  // 1b. Play harmonic 3-tone chime sound using Web Audio API
   const playChime = () => {
     try {
       if (!audioContextRef.current) {
         audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
       }
       const ctx = audioContextRef.current;
+      if (ctx.state === 'suspended') {
+        ctx.resume();
+      }
       const now = ctx.currentTime;
 
-      const playTone = (freq: number, startTime: number, duration: number) => {
+      const playTone = (freq: number, startTime: number, duration: number, vol: number = 0.35) => {
         const osc = ctx.createOscillator();
         const gain = ctx.createGain();
         osc.connect(gain);
         gain.connect(ctx.destination);
         osc.frequency.value = freq;
         osc.type = 'sine';
-        gain.gain.setValueAtTime(0.3, startTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+        gain.gain.setValueAtTime(vol, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
         osc.start(startTime);
         osc.stop(startTime + duration);
       };
 
-      playTone(880, now, 0.15);
-      playTone(1100, now + 0.12, 0.15);
-      playTone(880, now + 0.25, 0.2);
+      // Harmonic Airport/Hospital 3-chord chime (D5 -> A5 -> D6)
+      playTone(587.33, now, 0.25, 0.4);
+      playTone(880.00, now + 0.18, 0.3, 0.45);
+      playTone(1174.66, now + 0.38, 0.5, 0.5);
     } catch (e) {
       console.error('Chime failed:', e);
     }
   };
 
-  // 1c. TTS Queue Announcement
+  // 1c. Professional Arabic TTS Queue Announcement ("عميل رقم 1، شباك المبيعات")
   const speakQueueTicket = (ticketNumber: string, counterName: string) => {
     try {
       playChime();
+
+      // Format ticket and counter for natural Arabic speech:
+      // If ticket is 'S-1' -> '1', if 'A-104' -> '104'
+      const rawNum = ticketNumber.replace(/^[A-Za-z\u0600-\u06FF]-?/, '');
+      const spokenNum = rawNum || ticketNumber;
+
+      // Clean counter name (e.g. 'قسم المبيعات' -> 'شباك المبيعات' or counterName)
+      let spokenCounter = counterName || 'شباك الخدمة';
+      if (spokenCounter.startsWith('قسم ')) {
+        spokenCounter = spokenCounter.replace('قسم ', 'شباك ');
+      }
+
+      // Exact phrasing requested: "عميل رقم 1، شباك المبيعات"
+      const announcementText = `عميل رقم ${spokenNum}، ${spokenCounter}`;
+
       setTimeout(() => {
-        const utterance = new SpeechSynthesisUtterance(
-          `التذكرة رقم ${ticketNumber} إلى ${counterName}`
-        );
-        utterance.lang = 'ar-SA';
-        utterance.rate = 0.9;
-        utterance.pitch = 1.0;
-        utterance.volume = 1.0;
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
 
-        const voices = window.speechSynthesis.getVoices();
-        const arabicVoice = voices.find((v) => v.lang.startsWith('ar'));
-        if (arabicVoice) utterance.voice = arabicVoice;
+          const createUtterance = () => {
+            const utterance = new SpeechSynthesisUtterance(announcementText);
+            utterance.lang = 'ar-SA';
+            utterance.rate = 0.88;
+            utterance.pitch = 1.0;
+            utterance.volume = 1.0;
 
-        window.speechSynthesis.speak(utterance);
+            const voices = window.speechSynthesis.getVoices();
+            const arabicVoice = voices.find(
+              (v) =>
+                v.lang.startsWith('ar') ||
+                v.name.toLowerCase().includes('arabic') ||
+                v.name.toLowerCase().includes('maged') ||
+                v.name.toLowerCase().includes('laila') ||
+                v.name.toLowerCase().includes('tarik')
+            );
+            if (arabicVoice) utterance.voice = arabicVoice;
 
-        setCurrentQueueTicket({ ticket: ticketNumber, counter: counterName });
+            return utterance;
+          };
+
+          const firstUtterance = createUtterance();
+
+          // Repeat announcement once for maximum clarity in waiting halls
+          firstUtterance.onend = () => {
+            setTimeout(() => {
+              const secondUtterance = createUtterance();
+              window.speechSynthesis.speak(secondUtterance);
+            }, 600);
+          };
+
+          window.speechSynthesis.speak(firstUtterance);
+        }
+
+        setCurrentQueueTicket({ ticket: ticketNumber, counter: spokenCounter });
         setShowQueueTicket(true);
-        setTimeout(() => setShowQueueTicket(false), 10000);
-      }, 500);
+        setTimeout(() => setShowQueueTicket(false), 12000);
+      }, 700);
     } catch (e) {
       console.error('TTS failed:', e);
     }

@@ -9,17 +9,17 @@ export async function GET() {
 
   let services = await db.getQueueServices(session.organization.id);
 
-  // If organization has no queue services yet, auto-initialize 3 default departments
+  // If organization has no queue services yet, auto-initialize 3 default departments starting from ticket #1
   if (services.length === 0) {
     const defaultServices = [
       {
         id: 'qs-' + Math.random().toString(36).substring(2, 9),
         organizationId: session.organization.id,
         branchId: '',
-        name: 'قسم الاستقبال العام',
-        codePrefix: 'A',
-        currentNumber: 101,
-        lastCalledNumber: 101,
+        name: 'قسم المبيعات',
+        codePrefix: 'S',
+        currentNumber: 0,
+        lastCalledNumber: 0,
         averageWaitMinutes: 3,
         isActive: true,
       },
@@ -27,10 +27,10 @@ export async function GET() {
         id: 'qs-' + Math.random().toString(36).substring(2, 9),
         organizationId: session.organization.id,
         branchId: '',
-        name: 'قسم المبيعات والطلبات',
-        codePrefix: 'S',
-        currentNumber: 24,
-        lastCalledNumber: 24,
+        name: 'قسم الاستقبال العام',
+        codePrefix: 'A',
+        currentNumber: 0,
+        lastCalledNumber: 0,
         averageWaitMinutes: 5,
         isActive: true,
       },
@@ -38,10 +38,10 @@ export async function GET() {
         id: 'qs-' + Math.random().toString(36).substring(2, 9),
         organizationId: session.organization.id,
         branchId: '',
-        name: 'قسم خدمة العملاء والشكاوى',
+        name: 'قسم خدمة العملاء',
         codePrefix: 'C',
-        currentNumber: 12,
-        lastCalledNumber: 12,
+        currentNumber: 0,
+        lastCalledNumber: 0,
         averageWaitMinutes: 8,
         isActive: true,
       },
@@ -66,40 +66,71 @@ export async function POST(req: Request) {
     const body = await req.json();
     const { action, serviceId, counterNumber = 'شباك 1', name, codePrefix } = body;
 
-    // 1. Call Next Customer
+    // 1. Call Next Customer (استدعاء الزبون التالي)
     if (action === 'call_next') {
       if (!serviceId) {
-        return NextResponse.json({ error: 'مطلوب تحديد القسم / الخدمة' }, { status: 400 });
+        return NextResponse.json({ error: 'مطلوب تحديد الخدمة' }, { status: 400 });
       }
 
-      const ticket = await db.callNextTicket(serviceId, counterNumber);
-      if (!ticket) {
-        return NextResponse.json({ error: 'القسم المطلوب غير موجود' }, { status: 404 });
+      const service = await db.getQueueServiceById(serviceId);
+      if (!service) {
+        return NextResponse.json({ error: 'الخدمة غير موجودة' }, { status: 404 });
       }
 
-      // Broadcast queue update to all screens in real-time
+      // Next called number starts from 1 if currently 0
+      const nextCalled = (service.lastCalledNumber || 0) + 1;
+      await db.updateQueueService(serviceId, {
+        lastCalledNumber: nextCalled,
+        currentNumber: Math.max(service.currentNumber || 0, nextCalled),
+      });
+
+      const ticketNumber = `${service.codePrefix}-${nextCalled}`;
+
+      const ticket = {
+        id: 'tkt-' + Math.random().toString(36).substring(2, 9),
+        organizationId: session.organization.id,
+        serviceId: service.id,
+        serviceName: service.name,
+        ticketNumber: ticketNumber,
+        status: 'serving' as const,
+        counterNumber: counterNumber || service.name,
+        calledAt: new Date().toISOString(),
+        createdAt: new Date().toISOString(),
+      };
+
+      await db.createQueueTicket(ticket);
+
+      // Broadcast real-time event to all screens and players
       const screens = await db.getScreens(session.organization.id);
-      screens.forEach((s) => {
-        realtime.notifyScreen(s.id, 'queue_called', {
+      screens.forEach((screen) => {
+        realtime.notifyScreen(screen.id, 'queue_called', {
           ticket,
           ticketNumber: ticket.ticketNumber,
-          counterName: ticket.counterNumber || 'الاستقبال',
-          serviceName: ticket.serviceName,
+          counterName: ticket.counterNumber || service.name,
+          serviceName: service.name,
         });
-        if (s.registrationCode) {
-          realtime.notifyScreen(s.registrationCode, 'queue_called', {
+        if (screen.registrationCode) {
+          realtime.notifyScreen(screen.registrationCode, 'queue_called', {
             ticket,
             ticketNumber: ticket.ticketNumber,
-            counterName: ticket.counterNumber || 'الاستقبال',
-            serviceName: ticket.serviceName,
+            counterName: ticket.counterNumber || service.name,
+            serviceName: service.name,
           });
         }
       });
-      realtime.notifyDashboard(session.organization.id, 'queue_called', {
+
+      // Broadcast globally and on organization channel
+      realtime.notifyScreen(session.organization.id, 'queue_called', {
         ticket,
         ticketNumber: ticket.ticketNumber,
-        counterName: ticket.counterNumber || 'الاستقبال',
-        serviceName: ticket.serviceName,
+        counterName: ticket.counterNumber || service.name,
+        serviceName: service.name,
+      });
+      realtime.notifyScreen('screen:all', 'queue_called', {
+        ticket,
+        ticketNumber: ticket.ticketNumber,
+        counterName: ticket.counterNumber || service.name,
+        serviceName: service.name,
       });
 
       await db.logActivity({
@@ -114,7 +145,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ticket });
     }
 
-    // 2. Issue Ticket for Customer
+    // 2. Issue Ticket for Customer & Print (إصدار تذكرة جديدة من رقم 1)
     if (action === 'issue_ticket') {
       if (!serviceId) {
         return NextResponse.json({ error: 'مطلوب تحديد الخدمة' }, { status: 400 });
@@ -135,7 +166,7 @@ export async function POST(req: Request) {
         serviceName: service.name,
         ticketNumber: `${service.codePrefix}-${newNumber}`,
         status: 'waiting' as const,
-        counterNumber: counterNumber || 'الاستقبال',
+        counterNumber: counterNumber || service.name,
         calledAt: '',
         createdAt: new Date().toISOString(),
       };
@@ -154,7 +185,29 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, ticket });
     }
 
-    // 3. Create New Service / Department
+    // 3. Reset Counter back to 0 (تصفير العداد للبدء من رقم 1)
+    if (action === 'reset_counter') {
+      if (!serviceId) {
+        return NextResponse.json({ error: 'مطلوب تحديد الخدمة' }, { status: 400 });
+      }
+      await db.updateQueueService(serviceId, {
+        currentNumber: 0,
+        lastCalledNumber: 0,
+      });
+
+      await db.logActivity({
+        organizationId: session.organization.id,
+        userId: session.user.id,
+        userName: session.user.fullName,
+        action: 'تصفير عداد القسم',
+        actionType: 'system',
+        details: `تم تصفير عداد القسم لبدء الترقيم من رقم 1`,
+      });
+
+      return NextResponse.json({ success: true, message: 'تم تصفير العداد للبدء من رقم 1' });
+    }
+
+    // 4. Create New Service / Department (إنشاء قسم جديد)
     if (action === 'create_service') {
       if (!name || !codePrefix) {
         return NextResponse.json({ error: 'مطلوب اسم القسم والرمز' }, { status: 400 });
@@ -166,8 +219,8 @@ export async function POST(req: Request) {
         branchId: '',
         name: name.trim(),
         codePrefix: codePrefix.trim().toUpperCase(),
-        currentNumber: 1,
-        lastCalledNumber: 1,
+        currentNumber: 0,
+        lastCalledNumber: 0,
         averageWaitMinutes: 5,
         isActive: true,
       };
@@ -186,7 +239,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ success: true, service: newService });
     }
 
-    // 4. Delete Service / Department
+    // 5. Delete Service / Department
     if (action === 'delete_service') {
       if (!serviceId) {
         return NextResponse.json({ error: 'مطلوب تحديد القسم' }, { status: 400 });

@@ -28,6 +28,7 @@ import {
   Image as ImageIcon,
   Check,
   X,
+  RotateCcw,
 } from 'lucide-react';
 import { queueServiceSchema, QueueServiceFormData } from '@/lib/validations';
 import LogoUploader from '@/components/LogoUploader';
@@ -91,24 +92,71 @@ export default function QueuePage() {
   const services = data?.services || [];
   const tickets = data?.tickets || [];
 
+  // Play harmonic 3-tone chime sound
   const playChime = () => {
     try {
       const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
       if (ctx.state === 'suspended') {
         ctx.resume();
       }
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.frequency.setValueAtTime(587.33, ctx.currentTime);
-      osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
-      gain.gain.setValueAtTime(0.3, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.6);
-      osc.start(ctx.currentTime);
-      osc.stop(ctx.currentTime + 0.6);
+      const now = ctx.currentTime;
+      const playTone = (freq: number, startTime: number, duration: number, vol: number = 0.35) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        gain.gain.setValueAtTime(vol, startTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
+        osc.start(startTime);
+        osc.stop(startTime + duration);
+      };
+
+      playTone(587.33, now, 0.25, 0.4);
+      playTone(880.00, now + 0.18, 0.3, 0.45);
+      playTone(1174.66, now + 0.38, 0.5, 0.5);
     } catch (e) {
       console.warn('Audio not available:', e);
+    }
+  };
+
+  // Speak Arabic Queue Announcement
+  const speakQueueTicket = (ticketNumber: string, counterName: string) => {
+    try {
+      playChime();
+      const rawNum = ticketNumber.replace(/^[A-Za-z\u0600-\u06FF]-?/, '');
+      const spokenNum = rawNum || ticketNumber;
+      let spokenCounter = counterName || 'شباك الخدمة';
+      if (spokenCounter.startsWith('قسم ')) {
+        spokenCounter = spokenCounter.replace('قسم ', 'شباك ');
+      }
+      const announcementText = `عميل رقم ${spokenNum}، ${spokenCounter}`;
+
+      setTimeout(() => {
+        if ('speechSynthesis' in window) {
+          window.speechSynthesis.cancel();
+          const utterance = new SpeechSynthesisUtterance(announcementText);
+          utterance.lang = 'ar-SA';
+          utterance.rate = 0.88;
+          utterance.pitch = 1.0;
+          utterance.volume = 1.0;
+
+          const voices = window.speechSynthesis.getVoices();
+          const arabicVoice = voices.find(
+            (v) =>
+              v.lang.startsWith('ar') ||
+              v.name.toLowerCase().includes('arabic') ||
+              v.name.toLowerCase().includes('maged') ||
+              v.name.toLowerCase().includes('laila') ||
+              v.name.toLowerCase().includes('tarik')
+          );
+          if (arabicVoice) utterance.voice = arabicVoice;
+          window.speechSynthesis.speak(utterance);
+        }
+      }, 700);
+    } catch (e) {
+      console.error(e);
     }
   };
 
@@ -130,7 +178,7 @@ export default function QueuePage() {
       if (res.ok && d.success) {
         setLastCalledTicket(d.ticket);
         await mutate();
-        playChime();
+        speakQueueTicket(d.ticket.ticketNumber, serviceName);
         setSuccessMsg(`تم نداء التذكرة ${d.ticket.ticketNumber} وبثها للشاشات بنجاح 🔔`);
         setTimeout(() => setSuccessMsg(''), 4000);
       } else {
@@ -169,6 +217,24 @@ export default function QueuePage() {
     }
   };
 
+  const resetCounter = async (serviceId: string, serviceName: string) => {
+    if (!confirm(`هل تريد تصفير عداد "${serviceName}" والبدء من رقم 1؟`)) return;
+    try {
+      const res = await fetch('/api/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'reset_counter', serviceId }),
+      });
+      if (res.ok) {
+        await mutate();
+        setSuccessMsg(`تم تصفير العداد لـ "${serviceName}" وسيبدأ النداء والطباعة من رقم 1 ✨`);
+        setTimeout(() => setSuccessMsg(''), 4000);
+      }
+    } catch (e) {
+      console.error(e);
+    }
+  };
+
   const createService = async (formData: QueueServiceFormData) => {
     setCreating(true);
     try {
@@ -184,13 +250,13 @@ export default function QueuePage() {
 
       const d = await res.json();
       if (res.ok && d.success) {
+        await mutate();
         serviceForm.reset();
         setSetupMode(false);
-        await mutate();
-        setSuccessMsg(`تم إنشاء قسم "${formData.name}" بنجاح ✨`);
+        setSuccessMsg(`تمت إضافة القسم "${formData.name}" بنجاح ويبدأ من رقم 1 ✨`);
         setTimeout(() => setSuccessMsg(''), 3000);
       } else {
-        alert(d.error || 'فشل إنشاء الخدمة');
+        alert(d.error || 'فشل إضافة القسم');
       }
     } catch (e) {
       console.error(e);
@@ -201,17 +267,13 @@ export default function QueuePage() {
   };
 
   const deleteService = async (serviceId: string, serviceName: string) => {
-    if (!confirm(`هل أنت متأكد من حذف قسم "${serviceName}"؟`)) return;
+    if (!confirm(`هل أنت متأكد من رغبتك في حذف قسم "${serviceName}"؟`)) return;
     try {
       const res = await fetch('/api/queue', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          action: 'delete_service',
-          serviceId,
-        }),
+        body: JSON.stringify({ action: 'delete_service', serviceId }),
       });
-
       if (res.ok) {
         await mutate();
       }
@@ -220,21 +282,24 @@ export default function QueuePage() {
     }
   };
 
+  // Thermal Printer Print Ticket Function
   const printTicket = (ticket: any) => {
-    const printWindow = window.open('', '_blank', 'width=340,height=550');
+    const printWindow = window.open('', '_blank', 'width=350,height=550');
     if (!printWindow) {
-      alert('تم حظر النافذة المنبثقة. يرجى السماح بالنوافذ المنبثقة للطباعة.');
+      alert('يرجى السماح بالنوافذ المنبثقة للطباعة');
       return;
     }
 
-    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=TICKET:${ticket.ticketNumber}`;
+    const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=100x100&data=${encodeURIComponent(
+      typeof window !== 'undefined' ? `${window.location.origin}/player?ticket=${ticket.ticketNumber}` : 'https://screenflow.app'
+    )}`;
 
     printWindow.document.write(`
       <!DOCTYPE html>
       <html dir="rtl" lang="ar">
       <head>
         <meta charset="utf-8">
-        <title>تذكرة انتظار رقم ${ticket.ticketNumber}</title>
+        <title>تذكرة انتظار - ${ticket.ticketNumber}</title>
         <style>
           @media print {
             @page { size: 80mm auto; margin: 2mm; }
@@ -357,7 +422,7 @@ export default function QueuePage() {
     <div className="space-y-8 max-w-7xl mx-auto pb-12">
       <Header
         title="نظام إدارة أرقام الزبائن والانتظار"
-        subtitle="إصدار أرقام انتظار وعرضها المباشر على الشاشات + نداء صوتي وطباعة حرارية مخصصة"
+        subtitle="إصدار أرقام انتظار من رقم 1 وعرضها المباشر على الشاشات + نداء صوتي وطباعة حرارية مخصصة"
       />
 
       {/* Global Success Notification */}
@@ -380,11 +445,19 @@ export default function QueuePage() {
               نداء وتوجيه الزبائن على الشاشات بضغطة واحدة
             </h2>
             <p className="text-slate-300 text-xs md:text-sm max-w-xl">
-              عند نداء التذكرة يتم تشغيل رنين صوتي في الشاشات وعرض الرقم فوراً، مع إمكانية طباعة تذاكر حرارية تحمل لوجو المؤسسة واسم العيادة.
+              عند نداء التذكرة يتم تشغيل رنين صوتي في الشاشات ونطق العبارة العربية: <strong className="text-amber-300 font-bold">"عميل رقم 1، شباك المبيعات"</strong>، مع إمكانية طباعة تذاكر حرارية تحمل لوجو المؤسسة.
             </p>
           </div>
 
-          <div className="flex items-center gap-3 shrink-0">
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            <button
+              onClick={() => speakQueueTicket('1', 'شباك المبيعات')}
+              className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-lg shadow-indigo-600/30 transition-all active:scale-95"
+            >
+              <Volume2 className="w-4 h-4 text-amber-300" />
+              <span>🗣️ تجربة النداء الصوتي</span>
+            </button>
+
             <button
               onClick={() => setIsReceiptSettingsOpen(true)}
               className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-white/10 hover:bg-white/20 text-white text-xs font-bold border border-white/20 cursor-pointer backdrop-blur-md transition-all"
@@ -396,16 +469,16 @@ export default function QueuePage() {
             <button
               onClick={() => {
                 printTicket({
-                  ticketNumber: 'A-104',
-                  serviceName: 'قسم الاستقبال والعيادات',
-                  counterNumber: 'شباك 1',
+                  ticketNumber: 'S-1',
+                  serviceName: 'قسم المبيعات والطلبات',
+                  counterNumber: 'شباك المبيعات',
                   createdAt: new Date().toISOString(),
                 });
               }}
               className="flex items-center gap-2 px-4 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-black cursor-pointer shadow-lg shadow-amber-500/20 transition-all"
             >
               <Printer className="w-4 h-4" />
-              <span>🖨️ طباعة تذكرة تجريبية</span>
+              <span>🖨️ طباعة تذكرة رقم 1 تجريبية</span>
             </button>
           </div>
         </div>
@@ -448,13 +521,13 @@ export default function QueuePage() {
         {setupMode && (
           <div className="glass-panel p-5 rounded-2xl border border-indigo-200 bg-indigo-50/40 animate-in fade-in duration-200">
             <form onSubmit={serviceForm.handleSubmit(createService)} className="space-y-4">
-              <h4 className="font-bold text-xs text-indigo-950">إضافة قسم انتظار جديد</h4>
+              <h4 className="font-bold text-xs text-indigo-950">إضافة قسم انتظار جديد يبدأ من رقم 1</h4>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-slate-700 mb-1">اسم القسم / الخدمة</label>
                   <input
                     {...serviceForm.register('name')}
-                    placeholder="مثال: قسم العيادات التخصصية"
+                    placeholder="مثال: قسم المبيعات"
                     className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                   />
                   {serviceForm.formState.errors.name && (
@@ -465,7 +538,7 @@ export default function QueuePage() {
                   <label className="block text-xs font-semibold text-slate-700 mb-1">رمز التذكرة (Prefix)</label>
                   <input
                     {...serviceForm.register('codePrefix')}
-                    placeholder="مثال: A أو B أو C"
+                    placeholder="مثال: S أو A أو B"
                     maxLength={3}
                     className="w-full px-3 py-2 rounded-xl bg-white border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500 uppercase font-mono"
                   />
@@ -509,13 +582,22 @@ export default function QueuePage() {
                     <h4 className="font-bold text-slate-900 text-sm">{svc.name}</h4>
                     <span className="text-[10px] text-slate-400 font-mono">الرمز: {svc.codePrefix}</span>
                   </div>
-                  <button
-                    onClick={() => deleteService(svc.id, svc.name)}
-                    className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
-                    title="حذف القسم"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      onClick={() => resetCounter(svc.id, svc.name)}
+                      className="p-1.5 text-slate-400 hover:text-amber-600 transition-colors"
+                      title="تصفير العداد إلى رقم 1"
+                    >
+                      <RotateCcw className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => deleteService(svc.id, svc.name)}
+                      className="p-1.5 text-slate-300 hover:text-rose-500 transition-colors"
+                      title="حذف القسم"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
 
                 {/* Counter Stats */}
@@ -559,70 +641,62 @@ export default function QueuePage() {
         </div>
       </div>
 
-      {/* Live Recent Tickets Call Log */}
-      <div className="space-y-3">
+      {/* Recent Tickets Table */}
+      <div className="glass-panel rounded-3xl p-6 border border-slate-200/80 shadow-sm space-y-4">
         <h3 className="font-bold text-slate-800 text-sm flex items-center gap-2">
           <Clock className="w-4 h-4 text-indigo-600" />
           سجل التذاكر المستدعاة مؤخراً ({tickets.length})
         </h3>
 
-        <div className="glass-panel rounded-2xl overflow-hidden border border-slate-200 shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full text-right text-xs">
-              <thead className="bg-slate-50 border-b border-slate-200 text-slate-500">
-                <tr>
-                  <th className="p-3 font-semibold">رقم التذكرة</th>
-                  <th className="p-3 font-semibold">القسم / الخدمة</th>
-                  <th className="p-3 font-semibold">الشباك</th>
-                  <th className="p-3 font-semibold">الحالة</th>
-                  <th className="p-3 font-semibold">وقت الاستدعاء</th>
+        <div className="overflow-x-auto">
+          <table className="w-full text-right text-xs">
+            <thead>
+              <tr className="border-b border-slate-100 text-slate-400 font-medium">
+                <th className="pb-3">رقم التذكرة</th>
+                <th className="pb-3">القسم / الخدمة</th>
+                <th className="pb-3">الشباك</th>
+                <th className="pb-3">الحالة</th>
+                <th className="pb-3">وقت الاستدعاء</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {tickets.slice(0, 8).map((t) => (
+                <tr key={t.id} className="text-slate-700">
+                  <td className="py-3 font-mono font-bold text-indigo-600">{t.ticketNumber}</td>
+                  <td className="py-3">{t.serviceName}</td>
+                  <td className="py-3">{t.counterNumber || 'شباك 1'}</td>
+                  <td className="py-3">
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600">
+                      تم النداء
+                    </span>
+                  </td>
+                  <td className="py-3 text-slate-400 font-mono">
+                    {t.calledAt ? new Date(t.calledAt).toLocaleTimeString('ar-SA') : 'منذ قليل'}
+                  </td>
                 </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100">
-                {tickets.slice(0, 8).map((t) => (
-                  <tr key={t.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="p-3 font-mono font-bold text-indigo-600">{t.ticketNumber}</td>
-                    <td className="p-3 text-slate-800 font-medium">{t.serviceName}</td>
-                    <td className="p-3 text-slate-600">{t.counterNumber || 'شباك 1'}</td>
-                    <td className="p-3">
-                      <span className="px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-600 border border-emerald-200">
-                        تم النداء 🔔
-                      </span>
-                    </td>
-                    <td className="p-3 text-slate-400 font-mono text-[11px]">
-                      {new Date(t.calledAt || t.createdAt).toLocaleTimeString('ar-SA')}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+              ))}
+            </tbody>
+          </table>
         </div>
       </div>
 
-      {/* ========================================================================= */}
-      {/* THERMAL PRINTER CUSTOMIZATION MODAL (لوجو المؤسسة + اسم المنشأة)         */}
-      {/* ========================================================================= */}
+      {/* Thermal Printer Customization Modal */}
       {isReceiptSettingsOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-white border border-slate-200 rounded-3xl w-full max-w-lg overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-            <div className="p-5 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
+                <div className="w-10 h-10 rounded-2xl bg-amber-50 border border-amber-100 flex items-center justify-center text-amber-600">
                   <Printer className="w-5 h-5" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-slate-900 text-base">
-                    إعدادات ورقة الطابعة الحرارية والشعار
-                  </h3>
-                  <p className="text-xs text-slate-400">
-                    خصص الشعار واسم المجمع والنصوص الظاهرة على ورق التذاكر
-                  </p>
+                  <h3 className="font-bold text-slate-900 text-sm">تخصيص ورقة الطابعة الحرارية (80mm / 58mm)</h3>
+                  <p className="text-xs text-slate-400">تعديل الشعار، اسم العيادة، وملاحظات التذكرة</p>
                 </div>
               </div>
               <button
                 onClick={() => setIsReceiptSettingsOpen(false)}
-                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 cursor-pointer"
+                className="p-1.5 text-slate-400 hover:text-slate-700 cursor-pointer"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -650,56 +724,45 @@ export default function QueuePage() {
 
               <div>
                 <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                  ملاحظة تذييل الورقة (Footer Message)
+                  ملاحظة أسفل التذكرة (Footer Note)
                 </label>
                 <input
                   type="text"
                   value={footerNote}
                   onChange={(e) => setFooterNote(e.target.value)}
-                  placeholder="مثال: شكراً لزيارتكم • نسعد بخدمتكم دائماً"
+                  placeholder="شكراً لزيارتكم • نسعد بخدمتكم دائماً"
                   className="w-full px-3.5 py-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800 focus:outline-none focus:border-indigo-500"
                 />
               </div>
 
-              <div className="flex items-center gap-2 pt-2">
+              <div className="flex items-center gap-3 pt-2">
                 <input
                   type="checkbox"
-                  id="showQr"
+                  id="showQrCheck"
                   checked={showQr}
                   onChange={(e) => setShowQr(e.target.checked)}
-                  className="w-4 h-4 rounded text-indigo-600 cursor-pointer"
+                  className="w-4 h-4 text-indigo-600 rounded cursor-pointer"
                 />
-                <label htmlFor="showQr" className="text-xs font-semibold text-slate-700 cursor-pointer">
-                  تضمين باركود QR Code على التذكرة لمتابعة الدور على الهاتف
+                <label htmlFor="showQrCheck" className="text-xs font-semibold text-slate-700 cursor-pointer">
+                  طباعة رمز باركود QR Code في التذكرة لمتابعة الدور
                 </label>
-              </div>
-
-              {/* Preview Box */}
-              <div className="p-3 bg-slate-50 border border-dashed border-slate-300 rounded-2xl text-center text-slate-800 font-mono text-[11px] space-y-1">
-                <span className="text-[10px] text-slate-400 font-sans block mb-1">معاينة شكل التذكرة الحرارية:</span>
-                {receiptLogoUrl && <img src={receiptLogoUrl} className="h-6 mx-auto object-contain mb-1" alt="" />}
-                <div className="font-bold">{facilityName}</div>
-                <div className="text-[10px] text-slate-500">--------------------------------</div>
-                <div className="text-lg font-black text-indigo-600">A-104</div>
-                <div className="text-[10px] text-slate-500">--------------------------------</div>
-                <div className="text-[9px] text-slate-400">{footerNote}</div>
               </div>
             </div>
 
-            <div className="p-5 border-t border-slate-100 flex items-center justify-end gap-2 bg-slate-50/50">
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex items-center justify-end gap-3">
               <button
                 type="button"
                 onClick={() => setIsReceiptSettingsOpen(false)}
-                className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-600 text-xs font-bold cursor-pointer"
+                className="px-4 py-2.5 rounded-xl bg-slate-200 text-slate-700 text-xs font-bold cursor-pointer"
               >
                 إلغاء
               </button>
               <button
                 type="button"
                 onClick={saveReceiptSettings}
-                className="px-6 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold cursor-pointer shadow-md shadow-indigo-600/20"
+                className="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-bold shadow-md shadow-indigo-600/20 cursor-pointer"
               >
-                حفظ الإعدادات ✨
+                حفظ الإعدادات
               </button>
             </div>
           </div>
